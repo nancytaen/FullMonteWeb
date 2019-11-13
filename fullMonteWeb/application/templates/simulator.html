@@ -2,5 +2,42 @@
 
 {% block content %}
 <h1>FullMonte Simulator</h1>
-<p></p>
+
+<p><label for="id_material">Load Mesh:</label></p>
+<p><form action=""><input type="file"></form></p>
+
+<p><label for="id_material">MaterialSet:</label></p>
+<p><textarea name="material" id="id_material" required></textarea></p>
+
+<p><label for="id_lightsourcetype">Light source type:</label></p>
+<p><select>
+    <option value="point">Point</option>
+    <option value="pencilbeam">PencilBeam</option>
+    <option value="volume">Volume</option>
+    <option value="ball">Ball</option>
+    <option value="line">Line</option>
+    <option value="fiber">Cut-end Fiber</option>
+    <option value="tetraface">TetraFace</option>
+    <option value="cylinder">Cylinder</option>
+    <option value="composite">Composite</option>
+</select></p>
+
+<p><label for="id_lightsourcepos">Light source position:</label></p>
+<p><textarea name="lightsourcepos" id="id_lightsourcepos" required></textarea></p>
+
+<p><label for="lightsourcepower">Light source power:</label></p>
+<p><div class="lightsourcepower">
+    <input type="range" min="1" max="100" value="50" class="slider" id="id_lightsourcepower">
+</div><p>
+
+<p><label for="kerneltype">Kernel Type:</label></p>
+<p><select>
+    <option value="tetrasurfacekernel">TetraSurfaceKernel</option>
+    <option value="tetravolumekernel">TetraVolumeKernel</option>
+    <option value="tetrasvkernel">TetraSVKernel</option>
+    <option value="tetrainternalkernel">TetraInternalKernel</option>
+</select></p>
+
+<p><input type="submit"></p>
+
 {% endblock %}
