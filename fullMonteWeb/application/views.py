@@ -25,6 +25,12 @@ def fmSimulator(request):
             absorptionCoeff = request.POST.get('absorptionCoeff')
             refractiveIndex = request.POST.get('refractiveIndex')
             anisotropy = request.POST.get('anisotropy')
+            
+            type = request.POST.get('type')
+            xPos = request.POST.get('xPos')
+            yPos = request.POST.get('yPos')
+            zPos = request.POST.get('zPos')
+            power = request.POST.get('power')
             # redirect to a new URL:
             return HttpResponseRedirect('/application/')
     return render(request, "simulator.html", {'form': form})
