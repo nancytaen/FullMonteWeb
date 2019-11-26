@@ -18,10 +18,8 @@ def fmSimulator(request):
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        form = tclInput()
+        form = tclInput(request.POST)
         # check whether it's valid:
-        print(form)
-        
         if form.is_valid():
             # process the data in form.cleaned_data as required
             material = request.POST.get('material')
@@ -36,8 +34,20 @@ def fmSimulator(request):
             zPos = request.POST.get('zPos')
             power = request.POST.get('power')
             
-        # redirect to a new URL:
-        return HttpResponseRedirect('/application/visualization')
+            #debugging
+            print(material)
+            print(scatteringCoeff)
+            print(absorptionCoeff)
+            print(refractiveIndex)
+            print(anisotropy)
+            print(sourceType)
+            print(xPos)
+            print(yPos)
+            print(zPos)
+            print(power)
+            
+            # redirect to a new URL:
+            return HttpResponseRedirect('/application/visualization')
 
     # If this is a GET (or any other method) create the default form.
     else:
