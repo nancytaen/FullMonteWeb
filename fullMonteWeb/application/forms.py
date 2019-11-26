@@ -9,7 +9,7 @@ class tclInput(forms.Form):
         anisotropy = forms.IntegerField(label='Anisotropy')
 
     class lightSource(forms.Form):
-        type = forms.ChoiceField(label='Type', choices=(('point','Point'),
+        sourceType = forms.ChoiceField(label='Type', choices=(('point','Point'),
                                                         ('pencilbeam','PencilBeam'),
                                                         ('volume','Volume'),
                                                         ('ball','Ball'),

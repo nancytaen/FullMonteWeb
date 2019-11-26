@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from .forms import tclInput
 
 # Create your views here.
@@ -14,10 +15,13 @@ def fmTutorial(request):
 
 # FullMonte Simulator page
 def fmSimulator(request):
+    
     # if this is a POST request we need to process the form data
-    form = tclInput(request.POST or None)
     if request.method == 'POST':
+        form = tclInput()
         # check whether it's valid:
+        print(form)
+        
         if form.is_valid():
             # process the data in form.cleaned_data as required
             material = request.POST.get('material')
@@ -26,14 +30,24 @@ def fmSimulator(request):
             refractiveIndex = request.POST.get('refractiveIndex')
             anisotropy = request.POST.get('anisotropy')
             
-            type = request.POST.get('type')
+            sourceType = request.POST.get('sourceType')
             xPos = request.POST.get('xPos')
             yPos = request.POST.get('yPos')
             zPos = request.POST.get('zPos')
             power = request.POST.get('power')
-            # redirect to a new URL:
-            return HttpResponseRedirect('/application/')
-    return render(request, "simulator.html", {'form': form})
+            
+        # redirect to a new URL:
+        return HttpResponseRedirect('/application/visualization')
+
+    # If this is a GET (or any other method) create the default form.
+    else:
+        form = tclInput()
+
+    context = {
+        'form': form,
+    }
+
+    return render(request, "simulator.html", context)
 
 # FullMonte Output page
 def fmVisualization(request):
