@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import formset_factory
 
 class tclInput(forms.Form):
     class materialSet(forms.Form):
@@ -22,3 +23,6 @@ class tclInput(forms.Form):
         yPos = forms.IntegerField(label='Y Position')
         zPos = forms.IntegerField(label='Z Position')
         power = forms.IntegerField(label='Power')
+
+    materialSetSet = []
+    lightSourceSet = []

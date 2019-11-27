@@ -35,16 +35,6 @@ def fmSimulator(request):
             power = request.POST.get('power')
             
             #debugging
-            print(material)
-            print(scatteringCoeff)
-            print(absorptionCoeff)
-            print(refractiveIndex)
-            print(anisotropy)
-            print(sourceType)
-            print(xPos)
-            print(yPos)
-            print(zPos)
-            print(power)
             
             # redirect to a new URL:
             return HttpResponseRedirect('/application/visualization')
@@ -52,6 +42,17 @@ def fmSimulator(request):
     # If this is a GET (or any other method) create the default form.
     else:
         form = tclInput()
+        if request.method == 'GET':
+            if request.GET.get('addMatSet'):
+                form.materialSetSet.append(tclInput.materialSet())
+            if request.GET.get('removeMatSet'):
+                if len(form.materialSetSet) is not 0:
+                    form.materialSetSet.pop()
+            if request.GET.get('addLightSource'):
+                form.lightSourceSet.append(tclInput.lightSource())
+            if request.GET.get('removeLightSource'):
+                if len(form.lightSourceSet) is not 0:
+                    form.lightSourceSet.pop()
 
     context = {
         'form': form,

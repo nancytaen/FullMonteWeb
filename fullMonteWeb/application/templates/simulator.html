@@ -6,40 +6,43 @@
 <h2>Load Mesh:</h2>
 <p><form action=""><input type="file"></form></p>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script>
-    $(function(){
-      $(".addMatSet").on('click', function(){
-                      $('.matSet').append($('.repeatableMatSet').html())
-                      })
-      })
-</script>
+<form action="" method="GET">
+    <p><button type="addMatSet" name="addMatSet" value="addMatSet">
+        Add Material
+    </button>
+    <button type="removeMatSet" name="removeMatSet" value="removeMatSet">
+        Remove Material
+    </button></p>
+    <p>
+    <button type="addLightSource" name="addLightSource" value="addLightSource">
+        Add Light Source
+    </button>
+    <button type="removeLightSource" name="removeLightSource" value="removeLightSource">
+        Remove Light Source
+    </button>
+    </p>
+</form>
 
-<form action="" method="post">
+
+<form action="" method="POST">
+    
 <h2>Material Set:</h2>
 <div class="matSet">
-    <button class="addMatSet">Add</button>
     <div class="repeatableMatSet">
         {% csrf_token %}
-        {{ form.materialSet.as_p }}
+        {% for materialSet in form.materialSetSet %}
+            {{ materialSet.as_p }}
+        {% endfor %}
     </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script>
-    $(function(){
-      $(".addLightSource").on('click', function(){
-                         $('.lightSource').append($('.repeatableLightSource').html())
-                         })
-      })
-</script>
-
 <h2>Light Source:</h2>
 <div class="lightSource">
-    <button class="addLightSource">Add</button>
     <div class="repeatableLightSource">
         {% csrf_token %}
-        {{ form.lightSource.as_p }}
+        {% for lightSource in form.lightSourceSet %}
+            {{ lightSource.as_p }}
+        {% endfor %}
     </div>
 </div>
 
