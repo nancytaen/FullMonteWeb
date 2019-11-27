@@ -26,17 +26,8 @@ def fmSimulator(request):
         # check whether it's valid:
         if form.is_valid():
             # process the data in form.cleaned_data as required
-            material = request.POST.get('material')
-            scatteringCoeff = request.POST.get('scatteringCoeff')
-            absorptionCoeff = request.POST.get('absorptionCoeff')
-            refractiveIndex = request.POST.get('refractiveIndex')
-            anisotropy = request.POST.get('anisotropy')
-            
-            sourceType = request.POST.get('sourceType')
-            xPos = request.POST.get('xPos')
-            yPos = request.POST.get('yPos')
-            zPos = request.POST.get('zPos')
-            power = request.POST.get('power')
+            materialSetSet = form.materialSetSet
+            lightSourceSet = form.lightSourceSet
             
             #debugging
             
@@ -46,18 +37,7 @@ def fmSimulator(request):
     # If this is a GET (or any other method) create the default form.
     else:
         form = tclInput()
-        if request.method == 'GET':
-            if request.GET.get('addMatSet'):
-                form.materialSetSet.append(tclInput.materialSet())
-            if request.GET.get('removeMatSet'):
-                if len(form.materialSetSet) is not 0:
-                    form.materialSetSet.pop()
-            if request.GET.get('addLightSource'):
-                form.lightSourceSet.append(tclInput.lightSource())
-            if request.GET.get('removeLightSource'):
-                if len(form.lightSourceSet) is not 0:
-                    form.lightSourceSet.pop()
-
+    
     context = {
         'form': form,
     }

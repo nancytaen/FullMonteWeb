@@ -24,5 +24,5 @@ class tclInput(forms.Form):
         zPos = forms.IntegerField(label='Z Position')
         power = forms.IntegerField(label='Power')
 
-    materialSetSet = []
-    lightSourceSet = []
+    materialSetSet = formset_factory(materialSet)
+    lightSourceSet = formset_factory(lightSource)
