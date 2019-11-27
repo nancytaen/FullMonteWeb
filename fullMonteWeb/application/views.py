@@ -13,6 +13,10 @@ def home(request):
 def fmTutorial(request):
     return render(request, "tutorial.html")
 
+# FullMonte About page
+def about(request):
+    return render(request, "about.html")
+
 # FullMonte Simulator page
 def fmSimulator(request):
     

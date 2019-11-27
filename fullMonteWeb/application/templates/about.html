@@ -1,0 +1,50 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="row border-bottom">
+    <div id="about" class="col-md-6 border-right">
+        <h1>About FullMonte</h1>
+        <p>We introduce the FullMonte tetrahedral 3-D Monte Carlo (MC) software package for simulation, visualization, and analysis
+            of light propagation in heterogeneous turbid media including tissue. It provides the highest computational 
+            performance and richest set of input, output, and analysis facilities of any open-source tetrahedral-mesh MC light 
+            simulator. It also provides a robust framework for statistical verification. A scripting interface makes set-up of 
+            simulation runs simple, including parameter sweeps, while simultaneously providing customization options. Data formats shared 
+            with class-leading visualization tools, VTK and Paraview, facilitate interactive generation of publication-quality fluence and 
+            irradiance maps. The simulator can read and write file formats supported by other similar simulators, such as TIM-OS, MMC, COMSOL 
+            (finite-element simulations), and MCML to support comparison. Where simulator features permit, FullMonte can take a single test 
+            case, run it in multiple software packages, and load the results together for comparison. Example meshes, optical properties, 
+            set-up scripts, and output files are provided for user convenience. We demonstrate its use in several test cases, including photodynamic 
+            therapy of the brain, bioluminescence imaging (BLI) in a mouse phantom, and a comparison against MCML for layered geometries. 
+            Application domains that can benefit from use of FullMonte include photodynamic, photothermal, and photobiomodulation therapies, BLI, 
+            diffuse optical tomography, MC software development, and biophotonics education. Since MC results may be used for preclinical or even 
+            clinical experiments, a robust and rigorous verification process is essential. Being a stochastic numerical method, MC simulation has 
+            unique challenges associated with verification of output results since observed differences may be due simply to output variance or 
+            actual differences in expected output. We describe and have implemented a rigorous and statistically justified framework for 
+            comparing between simulators of the same class and for performing regression testing.</p>
+    </div>
+    <div id="developed" class="col-md-6">
+        <h2>Development</h2>
+        <p>FullMonte was developed by the Lilge-Betz group at the University of Toronto</p><br/>
+        <p class="font-weight-bold">The following people contributed extensively to development of this project</p>
+        <ul>
+            <li><a href="http://www.eecg.toronto.edu/~vaughn/" target="_blank">Vaughn Betz</a></li>
+            <li><a href="http://www.uhnresearch.ca/researcher/lothar-lilge" target="_blank">Lothar Lilge</a></li>
+            <li><span>Jeffrey Cassidy</span></li>
+            <li><span>Ali Nouri</span></li>
+            
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <h2>FullMonteWeb has been developed as a capstone project at the University of Toronto by the follwing four ECE undergraduate students</h2>
+        <ul>
+            <li>Julian Gonsalves - University of Toronto</li>
+            <li>Charlie Chai - University of Toronto</li>
+            <li>Yuchao Jin - University of Toronto</li>
+            <li>Galen Brook-Atkins -University of Strathclyde</li>
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

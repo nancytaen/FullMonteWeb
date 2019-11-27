@@ -205,7 +205,7 @@ EMAIL_SSL_KEYFILE = None
 EMAIL_TIMEOUT = None
 
 # List of strings representing installed apps.
-INSTALLED_APPS = []
+INSTALLED_APPS = ['bootstrap4','django_forms_bootstrap']
 
 TEMPLATES = [
     {

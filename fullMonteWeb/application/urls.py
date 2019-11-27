@@ -14,4 +14,7 @@ urlpatterns = [
                
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
+
+    # /application/about
+    path('about', views.about, name='about'),
 ]

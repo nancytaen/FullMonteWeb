@@ -7,6 +7,8 @@ verify_ssl = true
 
 [packages]
 django = "*"
+django-forms-bootstrap = "*"
+django-bootstrap4 = "*"
 
 [requires]
 python_version = "3.7"
