@@ -23,14 +23,21 @@ def fmSimulator(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         form = tclInput(request.POST)
+        
         # check whether it's valid:
         if form.is_valid():
             # process the data in form.cleaned_data as required
-            materialSetSet = form.materialSetSet
-            lightSourceSet = form.lightSourceSet
+
+            materialSetSet = form.materialSetSet()
+            for materialSet in materialSetSet:
+                print()
+            
+            lightSourceSet = form.lightSourceSet()
+            for lightSource in lightSourceSet:
+                print()
             
             #debugging
-            
+                
             # redirect to a new URL:
             return HttpResponseRedirect('/application/visualization')
 
