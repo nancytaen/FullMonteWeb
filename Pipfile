@@ -9,6 +9,7 @@ verify_ssl = true
 django = "*"
 django-forms-bootstrap = "*"
 django-bootstrap4 = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.7"
