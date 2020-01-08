@@ -1,0 +1,1 @@
+web: gunicorn fullMonteWeb.wsgi --log-file -
