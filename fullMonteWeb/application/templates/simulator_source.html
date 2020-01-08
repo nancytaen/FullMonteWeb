@@ -1,0 +1,44 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>FullMonte Simulator</h1>
+
+<form action="" method="post">
+    <h3>Light Source</h3>
+    {{ formset2.management_form }}
+    <div id="form_set" class="table">
+        {% for form in formset2.forms %}
+            <table class='no_error'>
+                {% csrf_token %}
+                {{ form.as_table }}
+            </table>
+        {% endfor %}
+    </div>
+    <input type="button" value="Add More" id="add_more">
+        <div id="empty_form" class="table" style="display:none">
+            <table class='no_error'>
+                {% csrf_token %}
+                {{ formset2.empty_form }}
+            </table>
+        </div>
+        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+        <script>
+            $('#add_more').click(function() {
+                                 var form_idx = $('#id_form-TOTAL_FORMS').val();
+                                 $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+                                 $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                                 });
+        </script>
+        
+    <p></p>
+
+    <p><input type="submit"></p>
+
+</form>
+
+<form>
+    <input type="button" value="Back" onclick="history.back()">
+</form>
+
+{% endblock %}

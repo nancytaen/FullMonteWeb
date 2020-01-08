@@ -12,6 +12,12 @@ urlpatterns = [
     # /application/simulator
     path('simulator', views.fmSimulator, name='simulator'),
                
+    # /application/simulator_material
+    path('simulator_material', views.fmSimulatorMaterial, name='simulator_material'),
+               
+    # /application/simulator_source
+    path('simulator_source', views.fmSimulatorSource, name='simulator_source'),
+               
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
 

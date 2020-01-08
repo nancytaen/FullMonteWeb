@@ -3,88 +3,16 @@
 {% block content %}
 <h1>FullMonte Simulator</h1>
 
-<h2>Load Mesh:</h2>
-<p><form action=""><input type="file"></form></p>
-
 <form action="" method="post">
-    <h3>Material Set</h3>
-    <input type="button" value="Add Material" id="add_more_material">
-        {% for form in form.materialSetSet %}
-        <div class='table'>
-            <table class='no_error'>
-                {% csrf_token %}
-                {{ form.as_table }}
-            </table>
-        </div>
-        {% endfor %}
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script>
-            $('#add_more_material').click(function() {
-                                          cloneMore('div.table:first', 'material');
-                                          });
-                                          
-                                          function cloneMore(selector, type) {
-                                              var newElement = $(selector).clone(true);
-                                              var total = $('#id_' + type + '-TOTAL_FORMS').val();
-                                              newElement.find(':input').each(function() {
-                                                                             var name = $(this).attr('name').replace('-' + (total-1) + '-','-' + total + '-');
-                                                                             var id = 'id_' + name;
-                                                                             $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
-                                                                             });
-                                                                             newElement.find('label').each(function() {
-                                                                                                           var newFor = $(this).attr('for').replace('-' + (total-1) + '-','-' + total + '-');
-                                                                                                           $(this).attr('for', newFor);
-                                                                                                           });
-                                                                                                           total++;
-                                                                                                           $('#id_' + type + '-TOTAL_FORMS').val(total);
-                                                                                                           $(selector).after(newElement);
-                                          }
-        </script>
-        
-        
-        <h3>Light Source</h3>
-        <input type="button" value="Add Light Source" id="add_more_lightsource">
-            {% for form in form.lightSourceSet %}
-            <div class='table'>
-                <table class='no_error'>
-                    {% csrf_token %}
-                    {{ form.as_table }}
-                </table>
-            </div>
-            {% endfor %}
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-            <script>
-                $('#add_more_lightsource').click(function() {
-                                                 cloneMore('div.table:last', 'lightsource');
-                                                 });
-                                                 
-                                                 function cloneMore(selector, type) {
-                                                     var newElement = $(selector).clone(true);
-                                                     var total = $('#id_' + type + '-TOTAL_FORMS').val();
-                                                     newElement.find(':input').each(function() {
-                                                                                    var name = $(this).attr('name').replace('-' + (total-1) + '-','-' + total + '-');
-                                                                                    var id = 'id_' + name;
-                                                                                    $(this).attr({'name': name, 'id': id}).val('').removeAttr('checked');
-                                                                                    });
-                                                                                    newElement.find('label').each(function() {
-                                                                                                                  var newFor = $(this).attr('for').replace('-' + (total-1) + '-','-' + total + '-');
-                                                                                                                  $(this).attr('for', newFor);
-                                                                                                                  });
-                                                                                                                  total++;
-                                                                                                                  $('#id_' + type + '-TOTAL_FORMS').val(total);
-                                                                                                                  $(selector).after(newElement);
-                                                 }
-            </script>
-
-            <h2>Kernel Type:</h2>
-            <p><select>
-                <option value="tetrasvkernel">TetraSVKernel</option>
-                <option value="tetrasurfacekernel">TetraSurfaceKernel</option>
-                <option value="tetravolumekernel">TetraVolumeKernel</option>
-                <option value="tetrainternalkernel">TetraInternalKernel</option>
-            </select></p>
-
-            <p><input type="submit"></p>
+    
+    <div class='table'>
+        <table class='no_error'>
+            {% csrf_token %}
+            {{ form.as_table }}
+        <table>
+    </div>
+    
+    <p><input type="submit" value="Next"></p>
 
 </form>
 
