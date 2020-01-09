@@ -21,16 +21,6 @@
                 {{ formset1.empty_form }}
             </table>
         </div>
-        
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script>
-            $('#add_more').click(function() {
-                                 var form_idx = $('#id_form-TOTAL_FORMS').val();
-                                 $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
-                                 $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-                                 });
-        </script>
-    
     <p></p>
     
     <p><input type="submit" value="Next"></p>
@@ -40,5 +30,67 @@
 <form>
     <input type="button" value="Back" onclick="history.back()">
 </form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    $('#add_more').click(function() {
+                         var form_idx = $('#id_form-TOTAL_FORMS').val();
+                         $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+                         $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                         if (document.getElementById("id_form-"+form_idx+"-custom")) {
+                            document.getElementById("id_form-"+form_idx+"-custom").onchange=function() { populateForm(this, form_idx); }
+                         }
+                         });
+                         
+    window.onload=function() {
+        var i = 0;
+        if (document.getElementById("id_form-"+i+"-custom")) {
+            document.getElementById("id_form-"+i+"-custom").onchange=function() { populateForm(this, i); }
+        }
+    }
+
+    function populateForm(SNewSel, i) {
+        var ind = SNewSel.selectedIndex;
+        var material = document.getElementById("id_form-"+i+"-material");
+        var scatteringCoeff = document.getElementById("id_form-"+i+"-scatteringCoeff");
+        var absorptionCoeff = document.getElementById("id_form-"+i+"-absorptionCoeff");
+        var refractiveIndex = document.getElementById("id_form-"+i+"-refractiveIndex");
+        var anisotropy = document.getElementById("id_form-"+i+"-anisotropy");
+        
+        switch (ind) {
+            default:
+            material.value = "";
+            scatteringCoeff.value = "";
+            absorptionCoeff.value = "";
+            refractiveIndex.value = "";
+            anisotropy.value = "";
+            break;
+            
+            case 1:
+            material.value = "Air";
+            scatteringCoeff.value = 0;
+            absorptionCoeff.value = 0;
+            refractiveIndex.value = 1;
+            anisotropy.value = 0;
+            break;
+            
+            case 2:
+            material.value = "Tumour";
+            scatteringCoeff.value = 2;
+            absorptionCoeff.value = 2;
+            refractiveIndex.value = 2;
+            anisotropy.value = 2;
+            break;
+
+            case 3:
+            material.value = "Muscle";
+            scatteringCoeff.value = 3;
+            absorptionCoeff.value = 3;
+            refractiveIndex.value = 3;
+            anisotropy.value = 3;
+            break;
+        }
+    }
+</script>
 
 {% endblock %}

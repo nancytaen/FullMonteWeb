@@ -10,6 +10,10 @@ class tclInput(forms.Form):
                                                            ('TetraInternalKernal','TetraInternalKernel')))
 
 class materialSet(forms.Form):
+    custom = forms.ChoiceField(label='Material Type', choices=(('Custom','Custom'),
+                                                        ('Air','Air'),
+                                                        ('Tumour','Tumour'),
+                                                        ('Muscle','Muscle')),)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
