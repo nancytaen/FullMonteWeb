@@ -44,8 +44,16 @@
                          
     window.onload=function() {
         var i = 0;
-        if (document.getElementById("id_form-"+i+"-custom")) {
-            document.getElementById("id_form-"+i+"-custom").onchange=function() { populateForm(this, i); }
+        for(i = 0; i < 100; ++i) {
+            if (document.getElementById("id_form-"+i+"-custom")) {
+                document.getElementById("id_form-"+i+"-custom").onchange=function()
+                {
+                    var x = this.name.substr(this.name.length-8, this.name.length);
+                    x = x.substr(0, 1);
+                    alert(x);
+                    populateForm(this, x);
+                }
+            }
         }
     }
 
