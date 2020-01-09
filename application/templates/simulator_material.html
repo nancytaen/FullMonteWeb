@@ -49,8 +49,7 @@
                 document.getElementById("id_form-"+i+"-custom").onchange=function()
                 {
                     var x = this.name.substr(this.name.length-8, this.name.length);
-                    x = x.substr(0, 1);
-                    alert(x);
+                    x = x.slice(0, -7);
                     populateForm(this, x);
                 }
             }
