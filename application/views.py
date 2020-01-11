@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from .models import *
 from .forms import *
 
 # Create your views here.
@@ -22,18 +23,22 @@ def fmSimulator(request):
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        form = tclInput(request.POST, request.FILES)
+        form = tclInputForm(request.POST, request.FILES)
         
         # check whether it's valid:
         if form.is_valid():
             # process cleaned data from formsets
-            print(form.cleaned_data)
+            #print(form.cleaned_data)
+            
+            form.save()
+
+            request.session['kernelType'] = form.cleaned_data['kernelType']
 
             return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
     else:
-        form = tclInput(request.GET or None)
+        form = tclInputForm(request.GET or None)
         
     context = {
         'form': form,
@@ -51,10 +56,19 @@ def fmSimulatorMaterial(request):
         # check whether it's valid:
         if formset1.is_valid():
             # process cleaned data from formsets
-            # print(formset1.data)
+            
+            request.session['material'] = []
+            request.session['scatteringCoeff'] = []
+            request.session['absorptionCoeff'] = []
+            request.session['refractiveIndex'] = []
+            request.session['anisotropy'] = []
             
             for form in formset1:
-                print(form.cleaned_data)
+                request.session['material'].append(form.cleaned_data['material'])
+                request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
+                request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
+                request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
+                request.session['anisotropy'].append(form.cleaned_data['anisotropy'])
             
             return HttpResponseRedirect('/application/simulator_source')
 
@@ -77,10 +91,25 @@ def fmSimulatorSource(request):
         # check whether it's valid:
         if formset2.is_valid():
             # process cleaned data from formsets
-            # print(formset2.data)
+            
+            request.session['sourceType'] = []
+            request.session['xPos'] = []
+            request.session['yPos'] = []
+            request.session['zPos'] = []
+            request.session['power'] = []
             
             for form in formset2:
-                print(form.cleaned_data)
+                request.session['sourceType'].append(form.cleaned_data['sourceType'])
+                request.session['xPos'].append(form.cleaned_data['xPos'])
+                request.session['yPos'].append(form.cleaned_data['yPos'])
+                request.session['zPos'].append(form.cleaned_data['zPos'])
+                request.session['power'].append(form.cleaned_data['power'])
+            
+            mesh = tclInput.objects.latest('id')
+            tclInput.objects.all().delete()
+            
+            #print(mesh.meshFile)
+            #print(tclInput.objects.all())
             
             return HttpResponseRedirect('/application/visualization')
 

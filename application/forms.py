@@ -1,13 +1,19 @@
 from django import forms
 from django.forms import formset_factory
 from django.forms import BaseFormSet
+from .models import tclInput
 
-class tclInput(forms.Form):
-    meshFile = forms.FileField(label='Mesh File')
-    kernelType = forms.ChoiceField(label='Kernel Type', choices=(('TetraSVKernal','TetraSVKernel'),
-                                                           ('TetraSurfaceKernal','TetraSurfaceKernel'),
-                                                           ('TetraVolumeKernal','TetraVolumeKernel'),
-                                                           ('TetraInternalKernal','TetraInternalKernel')))
+class tclInputForm(forms.ModelForm):
+    class Meta:
+        model = tclInput
+        fields = ('meshFile', 'kernelType')
+        kernel_choices = (('TetraSVKernal','TetraSVKernel'),
+                         ('TetraSurfaceKernal','TetraSurfaceKernel'),
+                         ('TetraVolumeKernal','TetraVolumeKernel'),
+                         ('TetraInternalKernal','TetraInternalKernel'))
+        widgets = {
+            'kernelType': forms.Select(choices=kernel_choices),
+        }
 
 class materialSet(forms.Form):
     custom = forms.ChoiceField(label='Material Type', choices=(('Custom','Custom'),
