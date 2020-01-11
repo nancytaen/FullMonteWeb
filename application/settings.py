@@ -14,7 +14,7 @@ def gettext_noop(s):
 # CORE             #
 ####################
 
-DEBUG = False
+DEBUG = True
 
 # Whether the framework should propagate raw exceptions rather than catching
 # them. This is useful under some testing situations and should never be used
@@ -281,19 +281,19 @@ DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/var/www/example.com/media/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # URL that handles the media served from MEDIA_ROOT.
 # Examples: "http://example.com/media/", "http://media.example.com/"
-MEDIA_URL = ''
+MEDIA_URL = '/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = None
+STATIC_ROOT = os.path.join(REPOSITORY_ROOT, 'static/')
 
 # URL that handles the static files served from STATIC_ROOT.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = None
+STATIC_URL = '/static/'
 
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = [

@@ -25,9 +25,11 @@ def fmSimulator(request):
         form = tclInput(request.POST, request.FILES)
         
         # check whether it's valid:
-        print(form.data)
-        
-        return HttpResponseRedirect('/application/simulator_material')
+        if form.is_valid():
+            # process cleaned data from formsets
+            print(form.cleaned_data)
+
+            return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
     else:
