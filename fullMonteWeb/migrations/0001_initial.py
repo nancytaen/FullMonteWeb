@@ -20,7 +20,7 @@ def load_properties(application, schema_editor):
     o=Optical(property_name="Anisotropy", property_value=4,material=m)
     o.save()
     #muscle
-    m = Material(material_name='Muscle')
+    m = Material(material_name='Tumour')
     m.save()
     o=Optical(property_name="Scattering Coefficient", property_value=4,material=m)
     o.save()
@@ -31,7 +31,7 @@ def load_properties(application, schema_editor):
     o=Optical(property_name="Anisotropy", property_value=1,material=m)
     o.save()
     #tumor
-    m = Material(material_name='Tumor')
+    m = Material(material_name='Muscle')
     m.save()
     o=Optical(property_name="Scattering Coefficient", property_value=2,material=m)
     o.save()
