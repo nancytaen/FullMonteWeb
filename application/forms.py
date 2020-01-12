@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import formset_factory
 from django.forms import BaseFormSet
-from .models import tclInput
+from .models import *
 
 class tclInputForm(forms.ModelForm):
     class Meta:
@@ -16,10 +16,7 @@ class tclInputForm(forms.ModelForm):
         }
 
 class materialSet(forms.Form):
-    custom = forms.ChoiceField(label='Material Type', choices=(('Custom','Custom'),
-                                                        ('Air','Air'),
-                                                        ('Tumour','Tumour'),
-                                                        ('Muscle','Muscle')),)
+    custom = custom = forms.ModelChoiceField(queryset=Material.objects.all())
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',

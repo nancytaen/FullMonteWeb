@@ -41,7 +41,8 @@ INSTALLED_APPS = [
 	'application',
     'bootstrap4',
     'django_forms_bootstrap',
-    'django_cleanup'
+    'django_cleanup',
+    'fullMonteWeb'
 ]
 
 MIDDLEWARE = [
