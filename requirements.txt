@@ -19,6 +19,7 @@ pipenv==2018.11.26
 psycopg2==2.8.4
 psycopg2-binary==2.8.4
 python-dateutil==2.8.1
+python-decouple==3.3
 pytz==2019.3
 s3transfer==0.3.0
 six==1.13.0

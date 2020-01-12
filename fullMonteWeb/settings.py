@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import django_heroku
+from decouple import config, Csv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,7 +22,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'vr(&_=yeth5&nml15#79*s-d_)=3*vb2qir62a#)x)r@29u4-*'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -134,8 +135,8 @@ USE_TZ = True
 django_heroku.settings(locals())
 
 #AWS settings
-AWS_ACCESS_KEY_ID = 'AKIAWIC5U5TMNOKPOF2P'
-AWS_SECRET_ACCESS_KEY = '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'
+AWS_ACCESS_KEY_ID = 'AKIAWIC5U5TMKZ5EPN7K'
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = 'fullmonte-storage'
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 AWS_S3_OBJECT_PARAMETERS = {
@@ -155,3 +156,4 @@ DEFAULT_FILE_STORAGE = 'mysite.storage_backends.PublicMediaStorage'
 
 AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
 PRIVATE_FILE_STORAGE = 'mysite.storage_backends.PrivateMediaStorage'
+
