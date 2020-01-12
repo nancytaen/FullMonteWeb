@@ -29,15 +29,15 @@ class materialSet(forms.Form):
     anisotropy = forms.FloatField(label='Anisotropy', min_value=0)
 
 class lightSource(forms.Form):
-    sourceType = forms.ChoiceField(label='Type', choices=(('point','Point'),
-                                                            ('pencilbeam','PencilBeam'),
-                                                            ('volume','Volume'),
-                                                            ('ball','Ball'),
-                                                            ('line','Line'),
-                                                            ('fiber','Fiber'),
-                                                            ('tetraface','Tetraface'),
-                                                            ('cylinder','Cylinder'),
-                                                            ('composite','Composite')))
+    sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
+                                                            ('PencilBeam','PencilBeam'),
+                                                            ('Volume','Volume'),
+                                                            ('Ball','Ball'),
+                                                            ('Line','Line'),
+                                                            ('Fiber','Fiber'),
+                                                            ('Tetraface','Tetraface'),
+                                                            ('Cylinder','Cylinder'),
+                                                            ('Composite','Composite')))
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')

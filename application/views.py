@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
+from application.tclGenerator import *
 
 # Create your views here.
 
@@ -106,11 +107,15 @@ def fmSimulatorSource(request):
                 request.session['power'].append(form.cleaned_data['power'])
             
             mesh = tclInput.objects.latest('id')
-            tclInput.objects.all().delete()
             
+            tclGenerator(request.session, mesh)
+            
+            
+            
+            #print(tclInput.objects.all())
+            tclInput.objects.all().delete()
             #print(mesh.meshFile)
             #print(tclInput.objects.all())
-            
             return HttpResponseRedirect('/application/visualization')
 
     # If this is a GET (or any other method) create the default form.
