@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'bootstrap4',
     'django_forms_bootstrap',
     'django_cleanup',
-    'fullMonteWeb'
+    'fullMonteWeb',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -127,7 +128,30 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-STATIC_URL = '/static/'
+#STATIC_URL = '/static/'
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
+
+#AWS settings
+AWS_ACCESS_KEY_ID = 'AKIAWIC5U5TMNOKPOF2P'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'fullmonte-storage'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+STATICFILES_DIRS = [
+                    os.path.join(BASE_DIR, 'application/static'),
+                    ]
+
+AWS_STATIC_LOCATION = 'static'
+STATICFILES_STORAGE = 'application.storage_backends.StaticStorage'
+STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
+
+AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
+DEFAULT_FILE_STORAGE = 'mysite.storage_backends.PublicMediaStorage'
+
+AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
+PRIVATE_FILE_STORAGE = 'mysite.storage_backends.PrivateMediaStorage'

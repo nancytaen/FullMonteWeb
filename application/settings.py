@@ -3,6 +3,7 @@
     by the DJANGO_SETTINGS_MODULE environment variable.
     """
 
+from storages.backends.s3boto3 import S3Boto3Storage
 
 # This is defined here as a do-nothing function because we can't import
 # django.utils.translation -- that module depends on the settings.
@@ -205,7 +206,11 @@ EMAIL_SSL_KEYFILE = None
 EMAIL_TIMEOUT = None
 
 # List of strings representing installed apps.
-INSTALLED_APPS = ['bootstrap4','django_forms_bootstrap','django_cleanup']
+INSTALLED_APPS = ['bootstrap4',
+                  'django_forms_bootstrap',
+                  'django_cleanup',
+                  'storages',
+                  ]
 
 TEMPLATES = [
     {
@@ -277,7 +282,7 @@ IGNORABLE_404_URLS = []
 SECRET_KEY = ''
 
 # Default file storage mechanism that holds media.
-DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+#DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/var/www/example.com/media/"
@@ -293,7 +298,7 @@ STATIC_ROOT = os.path.join(REPOSITORY_ROOT, 'static/')
 
 # URL that handles the static files served from STATIC_ROOT.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = '/static/'
+#STATIC_URL = '/static/'
 
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = [
@@ -611,10 +616,10 @@ FIXTURE_DIRS = []
 ###############
 
 # A list of locations of additional static files
-STATICFILES_DIRS = []
+#STATICFILES_DIRS = []
 
 # The default file storage backend used during the build process
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+#STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -653,3 +658,27 @@ SECURE_REDIRECT_EXEMPT = []
 SECURE_REFERRER_POLICY = None
 SECURE_SSL_HOST = None
 SECURE_SSL_REDIRECT = False
+
+
+#AWS settings
+AWS_ACCESS_KEY_ID = 'AKIAWIC5U5TMNOKPOF2P'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_STORAGE_BUCKET_NAME = 'fullmonte-storage'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+STATICFILES_DIRS = [
+                    os.path.join(BASE_DIR, 'application/static'),
+                    ]
+
+AWS_STATIC_LOCATION = 'static'
+STATICFILES_STORAGE = 'application.storage_backends.StaticStorage'
+STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
+
+AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
+DEFAULT_FILE_STORAGE = 'mysite.storage_backends.PublicMediaStorage'
+
+AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
+PRIVATE_FILE_STORAGE = 'mysite.storage_backends.PrivateMediaStorage'

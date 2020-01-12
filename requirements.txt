@@ -1,4 +1,6 @@
 beautifulsoup4==4.8.1
+boto3==1.11.0
+botocore==1.14.0
 certifi==2019.11.28
 dj-database-url==0.5.0
 Django==2.2.6
@@ -9,13 +11,20 @@ django-forms-bootstrap==3.1.0
 django-formset-js==0.5.0
 django-heroku==0.3.1
 django-jquery-js==3.1.1
+django-storages==1.8
+docutils==0.15.2
 gunicorn==20.0.4
+jmespath==0.9.4
 pipenv==2018.11.26
 psycopg2==2.8.4
 psycopg2-binary==2.8.4
+python-dateutil==2.8.1
 pytz==2019.3
+s3transfer==0.3.0
+six==1.13.0
 soupsieve==1.9.5
 sqlparse==0.3.0
+urllib3==1.25.7
 virtualenv==16.7.9
 virtualenv-clone==0.5.3
 whitenoise==5.0.1

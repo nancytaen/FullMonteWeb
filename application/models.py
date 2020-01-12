@@ -1,9 +1,10 @@
 from django.db import models
+from application.storage_backends import *
 
 # Create your models here.
 
 class tclInput(models.Model):
-    meshFile = models.FileField(upload_to='application/mesh')
+    meshFile = models.FileField(storage=PrivateMediaStorage())
     kernelType = models.CharField(max_length=255)
 
 class Material(models.Model):

@@ -1,0 +1,5 @@
+user: fullmonte-storage
+access key ID: AKIAWIC5U5TMNOKPOF2P
+secret key: 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
+
+bucket name: fullmonte-storage
