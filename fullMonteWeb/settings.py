@@ -29,6 +29,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+#auth
+LOGIN_REDIRECT_URL='/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Application definition
 
@@ -152,8 +155,9 @@ STATICFILES_STORAGE = 'application.storage_backends.StaticStorage'
 STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
 
 AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
-DEFAULT_FILE_STORAGE = 'mysite.storage_backends.PublicMediaStorage'
+DEFAULT_FILE_STORAGE = 'application.storage_backends.PublicMediaStorage'
 
 AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
-PRIVATE_FILE_STORAGE = 'mysite.storage_backends.PrivateMediaStorage'
+PRIVATE_FILE_STORAGE = 'application.storage_backends.PrivateMediaStorage'
 
+AWS_DEFAULT_ACL = None

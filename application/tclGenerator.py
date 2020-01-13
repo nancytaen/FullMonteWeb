@@ -1,6 +1,10 @@
 import shutil
 import os
 from datetime import datetime
+from django.conf import settings
+from application.storage_backends import *
+from .models import *
+from django.core.files.base import ContentFile
 
 def tclGenerator(session, mesh):
     #initialize session inputs
@@ -21,12 +25,18 @@ def tclGenerator(session, mesh):
     start = datetime.now().strftime('%H%M_%m%d%Y')
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
-    dest = dir_path + '/tcl/tcl_' + start + '.tcl'
+
+    #start by wiping script template
+    with open(source, 'r') as f:
+        lines = f.readlines()
     
-    tcl = shutil.copyfile(source, dest)
+    f = open(source, 'w')
+    for line in lines[::-1]:
+        del lines[-1]
     
     #start writing to tcl script
-    f = open(dest, 'a')
+    f = open(source, 'a')
+    f.write('package require FullMonte\n')
     
     #append mesh to tcl script
     meshpath = dir_path + '/' + mesh.meshFile.name
@@ -60,7 +70,8 @@ def tclGenerator(session, mesh):
     index = 1
     for st, x, y, z in zip(sourceType, xPos, yPos, zPos):
         f.write(st + ' P' + str(index) + '\n')
-        line = 'P1 position "' + str(x )+ ' ' + str(y) + ' ' + str(z) + '"\n\n'
+        line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n\n'
+        f.write(line)
         index += 1
 
     #append kernel to tcl script
@@ -102,5 +113,19 @@ def tclGenerator(session, mesh):
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n')
+
+    #copy and save script to AWS
+    f = open(source, 'r')
+    lines = f.readlines()
+    _temp = b''
+    for line in lines:
+        _temp += line.encode()
+
+    script_name = start + '.tcl'
+    new_script = tclScript()
+    new_script.script.save(script_name, ContentFile(_temp))
+    new_script.save()
+
+    f.close()
     
-    return 1
+    return script_name

@@ -4,6 +4,11 @@ from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
 from application.tclGenerator import *
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LogoutView
+from django.contrib.auth import login, authenticate
+from django.shortcuts import render, redirect
+from application.forms import SignUpForm
 
 # Create your views here.
 
@@ -108,15 +113,15 @@ def fmSimulatorSource(request):
             
             mesh = tclInput.objects.latest('id')
             
-            tclGenerator(request.session, mesh)
+            script_path = tclGenerator(request.session, mesh)
             
-            
+            request.session['script_path'] = script_path
             
             #print(tclInput.objects.all())
-            tclInput.objects.all().delete()
+            #tclInput.objects.all().delete()
             #print(mesh.meshFile)
             #print(tclInput.objects.all())
-            return HttpResponseRedirect('/application/visualization')
+            return HttpResponseRedirect('/application/tcl_viewer')
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -131,3 +136,33 @@ def fmSimulatorSource(request):
 # FullMonte Output page
 def fmVisualization(request):
     return render(request, "visualization.html")
+
+# page for viewing generated TCL scripts
+def tclViewer(request):
+    meshes = tclInput.objects.all()
+    scripts = tclScript.objects.all()
+    
+    context = {
+        'meshes': meshes,
+        'scripts': scripts,
+    }
+
+    if request.method == 'POST':
+        tclScript.objects.all().delete()
+        tclInput.objects.all().delete()
+    
+    return render(request, "tcl_viewer.html", context)
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})
