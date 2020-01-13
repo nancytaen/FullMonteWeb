@@ -113,7 +113,7 @@ def fmSimulatorSource(request):
             request.session['script_path'] = script_path
             
             #print(tclInput.objects.all())
-            tclInput.objects.all().delete()
+            #tclInput.objects.all().delete()
             #print(mesh.meshFile)
             #print(tclInput.objects.all())
             return HttpResponseRedirect('/application/tcl_viewer')
@@ -134,12 +134,16 @@ def fmVisualization(request):
 
 # page for viewing generated TCL scripts
 def tclViewer(request):
+    meshes = tclInput.objects.all()
     scripts = tclScript.objects.all()
+    
     context = {
+        'meshes': meshes,
         'scripts': scripts,
     }
 
     if request.method == 'POST':
-        scripts = tclScript.objects.all().delete()
+        tclScript.objects.all().delete()
+        tclInput.objects.all().delete()
     
     return render(request, "tcl_viewer.html", context)

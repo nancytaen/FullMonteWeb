@@ -2,8 +2,32 @@
 
 {% block content %}
 <h1>TCL Script Viewer</h1>
-<p>Temporary page to view your generated TCL scripts</p>
+<p>Placeholder page to view your mesh files and generated TCL scripts</p>
 
+<h3>Mesh Files</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mesh in meshes %}
+        <tr>
+            <td><a href="{{ mesh.meshFile.url }}" target="_blank">{{ mesh.meshFile }}</a></td>
+            <td>{{ mesh.meshFile.size|filesizeformat }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No data.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p></p>
+<h3>TCL Files</h1>
 <table>
     <thead>
         <tr>
