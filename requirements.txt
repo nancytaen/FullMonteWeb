@@ -15,6 +15,9 @@ django-storages==1.8
 docutils==0.15.2
 gunicorn==20.0.4
 jmespath==0.9.4
+matplotlib==3.1.2
+mpld3==0.3
+numpy==1.18.1
 pipenv==2018.11.26
 psycopg2==2.8.4
 psycopg2-binary==2.8.4
@@ -26,6 +29,7 @@ six==1.13.0
 soupsieve==1.9.5
 sqlparse==0.3.0
 urllib3==1.25.7
+vtk==8.1.2
 virtualenv==16.7.9
 virtualenv-clone==0.5.3
 whitenoise==5.0.1
