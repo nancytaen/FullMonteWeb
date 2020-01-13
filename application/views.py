@@ -4,6 +4,11 @@ from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
 from application.tclGenerator import *
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LogoutView
+from django.contrib.auth import login, authenticate
+from django.shortcuts import render, redirect
+from application.forms import SignUpForm
 
 # Create your views here.
 
@@ -147,3 +152,17 @@ def tclViewer(request):
         tclInput.objects.all().delete()
     
     return render(request, "tcl_viewer.html", context)
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('home')
+    else:
+        form = SignUpForm()
+    return render(request, 'signup.html', {'form': form})

@@ -29,6 +29,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+#auth
+LOGIN_REDIRECT_URL='/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Application definition
 

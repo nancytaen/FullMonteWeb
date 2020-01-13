@@ -28,6 +28,12 @@ urlpatterns = [
                
     # /application/tcl_viewer
     path('tcl_viewer', views.tclViewer, name='tcl_viewer'),
+
+    path('signup', views.signup, name='signup'),
+
+    path('login', views.LoginView.as_view(), name='login'),
+
+    path('logout', views.LogoutView.as_view(), name='logout'),
 ]
 
 if settings.DEBUG:
