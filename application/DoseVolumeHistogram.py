@@ -1,6 +1,7 @@
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
 import numpy as np
 import sys
+import os
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
 from matplotlib import pyplot as plt
@@ -104,7 +105,7 @@ def plot_DVH(data, noBins):
     # plt.yticks(np.arange(6), ('0%','20%','40%','60%','80%','100%'))
     plt.ylabel("Relative Volume")
     plt.xlabel("Relative Dose Bin # (Number of Bins: " + str(noBins) + ")")
-    plt.savefig("DVH.png")
+    # plt.savefig("DVH.png")
     plt.show()
 
     # plt.legend(['Region 1', 'Region 1', 'Region 1', 'Region 1','Region 1','Region 1','Region 1'], loc='upper left')
@@ -128,10 +129,9 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     return cumulativeDVH
 
+
 # regionBoundaries is a 6-entry vector of floating point values
 # This defines the boundaries of the subregion in the order xmin, xmax, ymin, ymax, zmin, zmax
-
-## Currently not working
 def extract_mesh_subregion(mesh,regionBoundaries):
     subregionAlgorithm = vtkExtractUnstructuredGrid()
     subregionAlgorithm.SetInputData(mesh)
@@ -142,7 +142,7 @@ def extract_mesh_subregion(mesh,regionBoundaries):
 
 def main():
 
-    filePath = "C:\\Users\\galen\\git\\FullMonteSW\\docker_sims\\FullMonte_fluence_line.vtk"
+    filePath = os.path.dirname(__file__) + "\\Samples\\Meshes\\FullMonte_fluence_line.vtk"
 
     output = import_data(filePath)
 
