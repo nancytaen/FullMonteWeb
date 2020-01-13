@@ -2,6 +2,7 @@ from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, 
 import numpy as np
 import sys
 import os
+import mpld3
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
 from matplotlib import pyplot as plt
@@ -35,8 +36,8 @@ def populate_dictionary(fluenceData, regionData):
 
             doseVolumeData[key].append(val)
 
-    for key in doseVolumeData:
-        print(key)
+    # for key in doseVolumeData:
+    #     print(key)
 
     return doseVolumeData
 
@@ -50,7 +51,7 @@ def calculate_DVH(doseData, volumeData, noBins):
         if regionMax > maxFluence:
             maxFluence = regionMax
 
-    print("Max fluence: " + str(maxFluence))
+    # print("Max fluence: " + str(maxFluence))
     binSize = maxFluence / noBins
     doseVolumeData = {}
 
@@ -106,10 +107,13 @@ def plot_DVH(data, noBins):
     plt.ylabel("Relative Volume")
     plt.xlabel("Relative Dose Bin # (Number of Bins: " + str(noBins) + ")")
     # plt.savefig("DVH.png")
-    plt.show()
+    # plt.show()
 
     # plt.legend(['Region 1', 'Region 1', 'Region 1', 'Region 1','Region 1','Region 1','Region 1'], loc='upper left')
-    # plt.show()
+    # mpld3.show()
+    fig = plt.gcf()
+    filePath = os.path.dirname(__file__) + "\\visualization\\scripts\\dvh_fig.html"
+    mpld3.save_html(fig,filePath)
 
 
 def calculate_cumulative_DVH(doseVolumeData, noBins):
@@ -142,7 +146,7 @@ def extract_mesh_subregion(mesh,regionBoundaries):
 
 def main():
 
-    filePath = os.path.dirname(__file__) + "\\Samples\\Meshes\\FullMonte_fluence_line.vtk"
+    filePath = os.path.dirname(__file__) + "\\visualization\\Meshes\\FullMonte_fluence_line.vtk"
 
     output = import_data(filePath)
 
