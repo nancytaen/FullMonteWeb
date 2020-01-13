@@ -1,6 +1,10 @@
 import shutil
 import os
 from datetime import datetime
+from django.conf import settings
+from application.storage_backends import *
+from .models import *
+import boto3
 
 def tclGenerator(session, mesh):
     #initialize session inputs
@@ -21,12 +25,18 @@ def tclGenerator(session, mesh):
     start = datetime.now().strftime('%H%M_%m%d%Y')
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
-    dest = dir_path + '/tcl/tcl_' + start + '.tcl'
+
+    #start by wiping script template
+    with open(source, 'r') as f:
+        lines = f.readlines()
     
-    tcl = shutil.copyfile(source, dest)
+    f = open(source, 'w')
+    for line in lines[::-1]:
+        del lines[-1]
     
     #start writing to tcl script
-    f = open(dest, 'a')
+    f = open(source, 'a')
+    f.write('package require FullMonte\n')
     
     #append mesh to tcl script
     meshpath = dir_path + '/' + mesh.meshFile.name
@@ -102,5 +112,17 @@ def tclGenerator(session, mesh):
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n')
+
+    f.close()
+
+    #copy and save script to AWS
+    session = boto3.Session(
+                            aws_access_key_id = settings.AWS_ACCESS_KEY_ID,
+                            aws_secret_access_key = settings.AWS_SECRET_ACCESS_KEY,
+                            )
+    s3 = session.resource('s3')
+    bucket = 'fullmonte-storage'
+
+    s3.Bucket(bucket).upload_file(source, 'media/tcl/tcl_' + start)
     
     return 1
