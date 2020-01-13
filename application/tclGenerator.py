@@ -120,7 +120,7 @@ def tclGenerator(session, mesh):
     for line in lines:
         _temp += line.encode()
 
-    script_name = start + '.vtk'
+    script_name = start + '.tcl'
     new_script = tclScript()
     new_script.script.save(script_name, ContentFile(_temp))
     new_script.save()
