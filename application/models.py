@@ -7,6 +7,9 @@ class tclInput(models.Model):
     meshFile = models.FileField(storage=PrivateMediaStorage())
     kernelType = models.CharField(max_length=255)
 
+class tclScript(models.Model):
+    script = models.FileField(storage=PublicMediaStorage())
+
 class Material(models.Model):
     material_name = models.CharField(max_length=50)
 

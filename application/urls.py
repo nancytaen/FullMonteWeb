@@ -25,6 +25,9 @@ urlpatterns = [
 
     # /application/about
     path('about', views.about, name='about'),
+               
+    # /application/tcl_viewer
+    path('tcl_viewer', views.tclViewer, name='tcl_viewer'),
 ]
 
 if settings.DEBUG:

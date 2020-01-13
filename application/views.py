@@ -108,15 +108,15 @@ def fmSimulatorSource(request):
             
             mesh = tclInput.objects.latest('id')
             
-            tclGenerator(request.session, mesh)
+            script_path = tclGenerator(request.session, mesh)
             
-            
+            request.session['script_path'] = script_path
             
             #print(tclInput.objects.all())
             tclInput.objects.all().delete()
             #print(mesh.meshFile)
             #print(tclInput.objects.all())
-            return HttpResponseRedirect('/application/visualization')
+            return HttpResponseRedirect('/application/tcl_viewer')
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -131,3 +131,14 @@ def fmSimulatorSource(request):
 # FullMonte Output page
 def fmVisualization(request):
     return render(request, "visualization.html")
+
+# page for viewing generated TCL scripts
+def tclViewer(request):
+    scripts = tclScript.objects.all()
+    context = {
+        'scripts': scripts,
+    }
+
+    #scripts = tclScript.objects.all().delete()
+    
+    return render(request, "tcl_viewer.html", context)

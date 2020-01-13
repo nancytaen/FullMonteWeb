@@ -4,7 +4,7 @@ from datetime import datetime
 from django.conf import settings
 from application.storage_backends import *
 from .models import *
-import boto3
+from django.core.files.base import ContentFile
 
 def tclGenerator(session, mesh):
     #initialize session inputs
@@ -113,16 +113,18 @@ def tclGenerator(session, mesh):
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n')
 
-    f.close()
-
     #copy and save script to AWS
-    session = boto3.Session(
-                            aws_access_key_id = settings.AWS_ACCESS_KEY_ID,
-                            aws_secret_access_key = settings.AWS_SECRET_ACCESS_KEY,
-                            )
-    s3 = session.resource('s3')
-    bucket = 'fullmonte-storage'
+    f = open(source, 'r')
+    lines = f.readlines()
+    _temp = b''
+    for line in lines:
+        _temp += line.encode()
 
-    s3.Bucket(bucket).upload_file(source, 'media/tcl/tcl_' + start)
+    script_name = start + '.vtk'
+    new_script = tclScript()
+    new_script.script.save(script_name, ContentFile(_temp))
+    new_script.save()
+
+    f.close()
     
-    return 1
+    return script_name

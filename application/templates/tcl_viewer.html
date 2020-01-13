@@ -1,0 +1,28 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<h1>TCL Script Viewer</h1>
+<p>Temporary page to view your generated TCL scripts</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Size</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for script in scripts %}
+        <tr>
+            <td><a href="{{ script.script.url }}" target="_blank">{{ script.script }}</a></td>
+            <td>{{ script.script.size|filesizeformat }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">No data.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

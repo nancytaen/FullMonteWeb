@@ -16,14 +16,7 @@ Material air
      air     refractiveIndex     1.0
      air     anisotropy     0.0
 
-Material tumour
-     tumour     scatteringCoeff     2.0
-     tumour     absorptionCoeff     2.0
-     tumour     refractiveIndex     2.0
-     tumour     anisotropy     2.0
-
 MS exterior air
-MS append tumour
 
 Point P1
 TetraSVKernal k
@@ -45,12 +38,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0208_01132020.out.vtk"
+     W filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0433_01132020.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0208_01132020.phi_v.vtk"
+     TW filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0433_01132020.phi_v.vtk"
      TW source [EF result]
      TW write
