@@ -18,7 +18,7 @@ class tclInputForm(forms.ModelForm):
         }
 
 class materialSet(forms.Form):
-    custom = custom = forms.ModelChoiceField(queryset=Material.objects.all())
+    custom = forms.ModelChoiceField(queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
