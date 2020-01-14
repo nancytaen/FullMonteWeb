@@ -71,7 +71,7 @@ def tclGenerator(session, mesh):
     for st, x, y, z in zip(sourceType, xPos, yPos, zPos):
         f.write(st + ' P' + str(index) + '\n')
         line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n\n'
-        f.write(line)
+        f.write(indent + line)
         index += 1
 
     #append kernel to tcl script
