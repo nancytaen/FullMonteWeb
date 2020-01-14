@@ -1,19 +1,24 @@
 from django import forms
 from django.forms import formset_factory
 from django.forms import BaseFormSet
+from .models import *
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
-class tclInput(forms.Form):
-    meshFile = forms.FileField(label='Mesh File')
-    kernelType = forms.ChoiceField(label='Kernel Type', choices=(('TetraSVKernal','TetraSVKernel'),
-                                                           ('TetraSurfaceKernal','TetraSurfaceKernel'),
-                                                           ('TetraVolumeKernal','TetraVolumeKernel'),
-                                                           ('TetraInternalKernal','TetraInternalKernel')))
+class tclInputForm(forms.ModelForm):
+    class Meta:
+        model = tclInput
+        fields = ('meshFile', 'kernelType')
+        kernel_choices = (('TetraSVKernal','TetraSVKernel'),
+                         ('TetraSurfaceKernal','TetraSurfaceKernel'),
+                         ('TetraVolumeKernal','TetraVolumeKernel'),
+                         ('TetraInternalKernal','TetraInternalKernel'))
+        widgets = {
+            'kernelType': forms.Select(choices=kernel_choices),
+        }
 
 class materialSet(forms.Form):
-    custom = forms.ChoiceField(label='Material Type', choices=(('Custom','Custom'),
-                                                        ('Air','Air'),
-                                                        ('Tumour','Tumour'),
-                                                        ('Muscle','Muscle')),)
+    custom = forms.ModelChoiceField(queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
@@ -26,15 +31,15 @@ class materialSet(forms.Form):
     anisotropy = forms.FloatField(label='Anisotropy', min_value=0)
 
 class lightSource(forms.Form):
-    sourceType = forms.ChoiceField(label='Type', choices=(('point','Point'),
-                                                            ('pencilbeam','PencilBeam'),
-                                                            ('volume','Volume'),
-                                                            ('ball','Ball'),
-                                                            ('line','Line'),
-                                                            ('fiber','Fiber'),
-                                                            ('tetraface','Tetraface'),
-                                                            ('cylinder','Cylinder'),
-                                                            ('composite','Composite')))
+    sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
+                                                            ('PencilBeam','PencilBeam'),
+                                                            ('Volume','Volume'),
+                                                            ('Ball','Ball'),
+                                                            ('Line','Line'),
+                                                            ('Fiber','Fiber'),
+                                                            ('Tetraface','Tetraface'),
+                                                            ('Cylinder','Cylinder'),
+                                                            ('Composite','Composite')))
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')
@@ -45,6 +50,17 @@ class RequiredFormSet(BaseFormSet):
         super(RequiredFormSet, self).__init__(*args, **kwargs)
         for form in self.forms:
             form.empty_permitted = False
+
+
+
+class SignUpForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, help_text='Required.')
+    last_name = forms.CharField(max_length=30, help_text='Required.')
+    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', )
 
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)

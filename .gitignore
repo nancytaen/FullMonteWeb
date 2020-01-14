@@ -1,0 +1,6 @@
+.env
+/__pycache__
+/application/__pycache__
+/fullMonteWeb/__pycache__
+/fullMonteWeb/.env
+FullMonteWeb_env
