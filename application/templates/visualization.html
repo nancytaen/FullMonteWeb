@@ -1,6 +1,46 @@
 {% extends "base_generic.html" %}
+{% load static %}
 
 {% block content %}
 <h1>Visualization</h1>
-<p></p>
+
+
+<div style="z-index:1" id="rendererContainer"></div>
+
+<script type="text/javascript" src="https://unpkg.com/vtk.js"></script>
+<script type="text/javascript">
+{#const fileName = 'http://127.0.0.1:8000/staticfiles/t.vtk';#}
+
+const fullScreenRenderer = vtk.Rendering.Misc.vtkFullScreenRenderWindow.newInstance({
+    rootContainer: document.getElementById('rendererContainer'),
+    containerStyle: {width: '50%', height: '50%', position: 'relative'}
+});
+const renderer = fullScreenRenderer.getRenderer();
+const renderWindow = fullScreenRenderer.getRenderWindow();
+
+const resetCamera = renderer.resetCamera;
+const render = renderWindow.render;
+
+const sphere = vtk.Filters.Sources.vtkSphereSource.newInstance();
+
+
+reader = vtk.IO.Legacy.vtkPolyDataReader.newInstance();
+
+{#reader.setUrl(fileName).then(() => {#}
+    const polydata = reader.getOutputData(0);
+    const mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+    const actor = vtk.Rendering.Core.vtkActor.newInstance();
+
+    actor.setMapper(mapper);
+    {#mapper.setInputData(polydata);#}
+    mapper.setInputConnection(sphere.getOutputPort());
+
+    renderer.addActor(actor);
+
+    resetCamera();
+    render();
+{% comment %}});{% endcomment %}
+
+</script>
+
 {% endblock %}
