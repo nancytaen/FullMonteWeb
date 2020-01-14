@@ -147,9 +147,9 @@ def tclViewer(request):
         'scripts': scripts,
     }
 
-    if request.method == 'POST':
-        tclScript.objects.all().delete()
-        tclInput.objects.all().delete()
+        #if request.method == 'POST':
+    tclScript.objects.all().delete()
+    tclInput.objects.all().delete()
     
     return render(request, "tcl_viewer.html", context)
 
