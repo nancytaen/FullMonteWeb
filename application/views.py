@@ -70,6 +70,7 @@ def fmSimulatorMaterial(request):
             request.session['anisotropy'] = []
             
             for form in formset1:
+                #print(form.cleaned_data)
                 request.session['material'].append(form.cleaned_data['material'])
                 request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
                 request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
@@ -105,6 +106,7 @@ def fmSimulatorSource(request):
             request.session['power'] = []
             
             for form in formset2:
+                #print(form.cleaned_data)
                 request.session['sourceType'].append(form.cleaned_data['sourceType'])
                 request.session['xPos'].append(form.cleaned_data['xPos'])
                 request.session['yPos'].append(form.cleaned_data['yPos'])
@@ -147,9 +149,9 @@ def tclViewer(request):
         'scripts': scripts,
     }
 
-    if request.method == 'POST':
-        tclScript.objects.all().delete()
-        tclInput.objects.all().delete()
+        #if request.method == 'POST':
+    tclScript.objects.all().delete()
+    tclInput.objects.all().delete()
     
     return render(request, "tcl_viewer.html", context)
 
