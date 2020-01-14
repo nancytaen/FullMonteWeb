@@ -4,7 +4,7 @@ from application.storage_backends import *
 # Create your models here.
 
 class tclInput(models.Model):
-    meshFile = models.FileField(storage=PrivateMediaStorage())
+    meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
 
 class tclScript(models.Model):
