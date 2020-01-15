@@ -132,7 +132,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
-#STATIC_URL = '/static/'
+STATIC_URL = '/static/'
 
 # Activate Django-Heroku.
 django_heroku.settings(locals())
@@ -149,10 +149,6 @@ AWS_S3_OBJECT_PARAMETERS = {
 STATICFILES_DIRS = [
                     os.path.join(BASE_DIR, 'application/static'),
                     ]
-
-AWS_STATIC_LOCATION = 'static'
-STATICFILES_STORAGE = 'application.storage_backends.StaticStorage'
-STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_STATIC_LOCATION)
 
 AWS_PUBLIC_MEDIA_LOCATION = 'media/public'
 DEFAULT_FILE_STORAGE = 'application.storage_backends.PublicMediaStorage'

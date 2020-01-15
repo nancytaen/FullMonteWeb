@@ -291,11 +291,11 @@ MEDIA_URL = '/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Example: "/var/www/example.com/static/"
-STATIC_ROOT = os.path.join(REPOSITORY_ROOT, 'static/')
+STATIC_ROOT = ''
 
 # URL that handles the static files served from STATIC_ROOT.
 # Example: "http://example.com/static/", "http://static.example.com/"
-#STATIC_URL = '/static/'
+STATIC_URL = ''
 
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = [
@@ -613,17 +613,17 @@ FIXTURE_DIRS = []
 ###############
 
 # A list of locations of additional static files
-#STATICFILES_DIRS = []
+STATICFILES_DIRS = []
 
 # The default file storage backend used during the build process
-#STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+STATICFILES_STORAGE = ''
 
 # List of finder classes that know how to find static files in
 # various locations.
 STATICFILES_FINDERS = [
                        'django.contrib.staticfiles.finders.FileSystemFinder',
                        'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-                       # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
+                       'django.contrib.staticfiles.finders.DefaultStorageFinder',
                        ]
 
 ##############
