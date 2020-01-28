@@ -15,6 +15,7 @@
         {% endfor %}
     </div>
     <input type="button" value="Add Row" id="add_row">
+    <input type="button" value="Remove Row" id="remove_row">
         <div id="empty_form" class="table" style="display:none">
             <table class='no_error'>
                 {% csrf_token %}
@@ -29,6 +30,13 @@
                                  $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                                  $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
                                  });
+            $('#remove_row').click(function() {
+                                   var form_idx = $('#id_form-TOTAL_FORMS').val();
+                                   if (parseInt(form_idx) > 1) {
+                                    $('.no_error')[parseInt(form_idx)-1].remove();
+                                    $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
+                                   }
+                                   });
         </script>
         
     <p></p>
