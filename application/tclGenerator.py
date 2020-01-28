@@ -42,7 +42,7 @@ def tclGenerator(session, mesh):
     meshpath = dir_path + '/' + mesh.meshFile.name
     f.write('\nset fn "' + meshpath + '"\n\n')
     f.write('VTKMeshReader R\n')
-    f.write(indent + 'R filname $fn\n')
+    f.write(indent + 'R filename $fn\n')
     f.write(indent + 'R read\n\n')
     f.write('set M [R mesh]\n\n')
     

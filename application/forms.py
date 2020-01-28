@@ -18,7 +18,7 @@ class tclInputForm(forms.ModelForm):
         }
 
 class materialSet(forms.Form):
-    custom = forms.ModelChoiceField(queryset=Material.objects.all(), required = False)
+    custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
@@ -27,8 +27,8 @@ class materialSet(forms.Form):
                                max_length=255)
     scatteringCoeff = forms.FloatField(label='Scattering Coefficient', min_value=0)
     absorptionCoeff = forms.FloatField(label='Absorption Coefficient', min_value=0)
-    refractiveIndex = forms.FloatField(label='Refractive Index', min_value=0)
-    anisotropy = forms.FloatField(label='Anisotropy', min_value=0)
+    refractiveIndex = forms.FloatField(label='Refractive Index', min_value=1)
+    anisotropy = forms.FloatField(label='Anisotropy', min_value=-1, max_value=1)
 
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
@@ -56,7 +56,7 @@ class RequiredFormSet(BaseFormSet):
 class SignUpForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, help_text='Required.')
     last_name = forms.CharField(max_length=30, help_text='Required.')
-    email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
+    email = forms.EmailField(max_length=254, help_text='Required.')
 
     class Meta:
         model = User

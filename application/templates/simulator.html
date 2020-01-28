@@ -1,20 +1,37 @@
 {% extends "base_generic.html" %}
 
-{% load static %}
-
 {% block content %}
 <h1>FullMonte Simulator</h1>
 
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-    
+
     <div class='table'>
         <table class='no_error'>
             {% csrf_token %}
-            {{ form.as_table }}
-        <table>
+            <tr>
+                <th>{{ form.meshFile.label_tag }}</th>
+                <td>
+                    {{ form.meshFile.errors }}
+                    {{ form.meshFile }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <button id='advanced'>Advanced Options</button>
+    
+    <div id='advancedOption' class='table'>
+        {% csrf_token %}
+        {{ form.kernelType.label_tag }}
+        {{ form.kernelType.errors }}
+        {{ form.kernelType }}
+        </br>
+        <a href="{% url 'kernel_info' %}">
+            Click here for more info about the kernel type.
+        </a>
     </div>
     
-    <p><input type="submit" value="Next"></p>
+    <p><br/><input type="submit" value="Next"></p>
 
 </form>
 
@@ -47,6 +64,14 @@
         
             return true;
     }
+</script>
+
+<script>
+    $(document).ready(function(){
+                      $("#advanced").click(function(){
+                                        $("#advancedOption").toggle();
+                                        });
+                      });
 </script>
 
 {% endblock %}

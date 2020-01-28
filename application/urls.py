@@ -28,6 +28,9 @@ urlpatterns = [
                
     # /application/tcl_viewer
     path('tcl_viewer', views.tclViewer, name='tcl_viewer'),
+               
+    # /application/kernel_info
+    path('kernel_info', views.kernelInfo, name='kernel_info'),
 
     path('signup', views.signup, name='signup'),
 

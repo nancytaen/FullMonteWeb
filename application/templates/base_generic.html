@@ -8,6 +8,10 @@
 
 {# Display django.contrib.messages as Bootstrap alerts #}
 {% bootstrap_messages %}
+
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
 <html lang="en">
     <head>
         {% block title %}<title>Local Library</title>{% endblock %}
