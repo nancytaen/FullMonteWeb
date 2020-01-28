@@ -10,15 +10,105 @@
         {% for form in formset1.forms %}
             <table class='no_error'>
                 {% csrf_token %}
-                {{ form.as_table }}
+                <tr>
+                    <th>{{ form.custom.label_tag }}</th>
+                    <td>
+                        {{ form.custom.errors }}
+                        {{ form.custom }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.material.label_tag }}</th>
+                    <td>
+                        {{ form.material.errors }}
+                        {{ form.material }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.scatteringCoeff.label_tag }}</th>
+                    <td>
+                        {{ form.scatteringCoeff.errors }}
+                        {{ form.scatteringCoeff }}
+                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.absorptionCoeff.label_tag }}</th>
+                    <td>
+                        {{ form.absorptionCoeff.errors }}
+                        {{ form.absorptionCoeff }}
+                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.refractiveIndex.label_tag }}</th>
+                    <td>
+                        {{ form.refractiveIndex.errors }}
+                        {{ form.refractiveIndex }}
+                        &nbsp; n
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.anisotropy.label_tag }}</th>
+                    <td>
+                        {{ form.anisotropy.errors }}
+                        {{ form.anisotropy }}
+                        &nbsp; r
+                    </td>
+                </tr>
             </table>
         {% endfor %}
     </div>
-    <input type="button" value="Add More" id="add_more">
+    <input type="button" value="Add Row" id="add_row">
         <div id="empty_form" class="table" style="display:none">
             <table class='no_error'>
                 {% csrf_token %}
-                {{ formset1.empty_form }}
+                <tr>
+                    <th>{{ formset1.empty_form.custom.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.custom.errors }}
+                        {{ formset1.empty_form.custom }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset1.empty_form.material.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.material.errors }}
+                        {{ formset1.empty_form.material }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset1.empty_form.scatteringCoeff.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.scatteringCoeff.errors }}
+                        {{ formset1.empty_form.scatteringCoeff }}
+                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset1.empty_form.absorptionCoeff.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.absorptionCoeff.errors }}
+                        {{ formset1.empty_form.absorptionCoeff }}
+                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset1.empty_form.refractiveIndex.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.refractiveIndex.errors }}
+                        {{ formset1.empty_form.refractiveIndex }}
+                        &nbsp; n
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset1.empty_form.anisotropy.label_tag }}</th>
+                    <td>
+                        {{ formset1.empty_form.anisotropy.errors }}
+                        {{ formset1.empty_form.anisotropy }}
+                        &nbsp; r
+                    </td>
+                </tr>
             </table>
         </div>
     <p></p>
@@ -31,9 +121,11 @@
     <input type="button" value="Back" onclick="history.back()">
 </form>
 
+<br/>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
-    $('#add_more').click(function() {
+    $('#add_row').click(function() {
                          var form_idx = $('#id_form-TOTAL_FORMS').val();
                          $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                          $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
@@ -86,7 +178,7 @@
             scatteringCoeff.value = 2;
             absorptionCoeff.value = 2;
             refractiveIndex.value = 2;
-            anisotropy.value = 2;
+            anisotropy.value = 0;
             break;
 
             case 3:
@@ -94,7 +186,7 @@
             scatteringCoeff.value = 3;
             absorptionCoeff.value = 3;
             refractiveIndex.value = 3;
-            anisotropy.value = 3;
+            anisotropy.value = 0;
             break;
         }
     }

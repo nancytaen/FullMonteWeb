@@ -155,6 +155,10 @@ def tclViewer(request):
     
     return render(request, "tcl_viewer.html", context)
 
+# page for diplaying info about kernel type
+def kernelInfo(request):
+    return render(request, "kernel_info.html")
+
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)

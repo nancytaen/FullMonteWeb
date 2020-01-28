@@ -21,11 +21,14 @@
     <button id='advanced'>Advanced Options</button>
     
     <div id='advancedOption' class='table'>
-        <br/>
         {% csrf_token %}
         {{ form.kernelType.label_tag }}
         {{ form.kernelType.errors }}
         {{ form.kernelType }}
+        </br>
+        <a href="{% url 'kernel_info' %}">
+            Click here for more info about the kernel type.
+        </a>
     </div>
     
     <p><br/><input type="submit" value="Next"></p>

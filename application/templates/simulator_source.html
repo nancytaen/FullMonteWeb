@@ -14,7 +14,7 @@
             </table>
         {% endfor %}
     </div>
-    <input type="button" value="Add More" id="add_more">
+    <input type="button" value="Add Row" id="add_row">
         <div id="empty_form" class="table" style="display:none">
             <table class='no_error'>
                 {% csrf_token %}
@@ -24,7 +24,7 @@
         
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <script>
-            $('#add_more').click(function() {
+            $('#add_row').click(function() {
                                  var form_idx = $('#id_form-TOTAL_FORMS').val();
                                  $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                                  $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
@@ -40,5 +40,7 @@
 <form>
     <input type="button" value="Back" onclick="history.back()">
 </form>
+
+<br/>
 
 {% endblock %}
