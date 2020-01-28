@@ -4,3 +4,4 @@
 /fullMonteWeb/__pycache__
 /fullMonteWeb/.env
 FullMonteWeb_env
+application/dvh_offline.py
