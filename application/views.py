@@ -159,6 +159,31 @@ def tclViewer(request):
 def kernelInfo(request):
     return render(request, "kernel_info.html")
 
+# page for downloading preset values
+def downloadPreset(request):
+    obj = preset.objects.all()
+    
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        form = presetForm(request.POST, request.FILES)
+        
+        # check whether it's valid:
+        if form.is_valid():
+            # process cleaned data from formsets
+            #print(form.cleaned_data)
+            
+            form.save()
+
+    # If this is a GET (or any other method) create the default form.
+    else:
+        form = presetForm(request.GET or None)
+    
+    context = {
+        'form': form,
+    }
+    
+    return render(request, "download_preset.html", context)
+
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)

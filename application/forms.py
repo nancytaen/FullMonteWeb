@@ -17,6 +17,11 @@ class tclInputForm(forms.ModelForm):
             'kernelType': forms.Select(choices=kernel_choices),
         }
 
+class presetForm(forms.ModelForm):
+    class Meta:
+        model = preset
+        fields = ('presetMesh', )
+
 class materialSet(forms.Form):
     custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
