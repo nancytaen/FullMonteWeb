@@ -15,7 +15,7 @@
     <tbody>
         {% for preset in presetObjects %}
         <tr>
-            <td><a href="{{ mesh.meshFile.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
+            <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
             <td>{{ preset.presetMesh.size|filesizeformat }}</td>
         </tr>
         {% empty %}
@@ -25,6 +25,12 @@
         {% endfor %}
     </tbody>
     </table>
+    <br/>
+    <form action="" method="post">
+        {% csrf_token %}
+        <p><input type="submit" name="reset" value="Reset"></p>
+            
+    </form>
 </div>
 
 <br/>
@@ -38,7 +44,6 @@
             <tr>
                 <th>{{ form.presetMesh.label_tag }}</th>
                 <td>
-                    {{ form.presetMesh.errors }}
                     {{ form.presetMesh }}
                 </td>
             </tr>
