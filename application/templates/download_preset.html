@@ -13,10 +13,10 @@
         </tr>
     </thead>
     <tbody>
-        {% for mesh in meshes %}
+        {% for preset in presetObjects %}
         <tr>
-            <td><a href="{{ mesh.meshFile.url }}" target="_blank">{{ mesh.meshFile }}</a></td>
-            <td>{{ mesh.meshFile.size|filesizeformat }}</td>
+            <td><a href="{{ mesh.meshFile.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
+            <td>{{ preset.presetMesh.size|filesizeformat }}</td>
         </tr>
         {% empty %}
         <tr>

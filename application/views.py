@@ -161,7 +161,7 @@ def kernelInfo(request):
 
 # page for downloading preset values
 def downloadPreset(request):
-    obj = preset.objects.all()
+    presetObjects = preset.objects.all()
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
