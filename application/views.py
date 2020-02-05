@@ -141,8 +141,8 @@ def fmVisualization(request):
 
 # page for viewing generated TCL scripts
 def tclViewer(request):
-    tclScript.objects.all().delete()
-    tclInput.objects.all().delete()
+    meshes = tclInput.objects.all()
+    scripts = tclScript.objects.all()
     
     context = {
         'meshes': meshes,
