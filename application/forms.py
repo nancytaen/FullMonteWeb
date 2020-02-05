@@ -43,11 +43,12 @@ class lightSource(forms.Form):
                                                             ('Line','Line'),
                                                             ('Fiber','Fiber'),
                                                             ('Tetraface','Tetraface'),
-                                                            ('Cylinder','Cylinder'),
                                                             ('Composite','Composite')))
+    # for Point
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')
+    
     power = forms.IntegerField(label='Power')
 
 class RequiredFormSet(BaseFormSet):

@@ -10,7 +10,41 @@
         {% for form in formset2.forms %}
             <table class='no_error'>
                 {% csrf_token %}
-                {{ form.as_table }}
+                <tr>
+                    <th>{{ form.sourceType.label_tag }}</th>
+                    <td>
+                        {{ form.sourceType.errors }}
+                        {{ form.sourceType }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.xPos.label_tag }}</th>
+                    <td>
+                        {{ form.xPos.errors }}
+                        {{ form.xPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.yPos.label_tag }}</th>
+                    <td>
+                        {{ form.yPos.errors }}
+                        {{ form.yPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.zPos.label_tag }}</th>
+                    <td>
+                        {{ form.zPos.errors }}
+                        {{ form.zPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ form.power.label_tag }}</th>
+                    <td>
+                        {{ form.power.errors }}
+                        {{ form.power }}
+                    </td>
+                </tr>
             </table>
         {% endfor %}
     </div>
@@ -19,31 +53,65 @@
         <div id="empty_form" class="table" style="display:none">
             <table class='no_error'>
                 {% csrf_token %}
-                {{ formset2.empty_form }}
+                <tr>
+                    <th>{{ formset2.empty_form.sourceType.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.sourceType.errors }}
+                        {{ formset2.empty_form.sourceType }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset2.empty_form.xPos.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.xPos.errors }}
+                        {{ formset2.empty_form.xPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset2.empty_form.yPos.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.yPos.errors }}
+                        {{ formset2.empty_form.yPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset2.empty_form.zPos.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.zPos.errors }}
+                        {{ formset2.empty_form.zPos }}
+                    </td>
+                </tr>
+                <tr>
+                    <th>{{ formset2.empty_form.power.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.power.errors }}
+                        {{ formset2.empty_form.power }}
+                    </td>
+                </tr>
             </table>
         </div>
-        
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <script>
-            $('#add_row').click(function() {
-                                 var form_idx = $('#id_form-TOTAL_FORMS').val();
-                                 $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
-                                 $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-                                 });
-            $('#remove_row').click(function() {
-                                   var form_idx = $('#id_form-TOTAL_FORMS').val();
-                                   if (parseInt(form_idx) > 1) {
-                                    $('.no_error')[parseInt(form_idx)-1].remove();
-                                    $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
-                                   }
-                                   });
-        </script>
         
     <p></p>
 
     <p><input type="submit"></p>
 
 </form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    $('#add_row').click(function() {
+                        var form_idx = $('#id_form-TOTAL_FORMS').val();
+                        $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+                        $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                        });
+    $('#remove_row').click(function() {
+                           var form_idx = $('#id_form-TOTAL_FORMS').val();
+                           if (parseInt(form_idx) > 1) {
+                            $('.no_error')[parseInt(form_idx)-1].remove();
+                            $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
+                           }
+                           });
+</script>
 
 <form>
     <input type="button" value="Back" onclick="history.back()">
