@@ -3,6 +3,12 @@
 {% block content %}
 <h1>FullMonte Simulator</h1>
 
+<b>
+<a href="{% url 'download_preset' %}">
+    Click here to download a preset mesh.
+</a>
+</b>
+
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
 
     <div class='table'>

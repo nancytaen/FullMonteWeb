@@ -31,6 +31,9 @@ urlpatterns = [
                
     # /application/kernel_info
     path('kernel_info', views.kernelInfo, name='kernel_info'),
+               
+    # /application/download_preset
+    path('download_preset', views.downloadPreset, name='download_preset'),
 
     path('signup', views.signup, name='signup'),
 

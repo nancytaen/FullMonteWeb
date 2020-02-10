@@ -37,7 +37,7 @@
                     <td>
                         {{ form.absorptionCoeff.errors }}
                         {{ form.absorptionCoeff }}
-                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                        &nbsp; µ<sub>a</sub> (cm<sup>-1</sup>)
                     </td>
                 </tr>
                 <tr>
@@ -53,7 +53,7 @@
                     <td>
                         {{ form.anisotropy.errors }}
                         {{ form.anisotropy }}
-                        &nbsp; r
+                        &nbsp; g
                     </td>
                 </tr>
             </table>
@@ -91,7 +91,7 @@
                     <td>
                         {{ formset1.empty_form.absorptionCoeff.errors }}
                         {{ formset1.empty_form.absorptionCoeff }}
-                        &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                        &nbsp; µ<sub>a</sub> (cm<sup>-1</sup>)
                     </td>
                 </tr>
                 <tr>
@@ -107,7 +107,7 @@
                     <td>
                         {{ formset1.empty_form.anisotropy.errors }}
                         {{ formset1.empty_form.anisotropy }}
-                        &nbsp; r
+                        &nbsp; g
                     </td>
                 </tr>
             </table>
@@ -184,18 +184,18 @@
             
             case 2:
             material.value = "Tumour";
-            scatteringCoeff.value = 2;
-            absorptionCoeff.value = 2;
-            refractiveIndex.value = 2;
-            anisotropy.value = 0;
+            scatteringCoeff.value = 9.35;
+            absorptionCoeff.value = 0.13;
+            refractiveIndex.value = 1.39;
+            anisotropy.value = 0.92;
             break;
 
             case 3:
             material.value = "Muscle";
-            scatteringCoeff.value = 3;
-            absorptionCoeff.value = 3;
-            refractiveIndex.value = 3;
-            anisotropy.value = 0;
+            scatteringCoeff.value = 89.2;
+            absorptionCoeff.value = 1.17;
+            refractiveIndex.value = 1.37;
+            anisotropy.value = 0.903;
             break;
         }
     }

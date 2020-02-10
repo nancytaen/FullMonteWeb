@@ -17,6 +17,11 @@ class tclInputForm(forms.ModelForm):
             'kernelType': forms.Select(choices=kernel_choices),
         }
 
+class presetForm(forms.ModelForm):
+    class Meta:
+        model = preset
+        fields = ('presetMesh', )
+
 class materialSet(forms.Form):
     custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
@@ -38,11 +43,12 @@ class lightSource(forms.Form):
                                                             ('Line','Line'),
                                                             ('Fiber','Fiber'),
                                                             ('Tetraface','Tetraface'),
-                                                            ('Cylinder','Cylinder'),
                                                             ('Composite','Composite')))
+    # for Point
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')
+    
     power = forms.IntegerField(label='Power')
 
 class RequiredFormSet(BaseFormSet):

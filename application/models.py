@@ -10,6 +10,9 @@ class tclInput(models.Model):
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
 
+class preset(models.Model):
+    presetMesh = models.FileField(storage=PublicMediaStorage())
+
 class Material(models.Model):
     material_name = models.CharField(max_length=50)
 
