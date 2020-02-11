@@ -4,6 +4,15 @@
 {% block content %}
 <h1>Visualization</h1>
 
+<input type="button" value="Dose-Volume Histogram" id="load_dvh"> </input>
+
+<div id="DVH_fig"> </div>
+
+<script>
+$('#load_dvh').click(function() {
+      $("#DVH_fig").load("../visualization/scripts/dvh_fig.html");
+});
+</script>
 
 <div style="z-index:1" id="rendererContainer"></div>
 
@@ -42,5 +51,6 @@ reader = vtk.IO.Legacy.vtkPolyDataReader.newInstance();
 {% comment %}});{% endcomment %}
 
 </script>
+
 
 {% endblock %}
