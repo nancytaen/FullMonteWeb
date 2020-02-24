@@ -3,5 +3,6 @@
 /application/__pycache__
 /fullMonteWeb/__pycache__
 /fullMonteWeb/.env
-FullMonteWeb_env
+/venv/
 application/dvh_offline.py
+/fullMonteWeb/settings.py

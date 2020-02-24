@@ -98,22 +98,41 @@ def calculate_volumes(fullMonteOutputData, regionData, noCells):
 
 def plot_DVH(data, noBins):
 
-    xVals = np.array(range(noBins))
+
+    SMALL_SIZE = 16
+    MEDIUM_SIZE = 18
+    LARGE_SIZE = 20
+
+    legendList = []
+
+    xVals = (np.array(range(noBins)) / noBins * 100)
+
     for key in data:
-        plt.plot(xVals,np.array(data[key]))
+        yVals = np.array(data[key]) * 100
+        plt.plot(xVals[1:-1],yVals[1:-1])
+        legendList.append(str(key))
 
-    # plt.yticks(np.arange(0,1,step=0.2))
-    # plt.yticks(np.arange(6), ('0%','20%','40%','60%','80%','100%'))
-    plt.ylabel("Relative Volume")
-    plt.xlabel("Relative Dose Bin # (Number of Bins: " + str(noBins) + ")")
+    plt.title("Cumulative Dose-Volume Histogram")
+    plt.ylabel("Relative Volume (% of region volume)")
+    plt.xlabel("Relative Dose (% of max fluence)")
+    plt.legend(legendList, loc='upper right', title='Region ID')
+
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=LARGE_SIZE)  # fontsize of the figure title
+
     # plt.savefig("DVH.png")
-    # plt.show()
-
-    # plt.legend(['Region 1', 'Region 1', 'Region 1', 'Region 1','Region 1','Region 1','Region 1'], loc='upper left')
     # mpld3.show()
+
     fig = plt.gcf()
-    filePath = os.path.dirname(__file__) + "\\visualization\\scripts\\dvh_fig.html"
-    mpld3.save_html(fig,filePath)
+    # filePath = os.path.dirname(__file__) + "\\visualization\\scripts\\dvh_fig.html"
+    # mpld3.save_html(fig,filePath)
+
+    return mpld3.fig_to_html(fig)
 
 
 def calculate_cumulative_DVH(doseVolumeData, noBins):
@@ -144,14 +163,14 @@ def extract_mesh_subregion(mesh,regionBoundaries):
     return subregionAlgorithm.GetOutput()
 
 
-def main():
+def dose_volume_histogram(filePath):
 
-    filePath = os.path.dirname(__file__) + "\\visualization\\Meshes\\FullMonte_fluence_line.vtk"
+    filePath = os.path.dirname(__file__) + filePath
 
     output = import_data(filePath)
 
-    regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
-    output = extract_mesh_subregion(output, regionBoundaries)
+    ## regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
+    ## output = extract_mesh_subregion(output, regionBoundaries)
 
     # Arrays are of type numpy.ndarray
     numpyWrapper = npi.WrapDataObject( output )
@@ -173,8 +192,4 @@ def main():
     doseData = populate_dictionary(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    plot_DVH(cumulativeDVH,noBins)
-
-
-if __name__ == '__main__':
-    main()
+    return plot_DVH(cumulativeDVH,noBins)
