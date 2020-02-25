@@ -1,7 +1,6 @@
 import mpld3
 import numpy as np
-import sys
-import os
+import sys, os
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
