@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'fullMonteWeb',
     'storages',
+    'vtk',
 ]
 
 MIDDLEWARE = [
