@@ -13,11 +13,17 @@ from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 from multiprocessing import Process
 
+from shutil import copyfile
+initSrc = "./application/scripts/__init__.py"
+initDst = ".heroku/python/lib/python-3.7/site-packages/vtk/__init__.py"
+copyFile(initSrc, initDst)
+
+
 # Create your views here.
 
 # homepage
 def home(request):
-    
+
     src = "./application/scripts/__init__.py"
     dest = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
 
