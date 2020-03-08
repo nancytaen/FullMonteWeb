@@ -8,7 +8,7 @@ from .forms import *
 from shutil import copyfile
 initSrc = "./application/scripts/__init__.py"
 initDst = ".heroku/python/lib/python-3.7/site-packages/vtk/__init__.py"
-copyFile(initSrc, initDst)
+copyfile(initSrc, initDst)
 
 from .dvh import dose_volume_histogram as dvh
 from .setup_visualizer import visualizer
@@ -18,7 +18,6 @@ from django.contrib.auth.views import LogoutView
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 from multiprocessing import Process
-
 
 # Create your views here.
 
