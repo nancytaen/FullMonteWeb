@@ -20,7 +20,7 @@ class tclInputForm(forms.ModelForm):
 class presetForm(forms.ModelForm):
     class Meta:
         model = preset
-        fields = ('presetMesh', )
+        fields = ('presetMesh', 'layerDesc')
 
 class materialSet(forms.Form):
     custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
