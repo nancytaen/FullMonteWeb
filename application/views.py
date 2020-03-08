@@ -7,7 +7,7 @@ from .forms import *
 
 from shutil import copyfile
 initSrc = "./application/scripts/__init__.py"
-initDst = ".heroku/python/lib/python-3.7/site-packages/vtk/__init__.py"
+initDst = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
 copyfile(initSrc, initDst)
 
 from .dvh import dose_volume_histogram as dvh
