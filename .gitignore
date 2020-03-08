@@ -5,3 +5,4 @@
 /fullMonteWeb/.env
 /venv/
 application/dvh_offline.py
+/fullMonteWeb/settings.py

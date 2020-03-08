@@ -21,7 +21,6 @@ from .vtkFiltersHybrid import *
 from .vtkImagingHybrid import *
 from .vtkInfovisLayout import *
 from .vtkGeovisCore import *
-from .vtkRenderingGL2PSOpenGL2 import *
 from .vtkIOExport import *
 from .vtkIOExportOpenGL2 import *
 from .vtkIOImport import *
