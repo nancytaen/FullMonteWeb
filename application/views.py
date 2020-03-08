@@ -17,6 +17,12 @@ from multiprocessing import Process
 
 # homepage
 def home(request):
+    
+    src = "./application/scripts/__init__.py"
+    dest = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
+
+    copyFile(src, dst)
+
     return render(request, "home.html")
 
 # FullMonte Tutorial page
@@ -141,10 +147,11 @@ def fmSimulatorSource(request):
 # FullMonte Output page
 def fmVisualization(request):
 
-    # filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
-    # dvhFig = dvh(filePath) # Figure in HTML string format
 
-    # context = {'dvhFig': dvhFig}
+    filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
+    dvhFig = dvh(filePath) # Figure in HTML string format
+
+    context = {'dvhFig': dvhFig}
 
     proc = Process(target=visualizer)
     proc.start()
