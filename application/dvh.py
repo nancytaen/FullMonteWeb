@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 def import_data(filePath):
 
-    reader = vtk.vtkUnstructuredGridReader()
+    reader = vtkUnstructuredGridReader()
     reader.SetFileName(filePath)
     reader.ReadAllScalarsOn()
     reader.ReadAllVectorsOn()

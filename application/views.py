@@ -5,10 +5,14 @@ from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
 
-from shutil import copyfile
-initSrc = "./application/scripts/__init__.py"
-initDst = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
-copyfile(initSrc, initDst)
+try:
+    from shutil import copyfile
+    initSrc = "./application/scripts/__init__.py"
+    initDst = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
+    copyfile(initSrc, initDst)
+
+except OSError:
+    pass
 
 from .dvh import dose_volume_histogram as dvh
 from .setup_visualizer import visualizer
@@ -148,7 +152,6 @@ def fmSimulatorSource(request):
 # FullMonte Output page
 def fmVisualization(request):
 
-
     filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
     dvhFig = dvh(filePath) # Figure in HTML string format
 
@@ -157,8 +160,7 @@ def fmVisualization(request):
     proc = Process(target=visualizer)
     proc.start()
 
-    return render(request, "visualization.html")
-    # return render(request, "visualization.html", context)
+    return render(request, "visualization.html", context)
 
 # page for viewing generated TCL scripts
 def tclViewer(request):
