@@ -1,25 +1,32 @@
 package require FullMonte
 
-set fn "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/183test21.mesh.vtk"
+set fn "C:\Users\galen\git\fullMonteWeb\application/Colin27.mesh_0SWsDiW.vtk"
 
 VTKMeshReader R
-     R filname $fn
+     R filename $fn
      R read
 
 set M [R mesh]
 
 MaterialSet MS
 
-Material air
-     air     scatteringCoeff     0.0
-     air     absorptionCoeff     0.0
-     air     refractiveIndex     1.0
-     air     anisotropy     0.0
+Material muscle
+     muscle     scatteringCoeff     89.2
+     muscle     absorptionCoeff     1.17
+     muscle     refractiveIndex     1.37
+     muscle     anisotropy     1.17
 
-MS exterior air
+Material tumour
+     tumour     scatteringCoeff     9.35
+     tumour     absorptionCoeff     0.13
+     tumour     refractiveIndex     1.39
+     tumour     anisotropy     0.13
 
-Point P1
-P1 position "1.0 0.0 -1.0"
+MS append muscle
+MS append tumour
+
+Volume P1
+     P1 position "2.0 4.0 -2.0"
 
 TetraSVKernal k
      k packetCount 100000
@@ -40,12 +47,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0503_01142020.out.vtk"
+     W filename "C:\Users\galen\git\fullMonteWeb\application/vtk/vtk_1043_02262020.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/Users/charliechai/Documents/UT/4th_Year/ECE496/FullMonteWeb/application/vtk/vtk_0503_01142020.phi_v.vtk"
+     TW filename "C:\Users\galen\git\fullMonteWeb\application/vtk/vtk_1043_02262020.phi_v.vtk"
      TW source [EF result]
      TW write

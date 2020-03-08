@@ -124,12 +124,7 @@ def plot_DVH(data, noBins):
     plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
     plt.rc('figure', titlesize=LARGE_SIZE)  # fontsize of the figure title
 
-    # plt.savefig("DVH.png")
-    # mpld3.show()
-
     fig = plt.gcf()
-    # filePath = os.path.dirname(__file__) + "\\visualization\\scripts\\dvh_fig.html"
-    # mpld3.save_html(fig,filePath)
 
     return mpld3.fig_to_html(fig)
 

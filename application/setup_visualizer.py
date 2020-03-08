@@ -35,3 +35,9 @@ def visualizer():
                     break
             retcode = chan.recv_exit_status()
             ssh_transp.close()
+
+def main():
+    visualizer()
+
+if __name__ == "__main__":
+    main()
