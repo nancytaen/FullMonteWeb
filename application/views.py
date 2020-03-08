@@ -4,6 +4,12 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
+
+from shutil import copyfile
+initSrc = "./application/scripts/__init__.py"
+initDst = ".heroku/python/lib/python-3.7/site-packages/vtk/__init__.py"
+copyFile(initSrc, initDst)
+
 from .dvh import dose_volume_histogram as dvh
 from .setup_visualizer import visualizer
 from application.tclGenerator import *
@@ -12,11 +18,6 @@ from django.contrib.auth.views import LogoutView
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 from multiprocessing import Process
-
-from shutil import copyfile
-initSrc = "./application/scripts/__init__.py"
-initDst = ".heroku/python/lib/python-3.7/site-packages/vtk/__init__.py"
-copyFile(initSrc, initDst)
 
 
 # Create your views here.
