@@ -12,7 +12,7 @@ def visualizer():
         ("142.1.145.194", 9993),
         ssh_username="Capstone",
         ssh_password="pro929",
-        remote_bind_address=('localhost',port),
+        remote_bind_address=('0.0.0.0',port),
         local_bind_address=('', 8080)
         ) as tunnel:
 
