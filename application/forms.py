@@ -38,13 +38,14 @@ class materialSet(forms.Form):
 
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
-                                                            ('PencilBeam','PencilBeam'),
-                                                            ('Volume','Volume'),
-                                                            ('Ball','Ball'),
-                                                            ('Line','Line'),
-                                                            ('Fiber','Fiber'),
-                                                            ('Tetraface','Tetraface'),
-                                                            ('Composite','Composite')))
+                                                          #('PencilBeam','PencilBeam'),
+                                                          #('Volume','Volume'),
+                                                          #('Ball','Ball'),
+                                                          #('Line','Line'),
+                                                          #('Fiber','Fiber'),
+                                                          #('Tetraface','Tetraface'),
+                                                          #('Composite','Composite')
+                                                          ))
     # for Point
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
