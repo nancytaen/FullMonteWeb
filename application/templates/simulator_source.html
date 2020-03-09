@@ -18,38 +18,121 @@
                         {{ form.sourceType }}
                     </td>
                 </tr>
-                <tr>
-                    <th>{{ form.xPos.label_tag }}</th>
-                    <td>
-                        {{ form.xPos.errors }}
-                        {{ form.xPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.yPos.label_tag }}</th>
-                    <td>
-                        {{ form.yPos.errors }}
-                        {{ form.yPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.zPos.label_tag }}</th>
-                    <td>
-                        {{ form.zPos.errors }}
-                        {{ form.zPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.power.label_tag }}</th>
-                    <td>
-                        {{ form.power.errors }}
-                        {{ form.power }}
-                    </td>
-                </tr>
+                <!-- Point Source Type -->
+                <tbody id="Point" style="display: none">
+                    <tr>
+                        <th>{{ form.xPos.label_tag }}</th>
+                        <td>
+                            {{ form.xPos.errors }}
+                            {{ form.xPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.yPos.label_tag }}</th>
+                        <td>
+                            {{ form.yPos.errors }}
+                            {{ form.yPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.zPos.label_tag }}</th>
+                        <td>
+                            {{ form.zPos.errors }}
+                            {{ form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.power.label_tag }}</th>
+                        <td>
+                            {{ form.power.errors }}
+                            {{ form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Point Source Type -->
+                <!-- PencilBeam Source Type -->
+                <tbody id="PencilBeam" style="display:none">
+                    <tr>
+                        <th><label>Position</label></th>
+                        <td>
+                            {{ form.xPos.errors }}
+                            {{ form.yPos.errors }}
+                            {{ form.zPos.errors }}
+                            {{ form.xPos }}
+                            {{ form.yPos }}
+                            {{ form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label>Direction</label></th>
+                        <td>
+                            {{ form.xDir.errors }}
+                            {{ form.yDir.errors }}
+                            {{ form.zDir.errors }}
+                            {{ form.xDir }}
+                            {{ form.yDir }}
+                            {{ form.zDir }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.power.label_tag }}</th>
+                        <td>
+                            {{ form.power.errors }}
+                            {{ form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- PencilBeam Source Type -->
+                <!-- Volume Source Type -->
+                <tbody id="Volume" style="display: none">
+                    <tr>
+                        <th>{{ form.vElement.label_tag }}</th>
+                        <td>
+                            {{ form.vElement.errors }}
+                            {{ form.vElement }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.power.label_tag }}</th>
+                        <td>
+                            {{ form.power.errors }}
+                            {{ form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Volume Source Type -->
+                <!-- Ball Source Type -->
+                <tbody id="Ball" style="display: none">
+                    <tr>
+                        <th><label>Center Position</label></th>
+                        <td>
+                            {{ form.xPos.errors }}
+                            {{ form.xPos }}
+                            {{ form.yPos }}
+                            {{ form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.rad.label_tag }}</th>
+                        <td>
+                            {{ form.rad.errors }}
+                            {{ form.rad }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.power.label_tag }}</th>
+                        <td>
+                            {{ form.power.errors }}
+                            {{ form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Ball Source Type -->
             </table>
         {% endfor %}
         <hr>
     </div>
+
     <input type="button" value="Add Row" id="add_row">
     <input type="button" value="Remove Row" id="remove_row">
         <div id="empty_form" class="table" style="display:none">
@@ -62,34 +145,116 @@
                         {{ formset2.empty_form.sourceType }}
                     </td>
                 </tr>
-                <tr>
-                    <th>{{ formset2.empty_form.xPos.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.xPos.errors }}
-                        {{ formset2.empty_form.xPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ formset2.empty_form.yPos.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.yPos.errors }}
-                        {{ formset2.empty_form.yPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ formset2.empty_form.zPos.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.zPos.errors }}
-                        {{ formset2.empty_form.zPos }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ formset2.empty_form.power.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.power.errors }}
-                        {{ formset2.empty_form.power }}
-                    </td>
-                </tr>
+                <!-- Point Source Type -->
+                <tbody id="Point2" style="display: none">
+                    <tr>
+                        <th>{{ formset2.empty_form.xPos.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.xPos.errors }}
+                            {{ formset2.empty_form.xPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.yPos.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.yPos.errors }}
+                            {{ formset2.empty_form.yPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.zPos.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.zPos.errors }}
+                            {{ formset2.empty_form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.power.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.power.errors }}
+                            {{ formset2.empty_form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Point Source Type -->
+                <!-- PencilBeam Source Type -->
+                <tbody id="PencilBeam2" style="display:none">
+                    <tr>
+                        <th><label>Position</label></th>
+                        <td>
+                            {{ formset2.empty_form.xPos.errors }}
+                            {{ formset2.empty_form.yPos.errors }}
+                            {{ formset2.empty_form.zPos.errors }}
+                            {{ formset2.empty_form.xPos }}
+                            {{ formset2.empty_form.yPos }}
+                            {{ formset2.empty_form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label>Direction</label></th>
+                        <td>
+                            {{ formset2.empty_form.xDir.errors }}
+                            {{ formset2.empty_form.yDir.errors }}
+                            {{ formset2.empty_form.zDir.errors }}
+                            {{ formset2.empty_form.xDir }}
+                            {{ formset2.empty_form.yDir }}
+                            {{ formset2.empty_form.zDir }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.power.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.power.errors }}
+                            {{ formset2.empty_form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- PencilBeam Source Type -->
+                <!-- Volume Source Type -->
+                <tbody id="Volume2" style="display: none">
+                    <tr>
+                        <th>{{ formset2.empty_form.vElement.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.vElement.errors }}
+                            {{ formset2.empty_form.vElement }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.power.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.power.errors }}
+                            {{ formset2.empty_form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Volume Source Type -->
+                <!-- Ball Source Type -->
+                <tbody id="Ball2" style="display: none">
+                    <tr>
+                        <th><label>Center Position</label></th>
+                        <td>
+                            {{ formset2.empty_form.xPos.errors }}
+                            {{ formset2.empty_form.xPos }}
+                            {{ formset2.empty_form.yPos }}
+                            {{ formset2.empty_form.zPos }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.rad.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.rad.errors }}
+                            {{ formset2.empty_form.rad }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ formset2.empty_form.power.label_tag }}</th>
+                        <td>
+                            {{ formset2.empty_form.power.errors }}
+                            {{ formset2.empty_form.power }}
+                        </td>
+                    </tr>
+                </tbody>
+                <!-- Ball Source Type -->
             </table>
             <hr>
         </div>
@@ -115,6 +280,64 @@
                            }
                            });
 </script>
+
+<script type="text/javascript" src="jquery-ui-1.10.0/tests/jquery-1.9.0.js"></script>
+<script src="jquery-ui-1.10.0/ui/jquery-ui.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#Point").show();
+        $("#Point2").show();
+    });
+
+    $('#id_form-0-sourceType').on('change', function () {
+        $("#Point").hide()
+        $("#PencilBeam").hide()
+        $("#Volume").hide()
+        $("#Ball").hide()
+        var selection = $(this).val();
+        switch (selection) {
+            case "Point":
+                $("#Point").show()
+                break;
+            case "PencilBeam":
+                $("#PencilBeam").show()
+                break;
+            case "Volume":
+                $("#Volume").show()
+                break;
+            case "Ball":
+                $("#Ball").show()
+                break;
+            default:
+        }
+    });
+
+    $('#id_form-1-sourceType').on('change', function () {
+        $("#Point2").hide()
+        $("#PencilBeam2").hide()
+        $("#Volume2").hide()
+        $("#Ball2").hide()
+        var selection = $(this).val();
+        switch (selection) {
+            case "Point":
+                $("#Point2").show()
+                break;
+            case "PencilBeam":
+                $("#PencilBeam2").show()
+                break;
+            case "Volume":
+                $("#Volume2").show()
+                break;
+            case "Ball":
+                $("#Ball2").show()
+                break;
+            default:
+        }
+    });
+
+</script>
+
+
 
 <form>
     <input type="button" value="Back" onclick="history.back()">

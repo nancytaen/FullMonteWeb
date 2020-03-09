@@ -4,6 +4,8 @@ from django.forms import BaseFormSet
 from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+#from django.contrib.gis import forms
+#from django.contrib.gis.geos import Point
 
 class tclInputForm(forms.ModelForm):
     class Meta:
@@ -38,19 +40,33 @@ class materialSet(forms.Form):
 
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
-                                                          #('PencilBeam','PencilBeam'),
-                                                          #('Volume','Volume'),
-                                                          #('Ball','Ball'),
+                                                          ('PencilBeam','PencilBeam'),
+                                                          ('Volume','Volume'),
+                                                          ('Ball','Ball'),
                                                           #('Line','Line'),
                                                           #('Fiber','Fiber'),
                                                           #('Tetraface','Tetraface'),
                                                           #('Composite','Composite')
                                                           ))
     # for Point
-    xPos = forms.FloatField(label='X Position')
-    yPos = forms.FloatField(label='Y Position')
-    zPos = forms.FloatField(label='Z Position')
-    
+    xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}))
+    yPos = forms.FloatField(label='Y Position', widget=forms.TextInput(attrs={'placeholder': 'y'}))
+    zPos = forms.FloatField(label='Z Position', widget=forms.TextInput(attrs={'placeholder': 'z'}))
+
+    # for Pencil Beam (Position uses xyz from point)
+    xDir = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}))
+    yDir = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}))
+    zDir = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}))
+
+    # for Volume
+    vElement = forms.IntegerField(label='V Element ID')
+
+    # for Ball (center uses xyz from point)
+    rad = forms.FloatField(label='Radius')
+
+    # for Line
+
+
     power = forms.IntegerField(label='Power')
 
 class RequiredFormSet(BaseFormSet):
