@@ -12,7 +12,7 @@ def visualizer():
         ("142.1.145.194", 9993),
         ssh_username="Capstone",
         ssh_password="pro929",
-        remote_bind_address=('localhost',port),
+        remote_bind_address=('0.0.0.0',port),
         local_bind_address=('', 8080)
         ) as tunnel:
 
@@ -38,10 +38,9 @@ def visualizer():
                     errdata += chan.recv_stderr(1000)
                 if chan.exit_status_ready():  # If completed
                     break
-                print(outdata)
-                print(errdata)
-                outdata, errdata = b'',b''
 
+            print(outdata)
+            print(errdata)
             retcode = chan.recv_exit_status()
             ssh_transp.close()
 
