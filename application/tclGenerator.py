@@ -50,7 +50,8 @@ def tclGenerator(session, mesh):
     f.write('MaterialSet MS\n\n')
     
     for ma, sc, ab, re, an in zip(material, scatteringCoeff, absorptionCoeff, refractiveIndex, anisotropy):
-        mat = ma.lower()
+        matLower = ma.lower()
+        mat = ma.replace(' ','')
         f.write('Material ' + mat + '\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
