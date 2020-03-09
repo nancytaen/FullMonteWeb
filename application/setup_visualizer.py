@@ -16,9 +16,7 @@ def visualizer():
         local_bind_address=('', 8080)
         ) as tunnel:
 
-            localPort = server.remote_bind_port
-
-            print("Forwarding on " + localPort)
+            print("Forwarding on " + port)
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
