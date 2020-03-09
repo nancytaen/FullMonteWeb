@@ -22,6 +22,11 @@ from django.contrib.auth.views import LogoutView
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 from multiprocessing import Process
+import paramiko
+from django.db import models
+from application.storage_backends import *
+from django.core.files.storage import default_storage
+import time
 
 # Create your views here.
 
@@ -108,17 +113,17 @@ def fmSimulatorSource(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
-
+        
         # check whether it's valid:
         if formset2.is_valid():
             # process cleaned data from formsets
-
+            
             request.session['sourceType'] = []
             request.session['xPos'] = []
             request.session['yPos'] = []
             request.session['zPos'] = []
             request.session['power'] = []
-
+            
             for form in formset2:
                 #print(form.cleaned_data)
                 request.session['sourceType'].append(form.cleaned_data['sourceType'])
@@ -126,23 +131,154 @@ def fmSimulatorSource(request):
                 request.session['yPos'].append(form.cleaned_data['yPos'])
                 request.session['zPos'].append(form.cleaned_data['zPos'])
                 request.session['power'].append(form.cleaned_data['power'])
-
+            
             mesh = tclInput.objects.latest('id')
-
+            
             script_path = tclGenerator(request.session, mesh)
-
+            
             request.session['script_path'] = script_path
-
+            
             #print(tclInput.objects.all())
             #tclInput.objects.all().delete()
+            #tclScript.objects.all().delete()
             #print(mesh.meshFile)
             #print(tclInput.objects.all())
-            return HttpResponseRedirect('/application/tcl_viewer')
+
+            #key = paramiko.RSAKey(data=base64.b64decode(b'AAA...'))
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            #client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
+            client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
+
+
+            #send file to savi
+            ftp_client=client.open_sftp()
+
+            dir_path = os.path.dirname(os.path.abspath(__file__))
+
+            #tc file
+            source = dir_path + '/tcl/tcl_template.tcl'
+            source = str(source)
+
+            #mesh file
+            f = default_storage.open(mesh.meshFile.name)
+
+
+            #send files to savi server
+            tclName = "/home/Capstone/docker_sims/" + mesh.meshFile.name + ".tcl"
+            ftp_client.put(source,tclName)
+            ftp_client.putfo(f,"/home/Capstone/docker_sims/" + mesh.meshFile.name)
+            f.close()
+            ftp_client.close()
+
+
+            '''
+            print("______________________________________________________________")
+            ##cd to folder
+            print("cd")
+            stdin, stdout, stderr = client.exec_command('cd docker_sims', get_pty=True)
+            ##ls
+            print("ls")
+            stdin, stdout, stderr = client.exec_command('ls', get_pty=True)
+            
+            ## run script
+            print("run script")
+            
+            
+            stdin, stdout, stderr = client.exec_command('sudo /opt/util/FullMonteSW_setup.sh', get_pty=True)
+
+            stdin.write('pro929\n')  # Password for sudo
+            stdin.flush()
+            stdin.write('pro929\n')  #gitlab user
+            stdin.flush()
+            stdin.write('1\n')  #run as user
+            stdin.flush()
+            stdin.write('capstone929!\n')  #gitlab pw
+            stdin.flush()
+            stdin.write('cd sims\n')  #when docer opens cd to sims
+            stdin.flush()
+            stdin.write('ls\n')  #ls
+            stdin.flush()
+
+            print("\n")
+            stdin.write('stty size\n')  #ls
+            stdin.flush()
+            stdin.write('reset -w\n')  #ls
+            stdin.flush()
+            stdin.write('stty size\n')  #ls
+            stdin.flush()
+
+            stdin.write('tclmonte.sh ./Run_HeadNeck.tcl\n')  #run tcl
+            stdin.flush()
+
+            time.sleep(15)
+
+            stdin.write('exit\n')  #exit
+            stdin.flush()
+
+            
+            '''
+            
+            channel = client.invoke_shell()
+
+            out = channel.recv(9999)
+
+            channel.send('cd docker_sims\n')
+            time.sleep(0.2)
+            channel.send('sudo /opt/util/FullMonteSW_setup.sh\n')
+            time.sleep(0.2)
+            channel.send('pro929\n')
+            time.sleep(0.2)
+            channel.send('pro929\n')
+            time.sleep(0.2)
+            channel.send('1\n')
+            time.sleep(0.2)
+            channel.send('capstone929!\n')
+            time.sleep(1)
+            channel.send('cd sims\n')
+            time.sleep(0.2)
+            channel.send('stty size\n')
+            time.sleep(0.5)
+            channel.send('reset -w\n')
+            time.sleep(0.5)
+            channel.send('stty size -w\n')
+            time.sleep(0.3)
+            time.sleep(0.2)
+            channel.send('tclmonte.sh ./' + mesh.meshFile.name + '.tcl' + '\n')
+            #time.sleep(15)
+            
+            test = channel.recv(9999)
+            #print(test)
+            channel.close
+
+
+            
+            
+            ##exit
+            #print("exit")
+            #stdin, stdout, stderr = client.exec_command('exit', get_pty=True)
+            #print("stdout")
+            #for line in stdout:
+            #    print('... ' + line.strip('\n'))
+            #print("stderr")
+            #for line in stderr:
+            #    print('... ' + line.strip('\n'))
+
+            print("______________________________________________________________")
+            #stdin, stdout, stderr = client.exec_command('cd docker_sims')
+            stdin, stdout, stderr = client.exec_command('cd docker_sims;ls')
+            for line in stdout:
+                print('... ' + line.strip('\n'))
+
+            #while()
+            client.close()
+
+            return HttpResponseRedirect('/application/visualization')
 
     # If this is a GET (or any other method) create the default form.
     else:
         formset2 = lightSourceSet(request.GET or None)
-
+        
     context = {
         'formset2': formset2,
     }
