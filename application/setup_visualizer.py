@@ -38,8 +38,10 @@ def visualizer():
                     errdata += chan.recv_stderr(1000)
                 if chan.exit_status_ready():  # If completed
                     break
-            print(outdata)
-            print(errdata)
+                print(outdata)
+                print(errdata)
+                outdata, errdata = b'',b''
+
             retcode = chan.recv_exit_status()
             ssh_transp.close()
 
