@@ -1,7 +1,7 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
-  <h2>Log in to My Site</h2>
+  <h2>Log in to FullMonte</h2>
   {% if form.errors %}
     <p style="color: red">Your username and password didn't match.</p>
   {% endif %}
@@ -19,5 +19,8 @@
     {% endfor %}
     <button type="submit">Log in</button>
     <a href="{% url 'signup' %}">New to FullMonte? Sign up</a>
+    <div>
+      <a href="{% url 'password_reset' %}">Forgot your password?</a>
+    </div>
   </form>
 {% endblock %}

@@ -209,6 +209,9 @@ INSTALLED_APPS = ['bootstrap4',
                   'django_cleanup',
                   ]
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+                  
+
 TEMPLATES = [
     {
              'BACKEND': 'django.template.backends.django.DjangoTemplates',

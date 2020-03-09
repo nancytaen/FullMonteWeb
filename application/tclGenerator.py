@@ -22,7 +22,6 @@ def tclGenerator(session, mesh):
     power = session['power']
     
     #initialize path for copying tcl template
-    start = datetime.now().strftime('%H%M_%m%d%Y')
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
 
@@ -51,19 +50,23 @@ def tclGenerator(session, mesh):
     f.write('MaterialSet MS\n\n')
     
     for ma, sc, ab, re, an in zip(material, scatteringCoeff, absorptionCoeff, refractiveIndex, anisotropy):
-        mat = ma.lower()
+        matLower = ma.lower()
+        mat = matLower.replace(' ','')
         f.write('Material ' + mat + '\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
         f.write(indent + mat + indent + 'refractiveIndex' + indent + str(re) + '\n')
         f.write(indent + mat + indent + 'anisotropy' + indent + str(ab) + '\n\n')
     
+    i = 0
     for ma in material:
-        mat = ma.lower()
-        if mat == 'air':
-            f.write('MS exterior air\n')
+        matLower = ma.lower()
+        mat = matLower.replace(' ','')
+        if i == 0:
+            f.write('MS exterior ' + mat + '\n')
         else:
             f.write('MS append ' + mat + '\n')
+        i += 1
 
     f.write('\n')
 
@@ -101,7 +104,7 @@ def tclGenerator(session, mesh):
     #initialize path for results
     #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
     #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
-    name = mesh.meshFile.name
+    name = mesh.meshFile.name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     
@@ -125,7 +128,7 @@ def tclGenerator(session, mesh):
     for line in lines:
         _temp += line.encode()
 
-    script_name = start + '.tcl'
+    script_name = name + '.tcl'
     new_script = tclScript()
     new_script.script.save(script_name, ContentFile(_temp))
     new_script.save()
