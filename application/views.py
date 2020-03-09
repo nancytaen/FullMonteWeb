@@ -160,7 +160,8 @@ def fmVisualization(request):
     proc = Process(target=visualizer)
     proc.start()
 
-    return render(request, "visualization.html", context)
+    return render(request, "visualization.html")
+    # return render(request, "visualization.html", context)
 
 # page for viewing generated TCL scripts
 def tclViewer(request):
