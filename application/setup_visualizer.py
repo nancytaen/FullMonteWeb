@@ -3,6 +3,7 @@ import sshtunnel
 from multiprocessing import Process
 
 # command = "pvpython -dr /opt/ParaView-5.7.0/share/paraview-5.7/web/visualizer/server/pvw-visualizer.py --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/ --reverse-connect-port 8000"
+port = int(os.environ.get("PORT", 4000))
 
 def visualizer():
 
@@ -10,7 +11,7 @@ def visualizer():
         ("142.1.145.194", 9993),
         ssh_username="Capstone",
         ssh_password="pro929",
-        remote_bind_address=('localhost',8080),
+        remote_bind_address=('localhost',port),
         local_bind_address=('', 8080)
         ) as tunnel:
 
