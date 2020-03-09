@@ -1,6 +1,7 @@
 import paramiko, sys
 import sshtunnel
 from multiprocessing import Process
+import os
 
 # command = "pvpython -dr /opt/ParaView-5.7.0/share/paraview-5.7/web/visualizer/server/pvw-visualizer.py --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/ --reverse-connect-port 8000"
 port = int(os.environ.get("PORT", 4000))
