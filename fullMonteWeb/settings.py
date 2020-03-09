@@ -93,9 +93,9 @@ WSGI_APPLICATION = 'fullMonteWeb.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME', 'fullmonte_database'),
+        'NAME': os.environ.get('DB_NAME', 'postgres'),
         'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASS', 'admin'),
+        'PASSWORD': os.environ.get('DB_PASS', 'sql'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
