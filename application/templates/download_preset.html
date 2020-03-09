@@ -18,7 +18,7 @@
         <tr>
             <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
             <td>{{ preset.presetMesh.size|filesizeformat }}</td>
-            <td>{{ preset.layerDesc }}</td>
+            <td>{{ preset.layerDesc|linebreaks }}</td>
         </tr>
         {% empty %}
         <tr>
