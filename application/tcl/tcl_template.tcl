@@ -28,11 +28,7 @@ Material larynx
      larynx     refractiveIndex     1.36
      larynx     anisotropy     0.55
 
-Material tumour
-     tumour     scatteringCoeff     9.35
-     tumour     absorptionCoeff     0.13
-     tumour     refractiveIndex     1.39
-     tumour     anisotropy     0.13
+MS exterior air
 
 Material teeth
      teeth     scatteringCoeff     60.0

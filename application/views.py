@@ -29,6 +29,12 @@ from django.core.files.storage import default_storage
 from django.core import serializers
 import time
 
+from django.conf import settings
+from django.core.mail import send_mail
+
+send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
+         ['to@example.com'], fail_silently=False)
+
 # Create your views here.
 
 # homepage
