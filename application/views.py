@@ -163,6 +163,10 @@ def fmVisualization(request):
     return render(request, "visualization.html")
     # return render(request, "visualization.html", context)
 
+# FullMonte Download page
+def fmDownload(request):
+    return render(request, "download.html")
+
 # page for viewing generated TCL scripts
 def tclViewer(request):
     meshes = tclInput.objects.all()
