@@ -2,16 +2,21 @@ import paramiko, sys
 import sshtunnel
 from multiprocessing import Process
 
+# command = "pvpython -dr /opt/ParaView-5.7.0/share/paraview-5.7/web/visualizer/server/pvw-visualizer.py --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/ --reverse-connect-port 8000"
+
 def visualizer():
 
     with sshtunnel.open_tunnel(
         ("142.1.145.194", 9993),
         ssh_username="Capstone",
         ssh_password="pro929",
-        remote_bind_address=('localhost', 8080),
+        remote_bind_address=('localhost',80),
         local_bind_address=('', 8080)
         ) as tunnel:
 
+            localPort = server.remote_bind_port
+
+            print("Forwarding on " + localPort)
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

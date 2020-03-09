@@ -152,10 +152,10 @@ def fmSimulatorSource(request):
 # FullMonte Output page
 def fmVisualization(request):
 
-    filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
-    dvhFig = dvh(filePath) # Figure in HTML string format
-
-    context = {'dvhFig': dvhFig}
+    # filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
+    # dvhFig = dvh(filePath) # Figure in HTML string format
+    #
+    # context = {'dvhFig': dvhFig}
 
     proc = Process(target=visualizer)
     proc.start()
