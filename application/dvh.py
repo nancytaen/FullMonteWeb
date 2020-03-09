@@ -2,10 +2,6 @@ import mpld3
 import numpy as np
 import sys, os
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
-# import vtk.vtkUnstructuredGrid
-# import vtk.vtkUnstructuredGridReader
-# import vtk.vtkMeshQuality
-# import vtk.VtkExtractUnstructuredGrid as ExtractGrid
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
 from matplotlib import pyplot as plt
