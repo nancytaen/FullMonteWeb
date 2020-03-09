@@ -9,10 +9,10 @@ class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
         fields = ('meshFile', 'kernelType')
-        kernel_choices = (('TetraSVKernal','TetraSVKernel'),
-                         ('TetraSurfaceKernal','TetraSurfaceKernel'),
-                         ('TetraVolumeKernal','TetraVolumeKernel'),
-                         ('TetraInternalKernal','TetraInternalKernel'))
+        kernel_choices = (('TetraSVKernel','TetraSVKernel'),
+                         ('TetraSurfaceKernel','TetraSurfaceKernel'),
+                         ('TetraVolumeKernel','TetraVolumeKernel'),
+                         ('TetraInternalKernel','TetraInternalKernel'))
         widgets = {
             'kernelType': forms.Select(choices=kernel_choices),
         }
