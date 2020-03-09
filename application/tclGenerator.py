@@ -51,7 +51,7 @@ def tclGenerator(session, mesh):
     
     for ma, sc, ab, re, an in zip(material, scatteringCoeff, absorptionCoeff, refractiveIndex, anisotropy):
         matLower = ma.lower()
-        mat = ma.replace(' ','')
+        mat = matLower.replace(' ','')
         f.write('Material ' + mat + '\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
@@ -60,7 +60,8 @@ def tclGenerator(session, mesh):
     
     i = 0
     for ma in material:
-        mat = ma.lower()
+        matLower = ma.lower()
+        mat = matLower.replace(' ','')
         if i == 0:
             f.write('MS exterior ' + mat + '\n')
         else:
