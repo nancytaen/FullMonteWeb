@@ -1,6 +1,7 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls import url
 
 from . import views
 
@@ -37,12 +38,17 @@ urlpatterns = [
 
     # /application/download_preset
     path('download_preset', views.downloadPreset, name='download_preset'),
+               
+    # /application/create_preset_material
+    path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),
 
     path('signup', views.signup, name='signup'),
 
     path('login', views.LoginView.as_view(), name='login'),
 
     path('logout', views.LogoutView.as_view(), name='logout'),
+               
+    url(r'^ajax_requests/', views.ajaxrequests_view, name='ajax_requests'),
 ]
 
 if settings.DEBUG:

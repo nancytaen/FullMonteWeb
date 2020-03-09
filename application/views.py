@@ -26,6 +26,7 @@ import paramiko
 from django.db import models
 from application.storage_backends import *
 from django.core.files.storage import default_storage
+from django.core import serializers
 import time
 
 # Create your views here.
@@ -107,6 +108,45 @@ def fmSimulatorMaterial(request):
     }
 
     return render(request, "simulator_material.html", context)
+
+# ajax requests
+def ajaxrequests_view(request):
+    ind = request.POST.get('ind', None)
+    if(ind):
+        ind = int(ind)
+        get_data = Material.objects.filter(id=ind)
+        ser_data = serializers.serialize("json", get_data)
+        return HttpResponse(ser_data, content_type="application/json")
+    else:
+        return HttpResponse(None, content_type="application/json")
+
+# developer page for creating new preset materials
+def createPresetMaterial(request):
+    presetMaterial = Material.objects.all()
+    
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        if 'reset' in request.POST:
+            Material.objects.all().delete()
+            form = materialForm(request.POST)
+        else:
+            form = materialForm(request.POST, request.FILES)
+            
+            # check whether it's valid:
+            if form.is_valid():
+                # process cleaned data from formsets
+                #print(form.cleaned_data)
+                
+                form.save()
+
+    else:
+        form = materialForm(request.GET)
+        
+    context = {
+        'form': form,
+        'presetMaterials': presetMaterial,
+    }
+    return render(request, "create_preset_material.html", context)
 
 # FullMonte Simulator light source page
 def fmSimulatorSource(request):

@@ -3,7 +3,15 @@
 {% block content %}
 <h1>FullMonte Simulator</h1>
 
+<button id='advanced'>Developer Options</button>
+<div id='advancedOption'>
+    <a href="{% url 'create_preset_material' %}">
+        Click here to upload a new preset material (developer only).
+    </a>
+</div>
+
 <form action="" method="post">
+    <br/>
     <h3>Material Set</h3>
     {{ formset1.management_form }}
     <div id="form_set" class="table">
@@ -140,7 +148,48 @@
                          $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                          $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
                          if (document.getElementById("id_form-"+form_idx+"-custom")) {
-                            document.getElementById("id_form-"+form_idx+"-custom").onchange=function() { populateForm(this, form_idx); }
+                            document.getElementById("id_form-"+form_idx+"-custom").onchange=function() {
+                                var ind = document.getElementById("id_form-"+form_idx+"-custom").value;
+                        
+                                $.ajaxSetup({
+                                            data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+                                            });
+                        
+                                $.ajax({
+                                       url: '{% url "ajax_requests" %}',
+                                       type: 'POST',
+                                       data: {
+                                        'ind': ind,
+                                       },
+                                       dataType: 'json',
+                                       success: function (data) {
+                                           var material = document.getElementById("id_form-"+form_idx+"-material");
+                                           var scatteringCoeff = document.getElementById("id_form-"+form_idx+"-scatteringCoeff");
+                                           var absorptionCoeff = document.getElementById("id_form-"+form_idx+"-absorptionCoeff");
+                                           var refractiveIndex = document.getElementById("id_form-"+form_idx+"-refractiveIndex");
+                                           var anisotropy = document.getElementById("id_form-"+form_idx+"-anisotropy");
+                                           if (data) {
+                                               material.value = data[0].fields['material_name'];
+                                               scatteringCoeff.value = data[0].fields['scattering_coeff'];
+                                               absorptionCoeff.value = data[0].fields['absorption_coeff'];
+                                               refractiveIndex.value = data[0].fields['refractive_index'];
+                                               anisotropy.value = data[0].fields['anisotropy'];
+                                           }
+                                       },
+                                       error: function(XMLHttpRequest, textStatus, errorThrown) {
+                                           var material = document.getElementById("id_form-"+form_idx+"-material");
+                                           var scatteringCoeff = document.getElementById("id_form-"+form_idx+"-scatteringCoeff");
+                                           var absorptionCoeff = document.getElementById("id_form-"+form_idx+"-absorptionCoeff");
+                                           var refractiveIndex = document.getElementById("id_form-"+form_idx+"-refractiveIndex");
+                                           var anisotropy = document.getElementById("id_form-"+form_idx+"-anisotropy");
+                                           material.value = null;
+                                           scatteringCoeff.value = null;
+                                           absorptionCoeff.value = null;
+                                           refractiveIndex.value = null;
+                                           anisotropy.value = null;
+                                       }
+                                       });
+                            }
                          }
                         
                          var label = document.getElementsByTagName("LABEL");
@@ -159,60 +208,64 @@
                          
     window.onload=function() {
         var i = 0;
-        for(i = 0; i < 100; ++i) {
+        for(; i < 100; ++i){
             if (document.getElementById("id_form-"+i+"-custom")) {
+                var form_idx = i;
                 document.getElementById("id_form-"+i+"-custom").onchange=function()
                 {
                     var x = this.name.substr(this.name.length-8, this.name.length);
                     x = x.slice(0, -7);
-                    populateForm(this, x);
+                    var ind = document.getElementById("id_form-"+form_idx+"-custom").value;;
+                    
+                    $.ajaxSetup({
+                                data: { csrfmiddlewaretoken: '{{ csrf_token }}' },
+                                });
+                                
+                    $.ajax({
+                           url: '{% url "ajax_requests" %}',
+                           type: 'POST',
+                           data: {
+                            'ind': ind,
+                           },
+                           dataType: 'json',
+                           success: function (data) {
+                               var material = document.getElementById("id_form-"+form_idx+"-material");
+                               var scatteringCoeff = document.getElementById("id_form-"+form_idx+"-scatteringCoeff");
+                               var absorptionCoeff = document.getElementById("id_form-"+form_idx+"-absorptionCoeff");
+                               var refractiveIndex = document.getElementById("id_form-"+form_idx+"-refractiveIndex");
+                               var anisotropy = document.getElementById("id_form-"+form_idx+"-anisotropy");
+                               if (data) {
+                                   material.value = data[0].fields['material_name'];
+                                   scatteringCoeff.value = data[0].fields['scattering_coeff'];
+                                   absorptionCoeff.value = data[0].fields['absorption_coeff'];
+                                   refractiveIndex.value = data[0].fields['refractive_index'];
+                                   anisotropy.value = data[0].fields['anisotropy'];
+                               }
+                           },
+                           error: function(XMLHttpRequest, textStatus, errorThrown) {
+                               var material = document.getElementById("id_form-"+form_idx+"-material");
+                               var scatteringCoeff = document.getElementById("id_form-"+form_idx+"-scatteringCoeff");
+                               var absorptionCoeff = document.getElementById("id_form-"+form_idx+"-absorptionCoeff");
+                               var refractiveIndex = document.getElementById("id_form-"+form_idx+"-refractiveIndex");
+                               var anisotropy = document.getElementById("id_form-"+form_idx+"-anisotropy");
+                               material.value = null;
+                               scatteringCoeff.value = null;
+                               absorptionCoeff.value = null;
+                               refractiveIndex.value = null;
+                               anisotropy.value = null;
+                           }
+                           })
                 }
             }
         }
     }
-
-    function populateForm(SNewSel, i) {
-        var ind = SNewSel.selectedIndex;
-        var material = document.getElementById("id_form-"+i+"-material");
-        var scatteringCoeff = document.getElementById("id_form-"+i+"-scatteringCoeff");
-        var absorptionCoeff = document.getElementById("id_form-"+i+"-absorptionCoeff");
-        var refractiveIndex = document.getElementById("id_form-"+i+"-refractiveIndex");
-        var anisotropy = document.getElementById("id_form-"+i+"-anisotropy");
-        
-        switch (ind) {
-            default:
-            material.value = "";
-            scatteringCoeff.value = "";
-            absorptionCoeff.value = "";
-            refractiveIndex.value = "";
-            anisotropy.value = "";
-            break;
-            
-            case 1:
-            material.value = "Air";
-            scatteringCoeff.value = 0;
-            absorptionCoeff.value = 0;
-            refractiveIndex.value = 1;
-            anisotropy.value = 0;
-            break;
-            
-            case 2:
-            material.value = "Tumour";
-            scatteringCoeff.value = 9.35;
-            absorptionCoeff.value = 0.13;
-            refractiveIndex.value = 1.39;
-            anisotropy.value = 0.92;
-            break;
-
-            case 3:
-            material.value = "Muscle";
-            scatteringCoeff.value = 89.2;
-            absorptionCoeff.value = 1.17;
-            refractiveIndex.value = 1.37;
-            anisotropy.value = 0.903;
-            break;
-        }
-    }
+</script>
+<script>
+    $(document).ready(function(){
+                      $("#advanced").click(function(){
+                                           $("#advancedOption").toggle();
+                                           });
+                      });
 </script>
 
 {% endblock %}

@@ -4,6 +4,7 @@ from django.forms import BaseFormSet
 from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 class tclInputForm(forms.ModelForm):
     class Meta:
@@ -35,6 +36,11 @@ class materialSet(forms.Form):
     absorptionCoeff = forms.FloatField(label='Absorption Coefficient', min_value=0)
     refractiveIndex = forms.FloatField(label='Refractive Index', min_value=1)
     anisotropy = forms.FloatField(label='Anisotropy', min_value=-1, max_value=1)
+
+class materialForm(forms.ModelForm):
+    class Meta:
+        model = Material
+        fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
 
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
