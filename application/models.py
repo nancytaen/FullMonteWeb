@@ -12,6 +12,7 @@ class tclScript(models.Model):
 
 class preset(models.Model):
     presetMesh = models.FileField(storage=PublicMediaStorage())
+    layerDesc = models.TextField(blank=True, null=True)
 
 class Material(models.Model):
     material_name = models.CharField(max_length=50)

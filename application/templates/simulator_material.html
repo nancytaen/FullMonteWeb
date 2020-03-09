@@ -7,11 +7,15 @@
     <h3>Material Set</h3>
     {{ formset1.management_form }}
     <div id="form_set" class="table">
+        <hr>
         {% for form in formset1.forms %}
             <table class='no_error'>
                 {% csrf_token %}
                 <tr>
-                    <th>{{ form.custom.label_tag }}</th>
+                    <th>Layer 1 - Outer layer:</th>
+                </tr>
+                <tr>
+                    <th>{{ form.custom.label_tag }} </th>
                     <td>
                         {{ form.custom.errors }}
                         {{ form.custom }}
@@ -58,12 +62,16 @@
                 </tr>
             </table>
         {% endfor %}
+        <hr>
     </div>
     <input type="button" value="Add Row" id="add_row">
     <input type="button" value="Remove Row" id="remove_row">
         <div id="empty_form" class="table" style="display:none">
             <table class='no_error'>
                 {% csrf_token %}
+                <tr>
+                    <th>{{ formset1.empty_form.layer.label_tag }} </th>
+                </tr>
                 <tr>
                     <th>{{ formset1.empty_form.custom.label_tag }}</th>
                     <td>
@@ -111,6 +119,7 @@
                     </td>
                 </tr>
             </table>
+            <hr>
         </div>
     <p></p>
     
@@ -133,7 +142,12 @@
                          if (document.getElementById("id_form-"+form_idx+"-custom")) {
                             document.getElementById("id_form-"+form_idx+"-custom").onchange=function() { populateForm(this, form_idx); }
                          }
-                         });
+                        
+                         var label = document.getElementsByTagName("LABEL");
+                         var index = 6 + ((parseInt(form_idx)-1) * 7)
+                         var layer_ind = parseInt(form_idx)+1
+                         label[index].innerText = "Layer " + layer_ind + ":"
+                        });
     
     $('#remove_row').click(function() {
                            var form_idx = $('#id_form-TOTAL_FORMS').val();

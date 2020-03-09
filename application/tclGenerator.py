@@ -39,7 +39,8 @@ def tclGenerator(session, mesh):
     f.write('package require FullMonte\n')
     
     #append mesh to tcl script
-    meshpath = dir_path + '/' + mesh.meshFile.name
+    #meshpath = dir_path + '/' + mesh.meshFile.name
+    meshpath = '/sims/' + mesh.meshFile.name
     f.write('\nset fn "' + meshpath + '"\n\n')
     f.write('VTKMeshReader R\n')
     f.write(indent + 'R filename $fn\n')
@@ -98,8 +99,11 @@ def tclGenerator(session, mesh):
 
 
     #initialize path for results
-    meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
-    fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
+    #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
+    #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
+    name = mesh.meshFile.name
+    meshResult = '/sims/' + name + '.out.vtk'
+    fluenceResult = '/sims/' + name + '.phi_v.txt'
     
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')

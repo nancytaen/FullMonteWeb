@@ -10,6 +10,7 @@
         <tr>
             <th>Name</th>
             <th>Size</th>
+            <th>Description</th>
         </tr>
     </thead>
     <tbody>
@@ -17,6 +18,7 @@
         <tr>
             <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
             <td>{{ preset.presetMesh.size|filesizeformat }}</td>
+            <td>{{ preset.layerDesc|linebreaks }}</td>
         </tr>
         {% empty %}
         <tr>
@@ -34,15 +36,19 @@
     </b>
     <br/>
     <br/>
-    
-    <form action="" method="post">
-        {% csrf_token %}
-        <p><input type="submit" name="reset" value="Reset"></p>
-            
-    </form>
 </div>
 
 <br/>
+
+<button id='advanced'>Developer Options</button>
+
+<div id='advancedOption'>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <br/>
+    <p><input type="submit" name="reset" value="Delete All Preset Meshes" onclick="return confirm('Are you sure?');"></p>
+</form>
 
 <h3>Upload preset mesh</h3>
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
@@ -56,12 +62,20 @@
                     {{ form.presetMesh }}
                 </td>
             </tr>
+            <tr>
+                <th>{{ form.layerDesc.label_tag }}</th>
+                <td>
+                    {{ form.layerDesc }}
+                </td>
+            </tr>
         </table>
     </div>
     
     <p><br/><input type="submit" value="Submit"></p>
         
 </form>
+
+</div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
@@ -92,6 +106,14 @@
         
         return true;
     }
+</script>
+
+<script>
+    $(document).ready(function(){
+                      $("#advanced").click(function(){
+                                           $("#advancedOption").toggle();
+                                           });
+                      });
 </script>
 
 {% endblock %}

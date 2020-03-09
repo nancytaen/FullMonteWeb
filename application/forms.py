@@ -20,9 +20,10 @@ class tclInputForm(forms.ModelForm):
 class presetForm(forms.ModelForm):
     class Meta:
         model = preset
-        fields = ('presetMesh', )
+        fields = ('presetMesh', 'layerDesc')
 
 class materialSet(forms.Form):
+    layer = forms.CharField(label='Layer', required = False, max_length=255)
     custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
@@ -37,13 +38,14 @@ class materialSet(forms.Form):
 
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
-                                                            ('PencilBeam','PencilBeam'),
-                                                            ('Volume','Volume'),
-                                                            ('Ball','Ball'),
-                                                            ('Line','Line'),
-                                                            ('Fiber','Fiber'),
-                                                            ('Tetraface','Tetraface'),
-                                                            ('Composite','Composite')))
+                                                          #('PencilBeam','PencilBeam'),
+                                                          #('Volume','Volume'),
+                                                          #('Ball','Ball'),
+                                                          #('Line','Line'),
+                                                          #('Fiber','Fiber'),
+                                                          #('Tetraface','Tetraface'),
+                                                          #('Composite','Composite')
+                                                          ))
     # for Point
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
