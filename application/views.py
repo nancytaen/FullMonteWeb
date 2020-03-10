@@ -205,7 +205,7 @@ def fmSimulatorSource(request):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             #client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
-            ########client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
+            client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
 
 
             #send file to savi
