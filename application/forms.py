@@ -53,25 +53,25 @@ class lightSource(forms.Form):
                                                           #('Composite','Composite')
                                                           ))
     # for Point
-    xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}))
-    yPos = forms.FloatField(label='Y Position', widget=forms.TextInput(attrs={'placeholder': 'y'}))
-    zPos = forms.FloatField(label='Z Position', widget=forms.TextInput(attrs={'placeholder': 'z'}))
+    xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos = forms.FloatField(label='Y Position', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos = forms.FloatField(label='Z Position', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
 
     # for Pencil Beam (Position uses xyz from point)
-    xDir = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}))
-    yDir = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}))
-    zDir = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}))
+    xDir = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yDir = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zDir = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
 
     # for Volume
-    vElement = forms.IntegerField(label='V Element ID')
+    vElement = forms.IntegerField(label='V Element ID', required=False)
 
     # for Ball (center uses xyz from point)
-    rad = forms.FloatField(label='Radius')
+    rad = forms.FloatField(label='Radius', required=False)
 
     # for Line
 
 
-    power = forms.IntegerField(label='Power')
+    power = forms.IntegerField(label='Power', required=False)
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):
