@@ -7,12 +7,12 @@ import os
 port = int(os.environ.get("PORT", 4000))
 
 def visualizer():
-
+    print("*")
     with sshtunnel.open_tunnel(
         ("142.1.145.194", 9993),
         ssh_username="Capstone",
         ssh_password="pro929",
-        remote_bind_address=('0.0.0.0', port),
+        remote_bind_address=('fullmonte.herokuapp.com', port),
         local_bind_address=('', 8080)
         ) as tunnel:
 
