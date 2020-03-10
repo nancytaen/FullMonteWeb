@@ -21,38 +21,6 @@
                 <!-- Point Source Type -->
                 <tbody id="Point" style="display: none">
                     <tr>
-                        <th>{{ form.xPos.label_tag }}</th>
-                        <td>
-                            {{ form.xPos.errors }}
-                            {{ form.xPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ form.yPos.label_tag }}</th>
-                        <td>
-                            {{ form.yPos.errors }}
-                            {{ form.yPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ form.zPos.label_tag }}</th>
-                        <td>
-                            {{ form.zPos.errors }}
-                            {{ form.zPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ form.power.label_tag }}</th>
-                        <td>
-                            {{ form.power.errors }}
-                            {{ form.power }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Point Source Type -->
-                <!-- PencilBeam Source Type -->
-                <tbody id="PencilBeam" style="display:none">
-                    <tr>
                         <th><label>Position</label></th>
                         <td>
                             {{ form.xPos.errors }}
@@ -63,6 +31,10 @@
                             {{ form.zPos }}
                         </td>
                     </tr>
+                </tbody>
+                <!-- Point Source Type -->
+                <!-- PencilBeam Source Type -->
+                <tbody id="PencilBeam" style="display:none">
                     <tr>
                         <th><label>Direction</label></th>
                         <td>
@@ -74,29 +46,15 @@
                             {{ form.zDir }}
                         </td>
                     </tr>
-                    <tr>
-                        <th>{{ form.power.label_tag }}</th>
-                        <td>
-                            {{ form.power.errors }}
-                            {{ form.power }}
-                        </td>
-                    </tr>
                 </tbody>
                 <!-- PencilBeam Source Type -->
                 <!-- Volume Source Type -->
                 <tbody id="Volume" style="display: none">
                     <tr>
-                        <th>{{ form.vElement.label_tag }}</th>
+                        <th><label>Volume Element ID</label></th>
                         <td>
                             {{ form.vElement.errors }}
                             {{ form.vElement }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ form.power.label_tag }}</th>
-                        <td>
-                            {{ form.power.errors }}
-                            {{ form.power }}
                         </td>
                     </tr>
                 </tbody>
@@ -104,30 +62,21 @@
                 <!-- Ball Source Type -->
                 <tbody id="Ball" style="display: none">
                     <tr>
-                        <th><label>Center Position</label></th>
-                        <td>
-                            {{ form.xPos.errors }}
-                            {{ form.xPos }}
-                            {{ form.yPos }}
-                            {{ form.zPos }}
-                        </td>
-                    </tr>
-                    <tr>
                         <th>{{ form.rad.label_tag }}</th>
                         <td>
                             {{ form.rad.errors }}
                             {{ form.rad }}
                         </td>
                     </tr>
-                    <tr>
-                        <th>{{ form.power.label_tag }}</th>
-                        <td>
-                            {{ form.power.errors }}
-                            {{ form.power }}
-                        </td>
-                    </tr>
                 </tbody>
                 <!-- Ball Source Type -->
+                <tr>
+                    <th>{{ form.power.label_tag }}</th>
+                    <td>
+                        {{ form.power.errors }}
+                        {{ form.power }}
+                    </td>
+                </tr>
             </table>
         {% endfor %}
         <hr>
@@ -148,38 +97,6 @@
                 <!-- Point Source Type -->
                 <tbody id="Point2" style="display: none">
                     <tr>
-                        <th>{{ formset2.empty_form.xPos.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.xPos.errors }}
-                            {{ formset2.empty_form.xPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.yPos.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.yPos.errors }}
-                            {{ formset2.empty_form.yPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.zPos.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.zPos.errors }}
-                            {{ formset2.empty_form.zPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.power.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.power.errors }}
-                            {{ formset2.empty_form.power }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Point Source Type -->
-                <!-- PencilBeam Source Type -->
-                <tbody id="PencilBeam2" style="display:none">
-                    <tr>
                         <th><label>Position</label></th>
                         <td>
                             {{ formset2.empty_form.xPos.errors }}
@@ -190,6 +107,10 @@
                             {{ formset2.empty_form.zPos }}
                         </td>
                     </tr>
+                </tbody>
+                <!-- Point Source Type -->
+                <!-- PencilBeam Source Type -->
+                <tbody id="PencilBeam2" style="display:none">
                     <tr>
                         <th><label>Direction</label></th>
                         <td>
@@ -199,13 +120,6 @@
                             {{ formset2.empty_form.xDir }}
                             {{ formset2.empty_form.yDir }}
                             {{ formset2.empty_form.zDir }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.power.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.power.errors }}
-                            {{ formset2.empty_form.power }}
                         </td>
                     </tr>
                 </tbody>
@@ -219,42 +133,26 @@
                             {{ formset2.empty_form.vElement }}
                         </td>
                     </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.power.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.power.errors }}
-                            {{ formset2.empty_form.power }}
-                        </td>
-                    </tr>
                 </tbody>
                 <!-- Volume Source Type -->
                 <!-- Ball Source Type -->
                 <tbody id="Ball2" style="display: none">
                     <tr>
-                        <th><label>Center Position</label></th>
-                        <td>
-                            {{ formset2.empty_form.xPos.errors }}
-                            {{ formset2.empty_form.xPos }}
-                            {{ formset2.empty_form.yPos }}
-                            {{ formset2.empty_form.zPos }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.rad.label_tag }}</th>
+                        <th><label>Volume Element ID</label></th>
                         <td>
                             {{ formset2.empty_form.rad.errors }}
                             {{ formset2.empty_form.rad }}
                         </td>
                     </tr>
-                    <tr>
-                        <th>{{ formset2.empty_form.power.label_tag }}</th>
-                        <td>
-                            {{ formset2.empty_form.power.errors }}
-                            {{ formset2.empty_form.power }}
-                        </td>
-                    </tr>
                 </tbody>
                 <!-- Ball Source Type -->
+                <tr>
+                    <th>{{ formset2.empty_form.power.label_tag }}</th>
+                    <td>
+                        {{ formset2.empty_form.power.errors }}
+                        {{ formset2.empty_form.power }}
+                    </td>
+                </tr>
             </table>
             <hr>
         </div>
@@ -271,6 +169,32 @@
                         var form_idx = $('#id_form-TOTAL_FORMS').val();
                         $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                         $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                        if ('#id_form-' + form_idx + '-sourceType'){
+                            $('#id_form-' + form_idx + '-sourceType').on('change', function () {
+                                                          $("#Point2").hide()
+                                                          $("#PencilBeam2").hide()
+                                                          $("#Volume2").hide()
+                                                          $("#Ball2").hide()
+                                                          var selection = $(this).val();
+                                                          switch (selection) {
+                                                            case "Point":
+                                                                $("#Point2").show()
+                                                            break;
+                                                            case "PencilBeam":
+                                                                $("#Point2").show()
+                                                                $("#PencilBeam2").show()
+                                                            break;
+                                                            case "Volume":
+                                                                $("#Volume2").show()
+                                                            break;
+                                                            case "Ball":
+                                                                $("#Point2").show()
+                                                                $("#Ball2").show()
+                                                            break;
+                                                            default:
+                                                          }
+                                                          });
+                        }
                         });
     $('#remove_row').click(function() {
                            var form_idx = $('#id_form-TOTAL_FORMS').val();
@@ -300,36 +224,15 @@
                 $("#Point").show()
                 break;
             case "PencilBeam":
+                $("#Point").show()
                 $("#PencilBeam").show()
                 break;
             case "Volume":
                 $("#Volume").show()
                 break;
             case "Ball":
+                $("#Point").show()
                 $("#Ball").show()
-                break;
-            default:
-        }
-    });
-
-    $('#id_form-1-sourceType').on('change', function () {
-        $("#Point2").hide()
-        $("#PencilBeam2").hide()
-        $("#Volume2").hide()
-        $("#Ball2").hide()
-        var selection = $(this).val();
-        switch (selection) {
-            case "Point":
-                $("#Point2").show()
-                break;
-            case "PencilBeam":
-                $("#PencilBeam2").show()
-                break;
-            case "Volume":
-                $("#Volume2").show()
-                break;
-            case "Ball":
-                $("#Ball2").show()
                 break;
             default:
         }
