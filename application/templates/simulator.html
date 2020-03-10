@@ -31,6 +31,10 @@
         {{ form.kernelType.label_tag }}
         {{ form.kernelType.errors }}
         {{ form.kernelType }}
+        <br/>
+        {{ form.packetCount.label_tag }}
+        {{ form.packetCount.errors }}
+        {{ form.packetCount }}
         </br>
         <a href="{% url 'kernel_info' %}">
             Click here for more info about the kernel type.

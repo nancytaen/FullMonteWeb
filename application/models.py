@@ -7,6 +7,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class tclInput(models.Model):
     meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
+    packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
 
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())

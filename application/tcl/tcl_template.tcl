@@ -1,6 +1,6 @@
 package require FullMonte
 
-set fn "/sims/183test21.mesh_bPZXlpU.vtk"
+set fn "/sims/183test21.mesh_jYPfa5m.vtk"
 
 VTKMeshReader R
      R filename $fn
@@ -10,71 +10,21 @@ set M [R mesh]
 
 MaterialSet MS
 
-Material air
-     air     scatteringCoeff     0.0
-     air     absorptionCoeff     0.0
-     air     refractiveIndex     1.0
-     air     anisotropy     0.0
+Material adf
+     adf     scatteringCoeff     1.0
+     adf     absorptionCoeff     1.0
+     adf     refractiveIndex     1.0
+     adf     anisotropy     1.0
 
-Material tongue
-     tongue     scatteringCoeff     83.3
-     tongue     absorptionCoeff     0.95
-     tongue     refractiveIndex     1.37
-     tongue     anisotropy     0.95
+MS exterior adf
 
-Material larynx
-     larynx     scatteringCoeff     15.0
-     larynx     absorptionCoeff     0.55
-     larynx     refractiveIndex     1.36
-     larynx     anisotropy     0.55
-
-MS exterior air
-
-Material teeth
-     teeth     scatteringCoeff     60.0
-     teeth     absorptionCoeff     0.99
-     teeth     refractiveIndex     1.48
-     teeth     anisotropy     0.99
-
-Material bone
-     bone     scatteringCoeff     100.0
-     bone     absorptionCoeff     0.3
-     bone     refractiveIndex     1.56
-     bone     anisotropy     0.3
-
-Material surroundingtissues
-     surroundingtissues     scatteringCoeff     10.0
-     surroundingtissues     absorptionCoeff     1.49
-     surroundingtissues     refractiveIndex     1.35
-     surroundingtissues     anisotropy     1.49
-
-Material subcutaneousfat
-     subcutaneousfat     scatteringCoeff     30.0
-     subcutaneousfat     absorptionCoeff     0.2
-     subcutaneousfat     refractiveIndex     1.32
-     subcutaneousfat     anisotropy     0.2
-
-Material skin
-     skin     scatteringCoeff     187.0
-     skin     absorptionCoeff     2.0
-     skin     refractiveIndex     1.38
-     skin     anisotropy     2.0
-
-MS exterior air
-MS append tongue
-MS append larynx
-MS append tumour
-MS append teeth
-MS append bone
-MS append surroundingtissues
-MS append subcutaneousfat
-MS append skin
-
-Point P1
-     P1 position "7.9683 108.2337 -45.4809"
+PencilBeam PB1
+     PB1 position "None None None"
+     PB1 direction "1.0 1.0 1.0"
+     PB1 power 1
 
 TetraSVKernel k
-     k packetCount 100000
+     k packetCount 1000000
      k source P1
      k geometry $M
      k materials MS
@@ -92,12 +42,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/sims/183test21.mesh_bPZXlpU.out.vtk"
+     W filename "/sims/183test21.mesh_jYPfa5m.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/sims/183test21.mesh_bPZXlpU.phi_v.txt"
+     TW filename "/sims/183test21.mesh_jYPfa5m.phi_v.txt"
      TW source [EF result]
      TW write

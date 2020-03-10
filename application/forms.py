@@ -9,7 +9,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'kernelType')
+        fields = ('meshFile', 'kernelType', 'packetCount')
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
                          ('TetraVolumeKernel','TetraVolumeKernel'),
@@ -17,6 +17,12 @@ class tclInputForm(forms.ModelForm):
         widgets = {
             'kernelType': forms.Select(choices=kernel_choices),
         }
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial', {})
+        initial['packetCount'] = 1000000
+        kwargs['initial'] = initial
+        super(tclInputForm, self).__init__(*args, **kwargs)
 
 class presetForm(forms.ModelForm):
     class Meta:
@@ -71,7 +77,7 @@ class lightSource(forms.Form):
     # for Line
 
 
-    power = forms.IntegerField(label='Power', required=False)
+    power = forms.IntegerField(label='Power', required=False, initial=1)
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):

@@ -10,6 +10,7 @@ def tclGenerator(session, mesh):
     #initialize session inputs
     indent = '     '
     kernelType = session['kernelType']
+    packetCount = session['packetCount']
     material = session['material']
     scatteringCoeff = session['scatteringCoeff']
     absorptionCoeff = session['absorptionCoeff']
@@ -19,6 +20,11 @@ def tclGenerator(session, mesh):
     xPos = session['xPos']
     yPos = session['yPos']
     zPos = session['zPos']
+    xDir = session['xDir']
+    yDir = session['yDir']
+    zDir = session['zDir']
+    vElement = session['vElement']
+    rad = session['rad']
     power = session['power']
     
     #initialize path for copying tcl template
@@ -72,15 +78,39 @@ def tclGenerator(session, mesh):
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z in zip(sourceType, xPos, yPos, zPos):
-        f.write(st + ' P' + str(index) + '\n')
-        line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n\n'
-        f.write(indent + line)
+    for st, x, y, z, xD, yD, zD, vE, ra, po in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power):
+        if st == 'Point':
+            f.write(st + ' P' + str(index) + '\n')
+            line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'P' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+        if st == 'PencilBeam':
+            f.write(st + ' PB' + str(index) + '\n')
+            line = 'PB' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'PB' + str(index) + ' direction "' + str(xD)+ ' ' + str(yD) + ' ' + str(zD) + '"\n'
+            line3 = 'PB' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+        if st == 'Volume':
+            f.write(st + ' V' + str(index) + '\n')
+            line = 'V' + str(index) + ' elementID ' + str(vE) + '\n'
+            line2 = 'V' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+        if st == 'Ball':
+            f.write(st + ' B' + str(index) + '\n')
+            line = 'B' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'B' + str(index) + ' radius ' + str(ra) + '\n'
+            line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
         index += 1
 
     #append kernel to tcl script
     f.write(kernelType + ' k\n')
-    f.write(indent + 'k packetCount 100000\n')
+    f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
     f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
     f.write(indent + 'k materials MS\n\n')

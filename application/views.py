@@ -65,6 +65,7 @@ def fmSimulator(request):
             form.save()
 
             request.session['kernelType'] = form.cleaned_data['kernelType']
+            request.session['packetCount'] = form.cleaned_data['packetCount']
 
             return HttpResponseRedirect('/application/simulator_material')
 
@@ -168,6 +169,11 @@ def fmSimulatorSource(request):
             request.session['xPos'] = []
             request.session['yPos'] = []
             request.session['zPos'] = []
+            request.session['xDir'] = []
+            request.session['yDir'] = []
+            request.session['zDir'] = []
+            request.session['vElement'] = []
+            request.session['rad'] = []
             request.session['power'] = []
             
             for form in formset2:
@@ -176,6 +182,11 @@ def fmSimulatorSource(request):
                 request.session['xPos'].append(form.cleaned_data['xPos'])
                 request.session['yPos'].append(form.cleaned_data['yPos'])
                 request.session['zPos'].append(form.cleaned_data['zPos'])
+                request.session['xDir'].append(form.cleaned_data['xDir'])
+                request.session['yDir'].append(form.cleaned_data['yDir'])
+                request.session['zDir'].append(form.cleaned_data['zDir'])
+                request.session['vElement'].append(form.cleaned_data['vElement'])
+                request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
             
             mesh = tclInput.objects.latest('id')
