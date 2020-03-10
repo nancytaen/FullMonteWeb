@@ -2,8 +2,6 @@ from django.db import models
 from application.storage_backends import *
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-# Create your models here.
-
 class tclInput(models.Model):
     meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
