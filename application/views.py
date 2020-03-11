@@ -375,24 +375,27 @@ def tclViewer(request):
         if 'download_output' in request.POST:
             #print(":)")
             
-            #setup FTP client
+            # setup FTP client
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
             ftp_client = client.open_sftp()
                     
-            #file names
-            #mesh = tclInput.objects.latest('id')
-            #meshName = mesh.meshFile.name[:-4]
-            #outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
-            outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
-            dest = "183test21.mesh_lcIjGkg.out.vtk"
+            # VTK and fluence file names and paths
+            mesh = tclInput.objects.latest('id')
+            meshName = mesh.meshFile.name[:-4]
+            outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
+            outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
+            destPath = os.path.expanduser("~/Downloads")
+            destVtk = destPath + "/" + meshName + ".out.vtk"
+            destFlu = destPath + "/" + meshName + ".phi_v.txt"
             
-            print(outVtk)
-            print(dest)
+            # test
+            #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
             
-            #retrieve from SAVI
-            ftp_client.get(outVtk, dest)
+            # retrieve from SAVI
+            ftp_client.get(outVtk, destVtk)
+            ftp_client.get(outVtk, destFlu)
             
             ftp_client.close()
 
