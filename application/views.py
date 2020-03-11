@@ -358,8 +358,8 @@ def fmVisualization(request):
     return render(request, "visualization.html")
     # return render(request, "visualization.html", context)
 
-# page for viewing generated TCL scripts
-def tclViewer(request):
+# page for viewing and downloading files
+def downloadOutput(request):
     meshes = tclInput.objects.all()
     scripts = tclScript.objects.all()
 
@@ -399,7 +399,7 @@ def tclViewer(request):
             
             ftp_client.close()
 
-    return render(request, "tcl_viewer.html", context)
+    return render(request, "download_output.html", context)
 
 # page for diplaying info about kernel type
 def kernelInfo(request):

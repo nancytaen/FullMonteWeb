@@ -30,8 +30,8 @@ urlpatterns = [
     # /application/about
     path('about', views.about, name='about'),
 
-    # /application/tcl_viewer
-    path('tcl_viewer', views.tclViewer, name='tcl_viewer'),
+    # /application/download_output
+    path('download_output', views.downloadOutput, name='download_output'),
 
     # /application/kernel_info
     path('kernel_info', views.kernelInfo, name='kernel_info'),
