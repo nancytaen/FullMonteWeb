@@ -382,6 +382,7 @@ def downloadOutput(request):
             ftp_client = client.open_sftp()
                     
             # VTK and fluence file names and paths
+            '''
             mesh = tclInput.objects.latest('id')
             meshName = mesh.meshFile.name[:-4]
             outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
@@ -389,13 +390,17 @@ def downloadOutput(request):
             destPath = os.path.expanduser("~/Downloads")
             destVtk = destPath + "/" + meshName + ".out.vtk"
             destFlu = destPath + "/" + meshName + ".phi_v.txt"
+            destVtk = "application/temp/" + meshName + ".out.vtk"
+            destFlu = "application/temp/" + meshName + ".phi_v.txt"
+            '''
             
             # test
-            #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
+            destVtk = "application/temp/183test21.mesh_lcIjGkg.out.vtk"
+            outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
             
             # retrieve from SAVI
             ftp_client.get(outVtk, destVtk)
-            ftp_client.get(outVtk, destFlu)
+            #ftp_client.get(outFlu, destFlu)
             
             ftp_client.close()
 
