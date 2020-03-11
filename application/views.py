@@ -406,7 +406,8 @@ def downloadOutput(request):
                 new_output.save()
                 
             finally:
-                remote_file.close()
+                remote_vtk_file.close()
+                remote_flu_file.close()
             
             ftp_client.close()
 
