@@ -59,8 +59,30 @@
     <table class='no_error'>
         <form action="" method="post">
             {% csrf_token %}
-            <p><input type="submit" name="download_output" value="Download Output" onclick="return confirm('This will download to your local downloads folder');"></p>
+            <p><input type="submit" name="generate_output" value="Generate Output" onclick="return confirm('This will generate your output and will take a while.. hold on');"></p>
         </form>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for output in outputs %}
+            <tr>
+                <td><a href="{{ output.outputVtk.url }}" target="_blank">{{ output.outputVtk }}</a></td>
+                <td>{{ output.outputVtk.size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <td><a href="{{ output.outputFluence.url }}" target="_blank">{{ output.outputFluence }}</a></td>
+                <td>{{ output.outputFluence.size|filesizeformat }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No data.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 

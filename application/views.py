@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
+from django.core.files.base import ContentFile
 
 try:
     from shutil import copyfile
@@ -362,17 +363,20 @@ def fmVisualization(request):
 def downloadOutput(request):
     meshes = tclInput.objects.all()
     scripts = tclScript.objects.all()
+    outputs = fullmonteOutput.objects.all()
 
     context = {
         'meshes': meshes,
         'scripts': scripts,
+        'outputs': outputs,
     }
 
     if request.method == 'POST':
         if 'reset' in request.POST:
             tclScript.objects.all().delete()
             tclInput.objects.all().delete()
-        if 'download_output' in request.POST:
+            fullmonteOutput.objects.all().delete()
+        if 'generate_output' in request.POST:
             #print(":)")
             
             # setup FTP client
@@ -382,25 +386,27 @@ def downloadOutput(request):
             ftp_client = client.open_sftp()
                     
             # VTK and fluence file names and paths
-            '''
             mesh = tclInput.objects.latest('id')
             meshName = mesh.meshFile.name[:-4]
             outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
             outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
-            destPath = os.path.expanduser("~/Downloads")
-            destVtk = destPath + "/" + meshName + ".out.vtk"
-            destFlu = destPath + "/" + meshName + ".phi_v.txt"
-            destVtk = "application/temp/" + meshName + ".out.vtk"
-            destFlu = "application/temp/" + meshName + ".phi_v.txt"
-            '''
             
             # test
-            destVtk = "application/temp/183test21.mesh_lcIjGkg.out.vtk"
-            outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
+            #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
             
-            # retrieve from SAVI
-            ftp_client.get(outVtk, destVtk)
-            #ftp_client.get(outFlu, destFlu)
+            remote_vtk_file = ftp_client.open(outVtk)
+            remote_flu_file = ftp_client.open(outFlu)
+            
+            try:
+                outVtk_name = meshName + ".out.vtk"
+                outFlu_name = meshName + ".phi_v.txt"
+                new_output = fullmonteOutput()
+                new_output.outputVtk.save(outVtk_name, remote_vtk_file)
+                new_output.outputFluence.save(outFlu_name, remote_flu_file)
+                new_output.save()
+                
+            finally:
+                remote_file.close()
             
             ftp_client.close()
 
