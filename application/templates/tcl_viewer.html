@@ -54,9 +54,20 @@
 </div>
 
 <p></p>
+<h3>Downloading output files</h3>
+<div class='table'>
+    <table class='no_error'>
+        <form action="" method="post">
+            {% csrf_token %}
+            <p><input type="submit" name="download_output" value="Download Output" onclick="return confirm('This will download to your local downloads folder');"></p>
+        </form>
+    </table>
+</div>
+
+<p></p>
 <form action="" method="post">
     {% csrf_token %}
-    <p><input type="submit" value="Reset" onclick="return confirm('Are you sure?');"></p>
+    <p><input type="submit" name="reset" value="Reset" onclick="return confirm('Are you sure?');"></p>
         
 </form>
 

@@ -27,9 +27,6 @@ urlpatterns = [
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
 
-    # /application/visualization
-    path('download', views.fmDownload, name='download'),
-
     # /application/about
     path('about', views.about, name='about'),
 

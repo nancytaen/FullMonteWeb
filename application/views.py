@@ -63,7 +63,7 @@ def fmSimulator(request):
             #print(form.cleaned_data)
 
             form.save()
-
+            
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
@@ -328,6 +328,8 @@ def fmSimulatorSource(request):
                 print('... ' + line.strip('\n'))
 
             #while()
+            
+            
             client.close()
 
             return HttpResponseRedirect('/application/visualization')
@@ -356,10 +358,6 @@ def fmVisualization(request):
     return render(request, "visualization.html")
     # return render(request, "visualization.html", context)
 
-# FullMonte Download page
-def fmDownload(request):
-    return render(request, "download.html")
-
 # page for viewing generated TCL scripts
 def tclViewer(request):
     meshes = tclInput.objects.all()
@@ -371,8 +369,32 @@ def tclViewer(request):
     }
 
     if request.method == 'POST':
-        tclScript.objects.all().delete()
-        tclInput.objects.all().delete()
+        if 'reset' in request.POST:
+            tclScript.objects.all().delete()
+            tclInput.objects.all().delete()
+        if 'download_output' in request.POST:
+            #print(":)")
+            
+            #setup FTP client
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
+            ftp_client = client.open_sftp()
+                    
+            #file names
+            #mesh = tclInput.objects.latest('id')
+            #meshName = mesh.meshFile.name[:-4]
+            #outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
+            outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
+            dest = "183test21.mesh_lcIjGkg.out.vtk"
+            
+            print(outVtk)
+            print(dest)
+            
+            #retrieve from SAVI
+            ftp_client.get(outVtk, dest)
+            
+            ftp_client.close()
 
     return render(request, "tcl_viewer.html", context)
 
