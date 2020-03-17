@@ -59,13 +59,6 @@ class lightSource(forms.Form):
                                                           #('Composite','Composite')
                                                           ))
     # for Point
-<<<<<<< HEAD
-    xPos = forms.FloatField(label='X Position')
-    yPos = forms.FloatField(label='Y Position')
-    zPos = forms.FloatField(label='Z Position')
-
-    power = forms.IntegerField(label='Power')
-=======
     xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
     yPos = forms.FloatField(label='Y Position', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
     zPos = forms.FloatField(label='Z Position', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
@@ -85,7 +78,6 @@ class lightSource(forms.Form):
 
 
     power = forms.IntegerField(label='Power', required=False, initial=1)
->>>>>>> 86f9c585c801996976248ba0c2ece1bfe998f2c2
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):
