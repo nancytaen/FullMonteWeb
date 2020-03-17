@@ -50,7 +50,7 @@ class lightSource(forms.Form):
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')
-    
+
     power = forms.IntegerField(label='Power')
 
 class RequiredFormSet(BaseFormSet):

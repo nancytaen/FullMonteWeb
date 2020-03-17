@@ -1,22 +1,12 @@
 import paramiko, sys
-import sshtunnel
 from multiprocessing import Process
-import os
 
 # command = "pvpython -dr /opt/ParaView-5.7.0/share/paraview-5.7/web/visualizer/server/pvw-visualizer.py --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/ --reverse-connect-port 8000"
-port = int(os.environ.get("PORT", 4000))
 
 def visualizer():
 
-    with sshtunnel.open_tunnel(
-        ("142.1.145.194", 9993),
-        ssh_username="Capstone",
-        ssh_password="pro929",
-        remote_bind_address=('0.0.0.0',port),
-        local_bind_address=('', 8080)
-        ) as tunnel:
-
-            print("Forwarding on " + str(port))
+    while True:
+            # print("Forwarding on " + str(port))
             client = paramiko.SSHClient()
             client.load_system_host_keys()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -30,22 +20,45 @@ def visualizer():
 
             chan.exec_command(command="Visualizer --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/")
 
-            while True:  # monitoring process
-                # Reading from output streams
-                while chan.recv_ready():
-                    outdata += chan.recv(1000)
-                while chan.recv_stderr_ready():
-                    errdata += chan.recv_stderr(1000)
-                if chan.exit_status_ready():  # If completed
-                    break
+            try:
+                while True:  # monitoring process
+                    # Reading from output streams
+                    while chan.recv_ready():
+                        outdata += chan.recv(1000)
+                    if chan.recv_stderr_ready():
+                        errdata += chan.recv_stderr(1000)
+                    if chan.exit_status_ready():  # If completed
+                        break
 
-            print(outdata)
-            print(errdata)
-            retcode = chan.recv_exit_status()
-            ssh_transp.close()
+                print(outdata)
+                print(errdata)
 
-def main():
-    visualizer()
+            finally:
+                retcode = chan.recv_exit_status()
+                ssh_transp.close()
+                client.close()
+                return(retcode)
+            #
+            # except errExcept:
+            #     while chan.recv_stderr_ready():
+            #
+            #     retcode = chan.recv_exit_status()
+            #     ssh_transp.close()
+            #     client.close()
+            #
+            #     print("Error encountered on remote server. Error message below:")
+            #     print(errdata)
+
+                # outData2 = b''
+                #
+                # chan.exec_command(command="sudo lsof -i:8080")
+                #
+                # outData2 += chan.recv(1000)
+                # print(outData2)
+                #
+
+                # extract PID from error status message
+
 
 if __name__ == "__main__":
-    main()
+    visualizer()

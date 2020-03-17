@@ -8,10 +8,15 @@
 def gettext_noop(s):
     return s
 
+print("Executing main settings.py")
 
 ####################
 # CORE             #
 ####################
+#
+# # Default routing
+# ASGI_APPLICATION = "application.routing.application"
+
 
 DEBUG = True
 
