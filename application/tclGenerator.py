@@ -10,6 +10,7 @@ def tclGenerator(session, mesh):
     #initialize session inputs
     indent = '     '
     kernelType = session['kernelType']
+    packetCount = session['packetCount']
     material = session['material']
     scatteringCoeff = session['scatteringCoeff']
     absorptionCoeff = session['absorptionCoeff']
@@ -19,10 +20,14 @@ def tclGenerator(session, mesh):
     xPos = session['xPos']
     yPos = session['yPos']
     zPos = session['zPos']
+    xDir = session['xDir']
+    yDir = session['yDir']
+    zDir = session['zDir']
+    vElement = session['vElement']
+    rad = session['rad']
     power = session['power']
     
     #initialize path for copying tcl template
-    start = datetime.now().strftime('%H%M_%m%d%Y')
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
 
@@ -51,33 +56,61 @@ def tclGenerator(session, mesh):
     f.write('MaterialSet MS\n\n')
     
     for ma, sc, ab, re, an in zip(material, scatteringCoeff, absorptionCoeff, refractiveIndex, anisotropy):
-        mat = ma.lower()
+        matLower = ma.lower()
+        mat = matLower.replace(' ','')
         f.write('Material ' + mat + '\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
         f.write(indent + mat + indent + 'refractiveIndex' + indent + str(re) + '\n')
         f.write(indent + mat + indent + 'anisotropy' + indent + str(ab) + '\n\n')
     
+    i = 0
     for ma in material:
-        mat = ma.lower()
-        if mat == 'air':
-            f.write('MS exterior air\n')
+        matLower = ma.lower()
+        mat = matLower.replace(' ','')
+        if i == 0:
+            f.write('MS exterior ' + mat + '\n')
         else:
             f.write('MS append ' + mat + '\n')
+        i += 1
 
     f.write('\n')
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z in zip(sourceType, xPos, yPos, zPos):
-        f.write(st + ' P' + str(index) + '\n')
-        line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n\n'
-        f.write(indent + line)
+    for st, x, y, z, xD, yD, zD, vE, ra, po in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power):
+        if st == 'Point':
+            f.write(st + ' P' + str(index) + '\n')
+            line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'P' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+        if st == 'PencilBeam':
+            f.write(st + ' PB' + str(index) + '\n')
+            line = 'PB' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'PB' + str(index) + ' direction "' + str(xD)+ ' ' + str(yD) + ' ' + str(zD) + '"\n'
+            line3 = 'PB' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+        if st == 'Volume':
+            f.write(st + ' V' + str(index) + '\n')
+            line = 'V' + str(index) + ' elementID ' + str(vE) + '\n'
+            line2 = 'V' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+        if st == 'Ball':
+            f.write(st + ' B' + str(index) + '\n')
+            line = 'B' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'B' + str(index) + ' radius ' + str(ra) + '\n'
+            line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
         index += 1
 
     #append kernel to tcl script
     f.write(kernelType + ' k\n')
-    f.write(indent + 'k packetCount 100000\n')
+    f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
     f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
     f.write(indent + 'k materials MS\n\n')
@@ -101,7 +134,7 @@ def tclGenerator(session, mesh):
     #initialize path for results
     #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
     #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
-    name = mesh.meshFile.name
+    name = mesh.meshFile.name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     
@@ -125,7 +158,7 @@ def tclGenerator(session, mesh):
     for line in lines:
         _temp += line.encode()
 
-    script_name = start + '.tcl'
+    script_name = name + '.tcl'
     new_script = tclScript()
     new_script.script.save(script_name, ContentFile(_temp))
     new_script.save()

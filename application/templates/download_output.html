@@ -54,9 +54,42 @@
 </div>
 
 <p></p>
+<h3>Downloading output files</h3>
+<div class='table'>
+    <table class='no_error'>
+        <form action="" method="post">
+            {% csrf_token %}
+            <p><input type="submit" name="generate_output" value="Generate Output" onclick="return confirm('This will generate your output and will take a while.. hold on');"></p>
+        </form>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for output in outputs %}
+            <tr>
+                <td><a href="{{ output.outputVtk.url }}" target="_blank">{{ output.outputVtk }}</a></td>
+                <td>{{ output.outputVtk.size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <td><a href="{{ output.outputFluence.url }}" target="_blank">{{ output.outputFluence }}</a></td>
+                <td>{{ output.outputFluence.size|filesizeformat }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No data.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p></p>
 <form action="" method="post">
     {% csrf_token %}
-    <p><input type="submit" value="Reset" onclick="return confirm('Are you sure?');"></p>
+    <p><input type="submit" name="reset" value="Reset" onclick="return confirm('Are you sure?');"></p>
         
 </form>
 

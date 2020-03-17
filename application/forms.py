@@ -4,18 +4,25 @@ from django.forms import BaseFormSet
 from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'kernelType')
-        kernel_choices = (('TetraSVKernal','TetraSVKernel'),
-                         ('TetraSurfaceKernal','TetraSurfaceKernel'),
-                         ('TetraVolumeKernal','TetraVolumeKernel'),
-                         ('TetraInternalKernal','TetraInternalKernel'))
+        fields = ('meshFile', 'kernelType', 'packetCount')
+        kernel_choices = (('TetraSVKernel','TetraSVKernel'),
+                         ('TetraSurfaceKernel','TetraSurfaceKernel'),
+                         ('TetraVolumeKernel','TetraVolumeKernel'),
+                         ('TetraInternalKernel','TetraInternalKernel'))
         widgets = {
             'kernelType': forms.Select(choices=kernel_choices),
         }
+
+    def __init__(self, *args, **kwargs):
+        initial = kwargs.get('initial', {})
+        initial['packetCount'] = 1000000
+        kwargs['initial'] = initial
+        super(tclInputForm, self).__init__(*args, **kwargs)
 
 class presetForm(forms.ModelForm):
     class Meta:
@@ -36,22 +43,49 @@ class materialSet(forms.Form):
     refractiveIndex = forms.FloatField(label='Refractive Index', min_value=1)
     anisotropy = forms.FloatField(label='Anisotropy', min_value=-1, max_value=1)
 
+class materialForm(forms.ModelForm):
+    class Meta:
+        model = Material
+        fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
+
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
-                                                          #('PencilBeam','PencilBeam'),
-                                                          #('Volume','Volume'),
-                                                          #('Ball','Ball'),
+                                                          ('PencilBeam','PencilBeam'),
+                                                          ('Volume','Volume'),
+                                                          ('Ball','Ball'),
                                                           #('Line','Line'),
                                                           #('Fiber','Fiber'),
                                                           #('Tetraface','Tetraface'),
                                                           #('Composite','Composite')
                                                           ))
     # for Point
+<<<<<<< HEAD
     xPos = forms.FloatField(label='X Position')
     yPos = forms.FloatField(label='Y Position')
     zPos = forms.FloatField(label='Z Position')
 
     power = forms.IntegerField(label='Power')
+=======
+    xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos = forms.FloatField(label='Y Position', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos = forms.FloatField(label='Z Position', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+
+    # for Pencil Beam (Position uses xyz from point)
+    xDir = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yDir = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zDir = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+
+    # for Volume
+    vElement = forms.IntegerField(label='V Element ID', required=False)
+
+    # for Ball (center uses xyz from point)
+    rad = forms.FloatField(label='Radius', required=False)
+
+    # for Line
+
+
+    power = forms.IntegerField(label='Power', required=False, initial=1)
+>>>>>>> 86f9c585c801996976248ba0c2ece1bfe998f2c2
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):

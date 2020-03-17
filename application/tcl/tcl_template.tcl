@@ -1,6 +1,6 @@
 package require FullMonte
 
-set fn "C:\Users\galen\git\fullMonteWeb\application/Colin27.mesh_0SWsDiW.vtk"
+set fn "/sims/183test21.mesh_jYPfa5m.vtk"
 
 VTKMeshReader R
      R filename $fn
@@ -10,26 +10,21 @@ set M [R mesh]
 
 MaterialSet MS
 
-Material muscle
-     muscle     scatteringCoeff     89.2
-     muscle     absorptionCoeff     1.17
-     muscle     refractiveIndex     1.37
-     muscle     anisotropy     1.17
+Material adf
+     adf     scatteringCoeff     1.0
+     adf     absorptionCoeff     1.0
+     adf     refractiveIndex     1.0
+     adf     anisotropy     1.0
 
-Material tumour
-     tumour     scatteringCoeff     9.35
-     tumour     absorptionCoeff     0.13
-     tumour     refractiveIndex     1.39
-     tumour     anisotropy     0.13
+MS exterior adf
 
-MS append muscle
-MS append tumour
+PencilBeam PB1
+     PB1 position "None None None"
+     PB1 direction "1.0 1.0 1.0"
+     PB1 power 1
 
-Volume P1
-     P1 position "2.0 4.0 -2.0"
-
-TetraSVKernal k
-     k packetCount 100000
+TetraSVKernel k
+     k packetCount 1000000
      k source P1
      k geometry $M
      k materials MS
@@ -47,12 +42,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "C:\Users\galen\git\fullMonteWeb\application/vtk/vtk_1043_02262020.out.vtk"
+     W filename "/sims/183test21.mesh_jYPfa5m.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "C:\Users\galen\git\fullMonteWeb\application/vtk/vtk_1043_02262020.phi_v.vtk"
+     TW filename "/sims/183test21.mesh_jYPfa5m.phi_v.txt"
      TW source [EF result]
      TW write
