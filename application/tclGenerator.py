@@ -62,7 +62,7 @@ def tclGenerator(session, mesh):
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
         f.write(indent + mat + indent + 'refractiveIndex' + indent + str(re) + '\n')
-        f.write(indent + mat + indent + 'anisotropy' + indent + str(ab) + '\n\n')
+        f.write(indent + mat + indent + 'anisotropy' + indent + str(an) + '\n\n')
     
     i = 0
     for ma in material:
