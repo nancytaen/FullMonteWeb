@@ -38,7 +38,7 @@ urlpatterns = [
 
     # /application/download_preset
     path('download_preset', views.downloadPreset, name='download_preset'),
-               
+
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),
 
@@ -47,13 +47,13 @@ urlpatterns = [
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
         auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     url(r'^reset/done/$', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    
+
     path('registration/accounts/signup', views.signup , name = 'signup'),
 
     path('login', views.LoginView.as_view(), name='login'),
 
     path('logout', views.LogoutView.as_view(), name='logout'),
-               
+
     url(r'^ajax_requests/', views.ajaxrequests_view, name='ajax_requests'),
 ]
 

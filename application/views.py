@@ -6,6 +6,7 @@ from .models import *
 from .forms import *
 from django.core.files.base import ContentFile
 
+# Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
     initSrc = "./application/scripts/__init__.py"
@@ -40,7 +41,6 @@ send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
 
 # homepage
 def home(request):
-
     return render(request, "home.html")
 
 # FullMonte Tutorial page
@@ -64,7 +64,7 @@ def fmSimulator(request):
             #print(form.cleaned_data)
 
             form.save()
-            
+
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
@@ -131,7 +131,7 @@ def ajaxrequests_view(request):
 # developer page for creating new preset materials
 def createPresetMaterial(request):
     presetMaterial = Material.objects.all()
-    
+
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         if 'reset' in request.POST:
@@ -139,17 +139,17 @@ def createPresetMaterial(request):
             form = materialForm(request.POST)
         else:
             form = materialForm(request.POST, request.FILES)
-            
+
             # check whether it's valid:
             if form.is_valid():
                 # process cleaned data from formsets
                 #print(form.cleaned_data)
-                
+
                 form.save()
 
     else:
         form = materialForm(request.GET)
-        
+
     context = {
         'form': form,
         'presetMaterials': presetMaterial,
@@ -161,11 +161,11 @@ def fmSimulatorSource(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
-        
+
         # check whether it's valid:
         if formset2.is_valid():
             # process cleaned data from formsets
-            
+
             request.session['sourceType'] = []
             request.session['xPos'] = []
             request.session['yPos'] = []
@@ -176,7 +176,7 @@ def fmSimulatorSource(request):
             request.session['vElement'] = []
             request.session['rad'] = []
             request.session['power'] = []
-            
+
             for form in formset2:
                 print(form.cleaned_data)
                 request.session['sourceType'].append(form.cleaned_data['sourceType'])
@@ -189,13 +189,13 @@ def fmSimulatorSource(request):
                 request.session['vElement'].append(form.cleaned_data['vElement'])
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
-            
+
             mesh = tclInput.objects.latest('id')
-            
+
             script_path = tclGenerator(request.session, mesh)
-            
+
             request.session['script_path'] = script_path
-            
+
             #print(tclInput.objects.all())
             #tclInput.objects.all().delete()
             #tclScript.objects.all().delete()
@@ -220,7 +220,7 @@ def fmSimulatorSource(request):
 
             #mesh file
             f = default_storage.open(mesh.meshFile.name)
-
+            meshFileName = mesh.meshFile.name
 
             #send files to savi server
             tclName = "/home/Capstone/docker_sims/" + mesh.meshFile.name + ".tcl"
@@ -238,11 +238,11 @@ def fmSimulatorSource(request):
             ##ls
             print("ls")
             stdin, stdout, stderr = client.exec_command('ls', get_pty=True)
-            
+
             ## run script
             print("run script")
-            
-            
+
+
             stdin, stdout, stderr = client.exec_command('sudo /opt/util/FullMonteSW_setup.sh', get_pty=True)
 
             stdin.write('pro929\n')  # Password for sudo
@@ -274,9 +274,9 @@ def fmSimulatorSource(request):
             stdin.write('exit\n')  #exit
             stdin.flush()
 
-            
+
             '''
-            
+
             channel = client.invoke_shell()
 
             out = channel.recv(9999)
@@ -304,14 +304,14 @@ def fmSimulatorSource(request):
             time.sleep(0.2)
             channel.send('tclmonte.sh ./' + mesh.meshFile.name + '.tcl' + '\n')
             #time.sleep(15)
-            
+
             test = channel.recv(9999)
             #print(test)
             channel.close
 
 
-            
-            
+
+
             ##exit
             #print("exit")
             #stdin, stdout, stderr = client.exec_command('exit', get_pty=True)
@@ -329,8 +329,8 @@ def fmSimulatorSource(request):
                 print('... ' + line.strip('\n'))
 
             #while()
-            
-            
+
+
             client.close()
 
             return HttpResponseRedirect('/application/visualization')
@@ -338,7 +338,7 @@ def fmSimulatorSource(request):
     # If this is a GET (or any other method) create the default form.
     else:
         formset2 = lightSourceSet(request.GET or None)
-        
+
     context = {
         'formset2': formset2,
     }
@@ -353,11 +353,24 @@ def fmVisualization(request):
     #
     # context = {'dvhFig': dvhFig}
 
-    proc = Process(target=visualizer)
+    meshFileName = "183test21.mesh.vtk"
+    # mesh = tclInput.objects.latest('id')
+    # meshFileName = mesh.meshFile.name
+    msg = "Using mesh " + meshFileName[:-4]
+
+    #
+    # if (meshFileName):
+    #     msg = "Using mesh " + meshFileName
+    #
+    # else:
+    #     msg = "No output mesh was found. Root folder will be loaded for visualization."
+
+    context = {'message': msg}
+
+    proc = Process(target=visualizer, args=(meshFileName,))
     proc.start()
 
-    return render(request, "visualization.html")
-    # return render(request, "visualization.html", context)
+    return render(request, "visualization.html", context)
 
 # page for viewing and downloading files
 def downloadOutput(request):
@@ -378,25 +391,25 @@ def downloadOutput(request):
             fullmonteOutput.objects.all().delete()
         if 'generate_output' in request.POST:
             #print(":)")
-            
+
             # setup FTP client
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
             ftp_client = client.open_sftp()
-                    
+
             # VTK and fluence file names and paths
             mesh = tclInput.objects.latest('id')
             meshName = mesh.meshFile.name[:-4]
             outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
             outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
-            
+
             # test
             #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
-            
+
             remote_vtk_file = ftp_client.open(outVtk)
             remote_flu_file = ftp_client.open(outFlu)
-            
+
             try:
                 outVtk_name = meshName + ".out.vtk"
                 outFlu_name = meshName + ".phi_v.txt"
@@ -404,11 +417,11 @@ def downloadOutput(request):
                 new_output.outputVtk.save(outVtk_name, remote_vtk_file)
                 new_output.outputFluence.save(outFlu_name, remote_flu_file)
                 new_output.save()
-                
+
             finally:
                 remote_vtk_file.close()
                 remote_flu_file.close()
-            
+
             ftp_client.close()
 
     return render(request, "download_output.html", context)

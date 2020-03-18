@@ -1,44 +1,53 @@
 import paramiko, sys
 from multiprocessing import Process
 
-# command = "pvpython -dr /opt/ParaView-5.7.0/share/paraview-5.7/web/visualizer/server/pvw-visualizer.py --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/ --reverse-connect-port 8000"
+# def visualizer():
+#     ph = ""
+#     visualizer(ph)
 
-def visualizer():
+def visualizer(args):
+    cmd = "Visualizer --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/"
+    fileName = args
 
-    while True:
-            # print("Forwarding on " + str(port))
-            client = paramiko.SSHClient()
-            client.load_system_host_keys()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            client.connect('142.1.145.194', port=9993, username='Capstone', password='pro929')
-            ssh_transp = client.get_transport()
+    if (fileName):
+        cmd += " --load-file " + fileName
 
-            chan = ssh_transp.open_session()
-            # chan.settimeout(3 * 60 * 60)
-            chan.setblocking(0)
-            outdata, errdata = b'',b''
+    print(cmd)
 
-            chan.exec_command(command="Visualizer --paraview /opt/ParaView-5.7.0/ --data /home/Capstone/docker_sims/")
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    client.connect('142.1.145.194', port=9993, username='Capstone', password='pro929')
+    ssh_transp = client.get_transport()
 
-            try:
-                while True:  # monitoring process
-                    # Reading from output streams
-                    while chan.recv_ready():
-                        outdata += chan.recv(1000)
-                    if chan.recv_stderr_ready():
-                        errdata += chan.recv_stderr(1000)
-                    if chan.exit_status_ready():  # If completed
-                        break
+    chan = ssh_transp.open_session()
+    # chan.settimeout(3 * 60 * 60)
+    chan.setblocking(0)
+    outdata, errdata = b'',b''
 
-                print(outdata)
-                print(errdata)
+    chan.exec_command(command=cmd)
 
-            finally:
-                retcode = chan.recv_exit_status()
-                ssh_transp.close()
-                client.close()
-                return(retcode)
-            #
+    try:
+        while True:  # monitoring process
+            # Reading from output streams
+            while chan.recv_ready():
+                outdata += chan.recv(1000)
+            if chan.recv_stderr_ready():
+                errdata += chan.recv_stderr(1000)
+            if chan.exit_status_ready():  # If completed
+                break
+
+        print(outdata)
+        print(errdata)
+
+    finally:
+        retcode = chan.recv_exit_status()
+        ssh_transp.close()
+        client.close()
+
+        print("Visualizer process exited with code " + str(retcode))
+        return(retcode)
+    #
             # except errExcept:
             #     while chan.recv_stderr_ready():
             #

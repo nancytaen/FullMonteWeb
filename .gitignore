@@ -3,6 +3,8 @@
 /application/__pycache__
 /fullMonteWeb/__pycache__
 /fullMonteWeb/.env
+/application/migrations/
+/fullMonteWeb/migrations/
 /venv/
 application/dvh_offline.py
 /application/setup_visualizer3.py
