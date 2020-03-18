@@ -353,9 +353,9 @@ def fmVisualization(request):
     #
     # context = {'dvhFig': dvhFig}
 
-    meshFileName = "183test21.mesh.vtk"
-    # mesh = tclInput.objects.latest('id')
-    # meshFileName = mesh.meshFile.name
+    # meshFileName = "183test21.mesh.vtk"
+    mesh = tclInput.objects.latest('id')
+    meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
     #
