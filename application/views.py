@@ -33,9 +33,7 @@ import time
 
 from django.conf import settings
 from django.core.mail import send_mail
-
-send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
-         ['to@example.com'], fail_silently=False)
+from django.contrib import messages
 
 # Create your views here.
 
@@ -146,6 +144,9 @@ def createPresetMaterial(request):
                 #print(form.cleaned_data)
 
                 form.save()
+                messages.success(request, 'Material added successfully, you can now see it in table below')
+                
+                return redirect("create_preset_material")
 
     else:
         form = materialForm(request.GET)
@@ -389,6 +390,7 @@ def downloadOutput(request):
             tclScript.objects.all().delete()
             tclInput.objects.all().delete()
             fullmonteOutput.objects.all().delete()
+        
         if 'generate_output' in request.POST:
             #print(":)")
 
@@ -399,16 +401,24 @@ def downloadOutput(request):
             ftp_client = client.open_sftp()
 
             # VTK and fluence file names and paths
-            mesh = tclInput.objects.latest('id')
-            meshName = mesh.meshFile.name[:-4]
-            outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
-            outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
+            try:
+                mesh = tclInput.objects.latest('id')
+                meshName = mesh.meshFile.name[:-4]
+                outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
+                outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
+            except:
+                messages.error(request, 'Error - input mesh not found')
+                return render(request, "download_output.html", context)
 
             # test
             #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
 
-            remote_vtk_file = ftp_client.open(outVtk)
-            remote_flu_file = ftp_client.open(outFlu)
+            try:
+                remote_vtk_file = ftp_client.open(outVtk)
+                remote_flu_file = ftp_client.open(outFlu)
+            except:
+                messages.error(request, 'Error - output mesh not found')
+                return render(request, "download_output.html", context)
 
             try:
                 outVtk_name = meshName + ".out.vtk"
@@ -417,12 +427,16 @@ def downloadOutput(request):
                 new_output.outputVtk.save(outVtk_name, remote_vtk_file)
                 new_output.outputFluence.save(outFlu_name, remote_flu_file)
                 new_output.save()
+            except:
+                messages.error(request, 'Error - failed to generate output mesh for downloading')
+                return render(request, "download_output.html", context)
 
             finally:
                 remote_vtk_file.close()
                 remote_flu_file.close()
 
             ftp_client.close()
+            messages.success(request, 'Successfully generated output mesh for downloading, click the files below to download')
 
     return render(request, "download_output.html", context)
 
@@ -448,6 +462,9 @@ def downloadPreset(request):
                 #print(form.cleaned_data)
 
                 form.save()
+                messages.success(request, 'Mesh added successfully, you can now see it in table below')
+                    
+                return redirect("download_preset")
 
     # If this is a GET (or any other method) create the default form.
     else:
