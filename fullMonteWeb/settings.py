@@ -55,8 +55,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'fullmonteweb@gmail.com'
-EMAIL_HOST_PASSWORD = 'capstone929!'
+EMAIL_HOST_USER = config('fullmonteuser')
+EMAIL_HOST_PASSWORD = config('fullmontepassword')
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,9 +95,9 @@ WSGI_APPLICATION = 'fullMonteWeb.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DB_NAME', 'postgres'),
+        'NAME': os.environ.get('DB_NAME', 'fullmonte_database'),
         'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASS', 'sql'),
+        'PASSWORD': os.environ.get('DB_PASS', 'admin'),
         'HOST': 'localhost',
         'PORT': '5432',
     }
