@@ -62,8 +62,15 @@ def fmTutorial(request):
 def about(request):
     return render(request, "about.html")
 
+#Please login page - when trying to access simulator
+def please_login(request):
+    return render(request, "please_login.html")
+
 # FullMonte Simulator start page
 def fmSimulator(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -93,6 +100,8 @@ def fmSimulator(request):
 
 # FullMonte Simulator material page
 def fmSimulatorMaterial(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -172,6 +181,8 @@ def createPresetMaterial(request):
 
 # FullMonte Simulator light source page
 def fmSimulatorSource(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
@@ -361,6 +372,8 @@ def fmSimulatorSource(request):
 
 # FullMonte Output page
 def fmVisualization(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
 
     # filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
     # dvhFig = dvh(filePath) # Figure in HTML string format
@@ -388,6 +401,8 @@ def fmVisualization(request):
 
 # page for viewing and downloading files
 def downloadOutput(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     meshes = tclInput.objects.all()
     scripts = tclScript.objects.all()
     outputs = fullmonteOutput.objects.all()
@@ -459,6 +474,8 @@ def kernelInfo(request):
 
 # page for downloading preset values
 def downloadPreset(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     presetObjects = preset.objects.all()
 
     # if this is a POST request we need to process the form data
@@ -535,10 +552,14 @@ def activate(request, uidb64, token):
         return HttpResponse('Activation link is invalid!')
 
 def account(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     return render(request, "account.html")
 
 #for changing passwords 
 def change_password(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():

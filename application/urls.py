@@ -61,7 +61,9 @@ urlpatterns = [
 
     path('account', views.account, name='account'),
 
-    url(r'^password/$', views.change_password, name='change_password'),
+    url(r'^change_password/$', views.change_password, name='change_password'),
+
+    path('please_login', views.please_login, name='please_login'),
 ]
 
 if settings.DEBUG:
