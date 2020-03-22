@@ -95,7 +95,7 @@
                     </td>
                 </tr>
                 <!-- Point Source Type -->
-                <tbody id="Point2" style="display: none">
+                <tbody id="temp_point" style="display: none">
                     <tr>
                         <th><label>Position</label></th>
                         <td>
@@ -110,7 +110,7 @@
                 </tbody>
                 <!-- Point Source Type -->
                 <!-- PencilBeam Source Type -->
-                <tbody id="PencilBeam2" style="display:none">
+                <tbody id="temp_pencilbeam" style="display:none">
                     <tr>
                         <th><label>Direction</label></th>
                         <td>
@@ -125,9 +125,9 @@
                 </tbody>
                 <!-- PencilBeam Source Type -->
                 <!-- Volume Source Type -->
-                <tbody id="Volume2" style="display: none">
+                <tbody id="temp_volume" style="display: none">
                     <tr>
-                        <th>{{ formset2.empty_form.vElement.label_tag }}</th>
+                        <th>Volume Element ID</th>
                         <td>
                             {{ formset2.empty_form.vElement.errors }}
                             {{ formset2.empty_form.vElement }}
@@ -136,9 +136,9 @@
                 </tbody>
                 <!-- Volume Source Type -->
                 <!-- Ball Source Type -->
-                <tbody id="Ball2" style="display: none">
+                <tbody id="temp_ball" style="display: none">
                     <tr>
-                        <th><label>Volume Element ID</label></th>
+                        <th><label>{{ formset2.empty_form.rad.label_tag }}</label></th>
                         <td>
                             {{ formset2.empty_form.rad.errors }}
                             {{ formset2.empty_form.rad }}
@@ -169,27 +169,40 @@
                         var form_idx = $('#id_form-TOTAL_FORMS').val();
                         $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
                         $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                        var x_point = document.getElementById("temp_point");
+                        var x_pencilbeam = document.getElementById("temp_pencilbeam");
+                        var x_volume = document.getElementById("temp_volume");
+                        var x_ball = document.getElementById("temp_ball");
+                        x_point.id = "Point" + String(form_idx)
+                        x_pencilbeam.id = "PencilBeam" + String(form_idx)
+                        x_volume.id = "Volume" + String(form_idx)
+                        x_ball.id = "Ball" + String(form_idx)
                         if ('#id_form-' + form_idx + '-sourceType'){
                             $('#id_form-' + form_idx + '-sourceType').on('change', function () {
-                                                          $("#Point2").hide()
-                                                          $("#PencilBeam2").hide()
-                                                          $("#Volume2").hide()
-                                                          $("#Ball2").hide()
+                                                        var point = "#Point" + String(form_idx)
+                                                        var pencilbeam = "#PencilBeam" + String(form_idx)
+                                                        var volume = "#Volume" + String(form_idx)
+                                                        var ball = "#Ball" + String(form_idx)
+                                                        
+                                                          $(point).hide()
+                                                          $(pencilbeam).hide()
+                                                          $(volume).hide()
+                                                          $(ball).hide()
                                                           var selection = $(this).val();
                                                           switch (selection) {
                                                             case "Point":
-                                                                $("#Point2").show()
+                                                                $(point).show()
                                                             break;
                                                             case "PencilBeam":
-                                                                $("#Point2").show()
-                                                                $("#PencilBeam2").show()
+                                                                $(point).show()
+                                                                $(pencilbeam).show()
                                                             break;
                                                             case "Volume":
-                                                                $("#Volume2").show()
+                                                                $(volume).show()
                                                             break;
                                                             case "Ball":
-                                                                $("#Point2").show()
-                                                                $("#Ball2").show()
+                                                                $(point).show()
+                                                                $(ball).show()
                                                             break;
                                                             default:
                                                           }

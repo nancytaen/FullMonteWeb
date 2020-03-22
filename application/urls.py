@@ -55,6 +55,15 @@ urlpatterns = [
     path('logout', views.LogoutView.as_view(), name='logout'),
 
     url(r'^ajax_requests/', views.ajaxrequests_view, name='ajax_requests'),
+
+    url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        views.activate, name='activate'),
+
+    path('account', views.account, name='account'),
+
+    url(r'^change_password/$', views.change_password, name='change_password'),
+
+    path('please_login', views.please_login, name='please_login'),
 ]
 
 if settings.DEBUG:

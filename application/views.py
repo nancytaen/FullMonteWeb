@@ -21,9 +21,10 @@ from .setup_visualizer import visualizer
 from application.tclGenerator import *
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.views import LogoutView
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
-from multiprocessing import Process
 import paramiko
 from django.db import models
 from application.storage_backends import *
@@ -31,11 +32,21 @@ from django.core.files.storage import default_storage
 from django.core import serializers
 import time
 
+from .tokens import account_activation_token
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+
 from django.conf import settings
 from django.core.mail import send_mail
+from django.contrib import messages
+from django.core.mail import EmailMessage
 
-send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
-         ['to@example.com'], fail_silently=False)
+from decouple import config
+
+#send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
+ #        ['to@example.com'], fail_silently=False)
 
 # Create your views here.
 
@@ -51,8 +62,15 @@ def fmTutorial(request):
 def about(request):
     return render(request, "about.html")
 
+#Please login page - when trying to access simulator
+def please_login(request):
+    return render(request, "please_login.html")
+
 # FullMonte Simulator start page
 def fmSimulator(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -82,6 +100,8 @@ def fmSimulator(request):
 
 # FullMonte Simulator material page
 def fmSimulatorMaterial(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -146,6 +166,9 @@ def createPresetMaterial(request):
                 #print(form.cleaned_data)
 
                 form.save()
+                messages.success(request, 'Material added successfully, you can now see it in table below')
+                
+                return redirect("create_preset_material")
 
     else:
         form = materialForm(request.GET)
@@ -158,6 +181,8 @@ def createPresetMaterial(request):
 
 # FullMonte Simulator light source page
 def fmSimulatorSource(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
@@ -347,6 +372,8 @@ def fmSimulatorSource(request):
 
 # FullMonte Output page
 def fmVisualization(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
 
     filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
     dvhFig = dvh(filePath) # Figure in HTML string format
@@ -374,6 +401,8 @@ def fmVisualization(request):
 
 # page for viewing and downloading files
 def downloadOutput(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     meshes = tclInput.objects.all()
     scripts = tclScript.objects.all()
     outputs = fullmonteOutput.objects.all()
@@ -389,6 +418,7 @@ def downloadOutput(request):
             tclScript.objects.all().delete()
             tclInput.objects.all().delete()
             fullmonteOutput.objects.all().delete()
+        
         if 'generate_output' in request.POST:
             #print(":)")
 
@@ -399,16 +429,24 @@ def downloadOutput(request):
             ftp_client = client.open_sftp()
 
             # VTK and fluence file names and paths
-            mesh = tclInput.objects.latest('id')
-            meshName = mesh.meshFile.name[:-4]
-            outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
-            outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
+            try:
+                mesh = tclInput.objects.latest('id')
+                meshName = mesh.meshFile.name[:-4]
+                outVtk = "/home/Capstone/docker_sims/" + meshName + ".out.vtk"
+                outFlu = "/home/Capstone/docker_sims/" + meshName + ".phi_v.txt"
+            except:
+                messages.error(request, 'Error - input mesh not found')
+                return render(request, "download_output.html", context)
 
             # test
             #outVtk = "/home/Capstone/docker_sims/183test21.mesh_lcIjGkg.out.vtk"
 
-            remote_vtk_file = ftp_client.open(outVtk)
-            remote_flu_file = ftp_client.open(outFlu)
+            try:
+                remote_vtk_file = ftp_client.open(outVtk)
+                remote_flu_file = ftp_client.open(outFlu)
+            except:
+                messages.error(request, 'Error - output mesh not found')
+                return render(request, "download_output.html", context)
 
             try:
                 outVtk_name = meshName + ".out.vtk"
@@ -417,12 +455,16 @@ def downloadOutput(request):
                 new_output.outputVtk.save(outVtk_name, remote_vtk_file)
                 new_output.outputFluence.save(outFlu_name, remote_flu_file)
                 new_output.save()
+            except:
+                messages.error(request, 'Error - failed to generate output mesh for downloading')
+                return render(request, "download_output.html", context)
 
             finally:
                 remote_vtk_file.close()
                 remote_flu_file.close()
 
             ftp_client.close()
+            messages.success(request, 'Successfully generated output mesh for downloading, click the files below to download')
 
     return render(request, "download_output.html", context)
 
@@ -432,6 +474,8 @@ def kernelInfo(request):
 
 # page for downloading preset values
 def downloadPreset(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
     presetObjects = preset.objects.all()
 
     # if this is a POST request we need to process the form data
@@ -448,6 +492,9 @@ def downloadPreset(request):
                 #print(form.cleaned_data)
 
                 form.save()
+                messages.success(request, 'Mesh added successfully, you can now see it in table below')
+                    
+                return redirect("download_preset")
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -464,12 +511,66 @@ def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('home')
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            #username = form.cleaned_data.get('username')
+            #raw_password = form.cleaned_data.get('password1')
+            #user = authenticate(username=username, password=raw_password)
+            current_site = get_current_site(request)
+            mail_subject = 'Activate your FullMonte account.'
+            message = render_to_string('acc_active_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid':urlsafe_base64_encode(force_bytes(user.pk)),
+                'token':account_activation_token.make_token(user),
+            })
+            to_email = form.cleaned_data.get('email')
+            email = EmailMessage(
+                        mail_subject, message, to=[to_email]
+            )
+            email.send()
+            return render(request, "account_registration.html")
+
     else:
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        login(request, user)
+        # return redirect('home')
+        return render(request, "activation_complete.html")
+    else:
+        return HttpResponse('Activation link is invalid!')
+
+def account(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+    return render(request, "account.html")
+
+#for changing passwords 
+def change_password(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully')
+            return redirect('change_password')
+        else:
+            messages.error(request, 'Please fix the shown error')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'registration/change_password.html', {
+        'form': form
+    })
