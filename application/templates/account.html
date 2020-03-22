@@ -1,0 +1,41 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <h1 style="font-size: 400%">Account info</h1>
+    {% if not request.user.is_authenticated %}
+    <diV>
+        <p>You are note currently logged in</p>
+    </diV>
+    {% endif %}
+
+    {% if request.user.is_authenticated %}
+        <div style="font-size:200%">
+            <div class= "row">
+                <div class="col-md-4 float-left">
+                    <p>Username: </p>
+                </div>
+                <div class="col-md-4 float-left">
+                    <p>{{ request.user.username }}</p>
+                </div>
+                <div class="col-md-4 float-left">
+                    
+                </div>
+            </div>
+            <div class= "row">
+                <div class="col-md-4 float-left">
+                    <p>Email Address: </p>
+                </div>
+                <div class="col-md-4 float-left">
+                    <p>{{ request.user.email }}</p>
+                </div>
+                <div class="col-md-4 float-left">
+                    
+                </div>
+            </div>
+            <div class="row">
+                <a class="btn btn-primary" href="{% url 'change_password' %}">Change Password</a>
+            </div>
+        </div>
+    {% endif %}
+    
+{% endblock %}

@@ -21,9 +21,10 @@ from .setup_visualizer import visualizer
 from application.tclGenerator import *
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.views import LogoutView
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
-from multiprocessing import Process
 import paramiko
 from django.db import models
 from application.storage_backends import *
@@ -44,8 +45,8 @@ from django.core.mail import EmailMessage
 
 from decouple import config
 
-send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
-         ['to@example.com'], fail_silently=False)
+#send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
+ #        ['to@example.com'], fail_silently=False)
 
 # Create your views here.
 
@@ -535,3 +536,20 @@ def activate(request, uidb64, token):
 
 def account(request):
     return render(request, "account.html")
+
+#for changing passwords 
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Your password has been changed successfully')
+            return redirect('change_password')
+        else:
+            messages.error(request, 'Please fix the shown error')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'registration/change_password.html', {
+        'form': form
+    })
