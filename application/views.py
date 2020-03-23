@@ -171,6 +171,11 @@ def createPresetMaterial(request):
 
                 return redirect("create_preset_material")
 
+            else:
+                messages.error(request, 'Failed to add material, material values must be within bounds')
+                    
+                return redirect("create_preset_material")
+
     else:
         form = materialForm(request.GET)
 
