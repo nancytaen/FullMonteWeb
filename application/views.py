@@ -398,7 +398,7 @@ def fmVisualization(request):
     proc = Process(target=visualizer, args=(meshFileName,))
     proc.start()
 
-    return render(request, "visualization.html", context)
+    return render(request, "visualization.html")
 
 # page for viewing and downloading files
 def downloadOutput(request):
