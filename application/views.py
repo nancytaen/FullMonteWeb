@@ -44,6 +44,7 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 
 from decouple import config
+from multiprocessing import Process
 
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
@@ -167,7 +168,7 @@ def createPresetMaterial(request):
 
                 form.save()
                 messages.success(request, 'Material added successfully, you can now see it in table below')
-                
+
                 return redirect("create_preset_material")
 
     else:
@@ -375,10 +376,10 @@ def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
-    filePath = "/visualization/Meshes/FullMonte_fluence_line.vtk"
-    dvhFig = dvh(filePath) # Figure in HTML string format
-
-    context = {'dvhFig': dvhFig}
+    # filePath = "/visualization/Meshes/183test21.out.vtk"
+    # dvhFig = dvh(filePath) # Figure in HTML string format
+    #
+    # context = {'dvhFig': dvhFig}
 
     # meshFileName = "183test21.mesh.vtk"
     mesh = tclInput.objects.latest('id')
@@ -392,7 +393,7 @@ def fmVisualization(request):
     # else:
     #     msg = "No output mesh was found. Root folder will be loaded for visualization."
 
-    context = {'message': msg}
+    #context = {'message': msg}
 
     proc = Process(target=visualizer, args=(meshFileName,))
     proc.start()
@@ -418,7 +419,7 @@ def downloadOutput(request):
             tclScript.objects.all().delete()
             tclInput.objects.all().delete()
             fullmonteOutput.objects.all().delete()
-        
+
         if 'generate_output' in request.POST:
             #print(":)")
 
@@ -493,7 +494,7 @@ def downloadPreset(request):
 
                 form.save()
                 messages.success(request, 'Mesh added successfully, you can now see it in table below')
-                    
+
                 return redirect("download_preset")
 
     # If this is a GET (or any other method) create the default form.
@@ -556,7 +557,7 @@ def account(request):
         return redirect('please_login')
     return render(request, "account.html")
 
-#for changing passwords 
+#for changing passwords
 def change_password(request):
     if not request.user.is_authenticated:
         return redirect('please_login')

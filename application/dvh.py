@@ -169,15 +169,33 @@ def dose_volume_histogram(filePath):
     # Arrays are of type numpy.ndarray
     numpyWrapper = npi.WrapDataObject( output )
 
-    #fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
-    fluenceData = numpyWrapper.CellData[1] # Assuming you know the number of the array
+    try:
+        fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
+        regionData = numpyWrapper.CellData["Region"]
 
-    #regionData = numpyWrapper.CellData["Region"]
-    regionData = numpyWrapper.CellData[0]
+        if (fluenceData.size != regionData.size):
+            print("Fluence and region data do not match")
+            return(-1)
 
-    if (fluenceData.size != regionData.size):
-        print("Fluence and region data do not match")
-        exit(-1)
+    except AttributeError:
+        print("Could not parse region or fluence data by name. Attempting to parse by index")
+
+        try:
+            regionData = numpyWrapper.CellData[0]
+            fluenceData = numpyWrapper.CellData[1] # Assuming you know the number of the array
+
+            if (fluenceData.size != regionData.size):
+                print("Fluence and region data do not match")
+                return(-1)
+
+        except IndexError:
+            print("Could not parse region or fluence data. Input mesh may not be a correctly formatted FullMonte output file.")
+            return(-1)
+
+        except:
+            print("Unidentified error occurred. Could not parse input data")
+            return(-2)
+
 
     noBins = 500
     noCells = fluenceData.size
