@@ -178,8 +178,9 @@
                         x_volume.id = "Volume" + String(form_idx)
                         x_ball.id = "Ball" + String(form_idx)
                         if ('#id_form-' + form_idx + '-sourceType'){
+                            var point = "#Point" + String(form_idx)
+                            $(point).show()
                             $('#id_form-' + form_idx + '-sourceType').on('change', function () {
-                                                        var point = "#Point" + String(form_idx)
                                                         var pencilbeam = "#PencilBeam" + String(form_idx)
                                                         var volume = "#Volume" + String(form_idx)
                                                         var ball = "#Ball" + String(form_idx)
@@ -223,7 +224,6 @@
 <script>
     $(document).ready(function () {
         $("#Point").show();
-        $("#Point2").show();
     });
 
     $('#id_form-0-sourceType').on('change', function () {
