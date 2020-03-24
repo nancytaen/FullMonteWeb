@@ -6,6 +6,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.core import mail
 from .views import *
 
 class SimpleTest(TestCase):
@@ -35,7 +36,6 @@ class SimpleTest(TestCase):
         url = reverse('signup')
         response = c.post(url, {'username': 'john', 'password1': 'Boredman1!','password2': 'Boredman1!',
             'email': 'johnsmith@test.com', 'first_name':'john', 'last_name': 'smith'})
-        response.status_code
         self.assertEqual(response.status_code, 200)
 
     #test if user cannot access blocked pages when not logged in
@@ -69,3 +69,50 @@ class SimpleTest(TestCase):
         response = change_password(request)
         #check that password = new password
         self.assertEquals(self.user.check_password("Testchange1"), True)
+
+    def test_reset_password(self):
+        c = Client()
+       
+
+        # Post request with email
+        response = c.post(reverse('password_reset'),{'email':'testuser2@test.com'})
+        # Check that an email has been sent
+        self.assertEqual(len(mail.outbox), 1)
+        #check subject line
+        self.assertEqual(mail.outbox[0].subject, 'Password Reset - FullMonte')
+
+        # get token and user ID
+        token = response.context[0]['token']
+        uid = response.context[0]['uid']
+        url = reverse('password_reset_confirm', args=(uid,token))
+        response = c.get(url, follow=True)
+        #url of where to post new password
+        url2=reverse('password_reset_confirm', args=(uid,'set-password'))
+
+        #post to the same url with our new password
+        response = c.post(url2, {'new_password1':'Testpassword1','new_password2':'Testpassword1'}, follow=True)
+        #check that user now exists with new password
+        self.assertIsNotNone(authenticate(username='testuser2',password='Testpassword1'))
+
+    def test_signup_confirmation(self):
+
+        c = Client()
+        url = reverse('signup')
+        response = c.post(url, {'username': 'john', 'password1': 'Boredman1!','password2': 'Boredman1!',
+            'email': 'johnsmith@test.com', 'first_name':'john', 'last_name': 'smith'},follow = True)
+        self.assertEqual(response.status_code, 200)
+
+        # Check that an email has been sent
+        self.assertEqual(len(mail.outbox), 1)
+        #check subject line
+        self.assertEqual(mail.outbox[0].subject, 'Activate your FullMonte account.')
+
+        # get token and user ID
+        token = response.context[0]['token']
+        uid = response.context[0]['uid']
+        
+        url = reverse('activate', args=(uid,token))
+        response = c.get(url, follow=True)
+        uid = force_text(urlsafe_base64_decode(uid))
+        user = User.objects.get(pk=uid)
+        self.assertEqual(user.is_active,True)
