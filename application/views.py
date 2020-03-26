@@ -260,54 +260,6 @@ def fmSimulatorSource(request):
             f.close()
             ftp_client.close()
 
-
-            '''
-            print("______________________________________________________________")
-            ##cd to folder
-            print("cd")
-            stdin, stdout, stderr = client.exec_command('cd docker_sims', get_pty=True)
-            ##ls
-            print("ls")
-            stdin, stdout, stderr = client.exec_command('ls', get_pty=True)
-
-            ## run script
-            print("run script")
-
-
-            stdin, stdout, stderr = client.exec_command('sudo /opt/util/FullMonteSW_setup.sh', get_pty=True)
-
-            stdin.write('pro929\n')  # Password for sudo
-            stdin.flush()
-            stdin.write('pro929\n')  #gitlab user
-            stdin.flush()
-            stdin.write('1\n')  #run as user
-            stdin.flush()
-            stdin.write('capstone929!\n')  #gitlab pw
-            stdin.flush()
-            stdin.write('cd sims\n')  #when docer opens cd to sims
-            stdin.flush()
-            stdin.write('ls\n')  #ls
-            stdin.flush()
-
-            print("\n")
-            stdin.write('stty size\n')  #ls
-            stdin.flush()
-            stdin.write('reset -w\n')  #ls
-            stdin.flush()
-            stdin.write('stty size\n')  #ls
-            stdin.flush()
-
-            stdin.write('tclmonte.sh ./Run_HeadNeck.tcl\n')  #run tcl
-            stdin.flush()
-
-            time.sleep(15)
-
-            stdin.write('exit\n')  #exit
-            stdin.flush()
-
-
-            '''
-
             channel = client.invoke_shell()
 
             out = channel.recv(9999)
@@ -572,7 +524,9 @@ def change_password(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, 'Your password has been changed successfully')
-            return redirect('change_password')
+            return render(request, 'registration/change_password.html', {
+                'form': form
+    })
         else:
             messages.error(request, 'Please fix the shown error')
     else:
