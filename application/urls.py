@@ -64,6 +64,8 @@ urlpatterns = [
     url(r'^change_password/$', views.change_password, name='change_password'),
 
     path('please_login', views.please_login, name='please_login'),
+               
+    path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
 ]
 
 if settings.DEBUG:

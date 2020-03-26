@@ -580,3 +580,8 @@ def change_password(request):
     return render(request, 'registration/change_password.html', {
         'form': form
     })
+
+# error page for 30 second timeout when uploading/generating mesh files
+# Heroku h12 timeout error
+def heroku_timeout(request):
+    return render(request, 'heroku_timeout.html')
