@@ -81,9 +81,11 @@ def fmSimulator(request):
         if form.is_valid():
             # process cleaned data from formsets
             #print(form.cleaned_data)
-
-            form.save()
-
+            
+            obj = form.save(commit = False)
+            obj.user = request.user;
+            obj.save()
+            
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
@@ -221,9 +223,9 @@ def fmSimulatorSource(request):
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
 
-            mesh = tclInput.objects.latest('id')
+            mesh = tclInput.objects.filter(user = request.user).latest('id')
 
-            script_path = tclGenerator(request.session, mesh)
+            script_path = tclGenerator(request.session, mesh, request.user)
 
             request.session['script_path'] = script_path
 
@@ -339,7 +341,7 @@ def fmVisualization(request):
     # context = {'dvhFig': dvhFig}
 
     # meshFileName = "183test21.mesh.vtk"
-    mesh = tclInput.objects.latest('id')
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
     meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
@@ -361,25 +363,16 @@ def fmVisualization(request):
 def downloadOutput(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
-    meshes = tclInput.objects.all()
-    scripts = tclScript.objects.all()
-    outputs = fullmonteOutput.objects.all()
-
-    context = {
-        'meshes': meshes,
-        'scripts': scripts,
-        'outputs': outputs,
-    }
+    
+    current_user = request.user
 
     if request.method == 'POST':
         if 'reset' in request.POST:
-            tclScript.objects.all().delete()
-            tclInput.objects.all().delete()
-            fullmonteOutput.objects.all().delete()
+            tclInput.objects.filter(user = current_user).delete()
+            tclScript.objects.filter(user = current_user).delete()
+            fullmonteOutput.objects.filter(user = current_user).delete()
 
         if 'generate_output' in request.POST:
-            #print(":)")
-
             # setup FTP client
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -410,6 +403,7 @@ def downloadOutput(request):
                 outVtk_name = meshName + ".out.vtk"
                 outFlu_name = meshName + ".phi_v.txt"
                 new_output = fullmonteOutput()
+                new_output.user = current_user
                 new_output.outputVtk.save(outVtk_name, remote_vtk_file)
                 new_output.outputFluence.save(outFlu_name, remote_flu_file)
                 new_output.save()
@@ -423,6 +417,16 @@ def downloadOutput(request):
 
             ftp_client.close()
             messages.success(request, 'Successfully generated output mesh for downloading, click the files below to download')
+
+    meshes = tclInput.objects.filter(user = current_user)
+    scripts = tclScript.objects.filter(user = current_user)
+    outputs = fullmonteOutput.objects.filter(user = current_user)
+        
+    context = {
+        'meshes': meshes,
+        'scripts': scripts,
+        'outputs': outputs,
+    }
 
     return render(request, "download_output.html", context)
 

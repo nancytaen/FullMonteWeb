@@ -1,6 +1,9 @@
 from django.db import models
 from application.storage_backends import *
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings 
+
+User = settings.AUTH_USER_MODEL
 
 # Create your models here.
 
@@ -8,13 +11,28 @@ class tclInput(models.Model):
     meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
+    user = models.ForeignKey(User,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
 
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
+    user = models.ForeignKey(User,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
 
 class fullmonteOutput(models.Model):
     outputVtk = models.FileField(storage=PublicMediaStorage())
     outputFluence = models.FileField(storage=PublicMediaStorage())
+    user = models.ForeignKey(User,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
 
 class preset(models.Model):
     presetMesh = models.FileField(storage=PublicMediaStorage())

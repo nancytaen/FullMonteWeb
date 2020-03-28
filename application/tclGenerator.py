@@ -6,7 +6,7 @@ from application.storage_backends import *
 from .models import *
 from django.core.files.base import ContentFile
 
-def tclGenerator(session, mesh):
+def tclGenerator(session, mesh, current_user):
     #initialize session inputs
     indent = '     '
     kernelType = session['kernelType']
@@ -160,6 +160,7 @@ def tclGenerator(session, mesh):
 
     script_name = name + '.tcl'
     new_script = tclScript()
+    new_script.user = current_user
     new_script.script.save(script_name, ContentFile(_temp))
     new_script.save()
 
