@@ -84,7 +84,11 @@ def fmSimulator(request):
             
             obj = form.save(commit = False)
             obj.user = request.user;
-            obj.save()
+            #obj.save()
+            
+            proc = Process(target=save_input, args=(obj,))
+            proc.start()
+            
             
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
@@ -100,6 +104,16 @@ def fmSimulator(request):
     }
 
     return render(request, "simulator.html", context)
+
+def save_input(obj):
+    
+    print("test1")
+    
+    obj.save()
+    
+    print("test2")
+    
+    return
 
 # FullMonte Simulator material page
 def fmSimulatorMaterial(request):
