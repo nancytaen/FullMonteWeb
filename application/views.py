@@ -84,7 +84,11 @@ def fmSimulator(request):
             
             obj = form.save(commit = False)
             obj.user = request.user;
-            obj.save()
+            #obj.save()
+            
+            proc = Process(target=obj.save())
+            proc.start()
+            
             
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
