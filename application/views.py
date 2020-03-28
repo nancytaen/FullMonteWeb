@@ -370,6 +370,16 @@ def downloadOutput(request):
     
     current_user = request.user
 
+    meshes = tclInput.objects.filter(user = current_user)
+    scripts = tclScript.objects.filter(user = current_user)
+    outputs = fullmonteOutput.objects.filter(user = current_user)
+
+    context = {
+        'meshes': meshes,
+        'scripts': scripts,
+        'outputs': outputs,
+    }
+
     if request.method == 'POST':
         if 'reset' in request.POST:
             tclInput.objects.filter(user = current_user).delete()
@@ -421,16 +431,6 @@ def downloadOutput(request):
 
             ftp_client.close()
             messages.success(request, 'Successfully generated output mesh for downloading, click the files below to download')
-
-    meshes = tclInput.objects.filter(user = current_user)
-    scripts = tclScript.objects.filter(user = current_user)
-    outputs = fullmonteOutput.objects.filter(user = current_user)
-        
-    context = {
-        'meshes': meshes,
-        'scripts': scripts,
-        'outputs': outputs,
-    }
 
     return render(request, "download_output.html", context)
 

@@ -1,19 +1,16 @@
-{% extends "base_generic.html" %}
+<br/>
 
-{% block content %}
+<h1>
+    Your mesh is uploading or generating in the background.
+</h1>
+<h3>
+    If you got here from uploading a mesh, click below:
+</h3>
+<a href="http://fullmonte.herokuapp.com/application/simulator_material">Continue with input</a>
 
 <br/>
 
-<div>
-    <p>
-    Your mesh is uploading or generating in the background.
-    </p>
-    <p>
-    Return to the previous page to see your results.
-    </p>
-    <form>
-        <input type="button" value="Back" onclick="history.back()">
-    </form>
-</div>
-
-{% endblock %}
+<h3>
+    If you got here from generating a mesh, click below:
+</h3>
+<a href="http://fullmonte.herokuapp.com/application/download_output">View output</a>
