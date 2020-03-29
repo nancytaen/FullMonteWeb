@@ -1,1 +1,1 @@
-web: gunicorn fullMonteWeb.wsgi --timeout 120
+web: gunicorn fullMonteWeb.wsgi --timeout 1000
