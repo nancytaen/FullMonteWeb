@@ -345,7 +345,12 @@ def fmVisualization(request):
     # context = {'dvhFig': dvhFig}
 
     # meshFileName = "183test21.mesh.vtk"
-    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    try:
+        mesh = tclInput.objects.filter(user = request.user).latest('id')
+    except:
+        messages.error(request, 'Error - please upload a mesh before trying to visualize')
+        return render(request, "visualization.html")
+
     meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
