@@ -81,15 +81,15 @@ def fmSimulator(request):
         if form.is_valid():
             # process cleaned data from formsets
             #print(form.cleaned_data)
-            
+
             obj = form.save(commit = False)
             obj.user = request.user;
-            #obj.save()
-            
-            proc = Process(target=obj.save())
-            proc.start()
-            
-            
+            obj.save()
+
+            # proc = Process(target=obj.save())
+            # proc.start()
+
+
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
@@ -179,7 +179,7 @@ def createPresetMaterial(request):
 
             else:
                 messages.error(request, 'Failed to add material, material values must be within bounds')
-                    
+
                 return redirect("create_preset_material")
 
     else:
@@ -339,8 +339,6 @@ def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
-    # filePath = "/visualization/Meshes/183test21.out.vtk"
-    # dvhFig = dvh(filePath) # Figure in HTML string format
     #
     # context = {'dvhFig': dvhFig}
 
@@ -349,25 +347,28 @@ def fmVisualization(request):
     meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
-    #
-    # if (meshFileName):
-    #     msg = "Using mesh " + meshFileName
-    #
-    # else:
-    #     msg = "No output mesh was found. Root folder will be loaded for visualization."
+    filePath = "/visualization/Meshes/183test21.out.vtk"
 
-    #context = {'message': msg}
+    dvhFig = dvh(filePath)
+
+    if (meshFileName):
+        msg = "Using mesh " + meshFileName
+
+    else:
+        msg = "No output mesh was found. Root folder will be loaded for visualization."
+
+    context = {'message': msg, 'dvhFig': dvhFig}
 
     proc = Process(target=visualizer, args=(meshFileName,))
     proc.start()
 
-    return render(request, "visualization.html")
+    return render(request, "visualization.html", context)
 
 # page for viewing and downloading files
 def downloadOutput(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
-    
+
     current_user = request.user
 
     meshes = tclInput.objects.filter(user = current_user)

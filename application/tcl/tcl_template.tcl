@@ -1,6 +1,6 @@
 package require FullMonte
 
-set fn "/sims/Bladder.mesh_Bfuv4wu.vtk"
+set fn "/sims/Bladder.mesh_MpSwiV1.vtk"
 
 VTKMeshReader R
      R filename $fn
@@ -10,16 +10,30 @@ set M [R mesh]
 
 MaterialSet MS
 
-Material adsf1
-     adsf1     scatteringCoeff     1.0
-     adsf1     absorptionCoeff     1.0
-     adsf1     refractiveIndex     11.0
-     adsf1     anisotropy     1.0
+Material air
+     air     scatteringCoeff     0.0
+     air     absorptionCoeff     0.0
+     air     refractiveIndex     1.0
+     air     anisotropy     0.0
 
-MS exterior adsf1
+Material bladder
+     bladder     scatteringCoeff     14.6
+     bladder     absorptionCoeff     0.45
+     bladder     refractiveIndex     1.37
+     bladder     anisotropy     0.9
+
+Material water
+     water     scatteringCoeff     1.7e-06
+     water     absorptionCoeff     4.09e-05
+     water     refractiveIndex     1.33
+     water     anisotropy     0.8
+
+MS exterior air
+MS append bladder
+MS append water
 
 Point P1
-     P1 position "1.0 1.0 1.0"
+     P1 position "-2.9892 20.4403 1410.5728"
      P1 power 1
 
 TetraSVKernel k
@@ -41,12 +55,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/sims/Bladder.mesh_Bfuv4wu.out.vtk"
+     W filename "/sims/Bladder.mesh_MpSwiV1.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/sims/Bladder.mesh_Bfuv4wu.phi_v.txt"
+     TW filename "/sims/Bladder.mesh_MpSwiV1.phi_v.txt"
      TW source [EF result]
      TW write

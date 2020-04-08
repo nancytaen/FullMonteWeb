@@ -6,5 +6,5 @@
 /application/migrations/
 /fullMonteWeb/migrations/
 /venv/
-application/dvh_offline.py
+application/dvhCopy.py
 /application/setup_visualizer3.py

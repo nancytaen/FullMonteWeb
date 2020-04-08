@@ -97,7 +97,6 @@ def calculate_volumes(fullMonteOutputData, regionData, noCells):
 
 def plot_DVH(data, noBins):
 
-
     SMALL_SIZE = 16
     MEDIUM_SIZE = 18
     LARGE_SIZE = 20
