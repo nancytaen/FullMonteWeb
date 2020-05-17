@@ -445,9 +445,7 @@ def kernelInfo(request):
     return render(request, "kernel_info.html")
 
 # page for downloading preset values
-def downloadPreset(request):
-    preset.objects.all().delete()
-    
+def downloadPreset(request):    
     if not request.user.is_authenticated:
         return redirect('please_login')
     presetObjects = preset.objects.all()
