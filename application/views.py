@@ -553,3 +553,6 @@ def change_password(request):
 # Heroku h12 timeout error
 def heroku_timeout(request):
     return render(request, 'heroku_timeout.html')
+
+def aws(request):
+    return render(request, "aws.html")

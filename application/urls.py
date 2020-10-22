@@ -42,6 +42,9 @@ urlpatterns = [
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),
 
+    # /application/aws
+    path('aws', views.aws, name='aws'),
+
     url(r'^password_reset/$', auth_views.PasswordResetView.as_view() , name='password_reset'),
     url(r'^password_reset/done/$', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
