@@ -3,5 +3,61 @@
 {% block content %}
 
 <p>Welcome to AWS!</p>
+<form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+
+    <div class='table'>
+        <table class='no_error'>
+            {% csrf_token %}
+            <tr>
+                <th>{{ form.DNS.label_tag }}</th>
+                <td>
+                    {{ form.DNS.errors }}
+                    {{ form.DNS }}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.pemfile.label_tag }}</th>
+                <td>
+                    {{ form.pemfile.errors }}
+                    {{ form.pemfile }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <p><br/><input type="submit" value="Next"></p>
+
+</form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    var _validFileExtensions = [".pem"];
+    function Validate(oForm) {
+        var arrInputs = oForm.getElementsByTagName("input");
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var blnValid = false;
+                        for (var j = 0; j < _validFileExtensions.length; j++) {
+                            var sCurExtension = _validFileExtensions[j];
+                            if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                                blnValid = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!blnValid) {
+                            alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
+                            return false;
+                        }
+                    }
+                }
+            }
+        
+            return true;
+    }
+</script>
 
 {% endblock %}

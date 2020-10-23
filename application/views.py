@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
 from django.core.files.base import ContentFile
+import sys
 
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
@@ -555,4 +556,22 @@ def heroku_timeout(request):
     return render(request, 'heroku_timeout.html')
 
 def aws(request):
-    return render(request, "aws.html")
+    if request.method == 'POST':
+        print(request)
+        form = awsFiles(request.POST, request.FILES)
+        print(request.POST.get("DNS"))
+        if form.is_valid():
+            handle_uploaded_file(request.FILES['pemfile'])
+            sys.stdout.flush()
+            return HttpResponseRedirect('/application/')
+    else:
+        form = awsFiles()
+
+    context = {
+        'form': form,
+    }
+    return render(request, "aws.html", context)
+
+def handle_uploaded_file(f):
+    for line in f:
+        print (line)

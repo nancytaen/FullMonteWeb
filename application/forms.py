@@ -96,5 +96,9 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2', )
 
+class awsFiles(forms.Form):
+    DNS = forms.CharField(max_length=250)
+    pemfile = forms.FileField()
+
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
