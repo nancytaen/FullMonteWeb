@@ -260,6 +260,11 @@ def fmSimulatorSource(request):
             f = default_storage.open(mesh.meshFile.name)
             meshFileName = mesh.meshFile.name
 
+            print("DNS is", request.session['DNS'])
+            awsFile = awsFiles.objects.filter(user = request.user).latest('id')
+            pemfile = awsFile.pemfile
+            handle_uploaded_file(pemfile)
+
             #send files to savi server
             tclName = "/home/Capstone/docker_sims/" + mesh.meshFile.name + ".tcl"
             ftp_client.put(source,tclName)
@@ -561,9 +566,13 @@ def aws(request):
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
         if form.is_valid():
-            handle_uploaded_file(request.FILES['pemfile'])
+            print(form.cleaned_data)
+            form.save()
+            request.session['DNS'] = form.cleaned_data['DNS']
+            # handle_uploaded_file(request.FILES['pemfile'])
             sys.stdout.flush()
-            return HttpResponseRedirect('/application/')
+
+            return HttpResponseRedirect('/application/simulator')
     else:
         form = awsFiles()
 
