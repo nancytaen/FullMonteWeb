@@ -100,6 +100,8 @@ class awsFiles(forms.ModelForm):
     class Meta:
         model = awsFile
         fields = ('DNS', 'pemfile')
+    def __init__(self, *args, **kwargs):
+        super(awsFiles, self).__init__(*args, **kwargs)
 
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
