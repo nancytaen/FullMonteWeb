@@ -1,6 +1,6 @@
 package require FullMonte
 
-set fn "/sims/Bladder.mesh_MpSwiV1.vtk"
+set fn "/sims/Bladder.mesh_hRPZ5Te.vtk"
 
 VTKMeshReader R
      R filename $fn
@@ -33,7 +33,7 @@ MS append bladder
 MS append water
 
 Point P1
-     P1 position "-2.9892 20.4403 1410.5728"
+     P1 position "-2.9 20.0 1400.0"
      P1 power 1
 
 TetraSVKernel k
@@ -55,12 +55,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/sims/Bladder.mesh_MpSwiV1.out.vtk"
+     W filename "/sims/Bladder.mesh_hRPZ5Te.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/sims/Bladder.mesh_MpSwiV1.phi_v.txt"
+     TW filename "/sims/Bladder.mesh_hRPZ5Te.phi_v.txt"
      TW source [EF result]
      TW write

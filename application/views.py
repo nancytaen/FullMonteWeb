@@ -5,6 +5,10 @@ from django.http import HttpResponseRedirect
 from .models import *
 from .forms import *
 from django.core.files.base import ContentFile
+import sys
+import socket
+import io
+import codecs
 
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
@@ -230,99 +234,61 @@ def fmSimulatorSource(request):
             mesh = tclInput.objects.filter(user = request.user).latest('id')
 
             script_path = tclGenerator(request.session, mesh, request.user)
+            generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
 
             request.session['script_path'] = script_path
 
-            #print(tclInput.objects.all())
-            #tclInput.objects.all().delete()
-            #tclScript.objects.all().delete()
-            #print(mesh.meshFile)
-            #print(tclInput.objects.all())
-
-            #key = paramiko.RSAKey(data=base64.b64decode(b'AAA...'))
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            #client.get_host_keys().add('ssh.example.com', 'ssh-rsa', key)
-            client.connect('142.1.145.194', port='9993', username='Capstone', password='pro929')
-
-
-            #send file to savi
-            ftp_client=client.open_sftp()
-
-            dir_path = os.path.dirname(os.path.abspath(__file__))
-
-            #tc file
-            source = dir_path + '/tcl/tcl_template.tcl'
-            source = str(source)
-
             #mesh file
-            f = default_storage.open(mesh.meshFile.name)
+            mesh_file = default_storage.open(mesh.meshFile.name)
+            tcl_file = default_storage.open(generated_tcl.script.name)
             meshFileName = mesh.meshFile.name
 
-            #send files to savi server
-            tclName = "/home/Capstone/docker_sims/" + mesh.meshFile.name + ".tcl"
-            ftp_client.put(source,tclName)
-            ftp_client.putfo(f,"/home/Capstone/docker_sims/" + mesh.meshFile.name)
-            f.close()
-            ftp_client.close()
+            print("DNS is", request.session['DNS'])
+            uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+            pemfile = uploadedAWSPemFile.pemfile
 
-            channel = client.invoke_shell()
+            client = paramiko.SSHClient()
+            paramiko.util.log_to_file("paramiko_log.txt")
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            print('SSH into the instance: {}'.format(request.session['DNS']))
+            
+            private_key_file = io.BytesIO()
+            for line in pemfile:
+                private_key_file.write(line)
+            private_key_file.seek(0)
 
-            out = channel.recv(9999)
+            byte_str = private_key_file.read()
+            text_obj = byte_str.decode('UTF-8')
+            private_key_file = io.StringIO(text_obj)
+            
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            ftp = client.open_sftp()
 
-            channel.send('cd docker_sims\n')
-            time.sleep(0.2)
-            channel.send('sudo /opt/util/FullMonteSW_setup.sh\n')
-            time.sleep(0.2)
-            channel.send('pro929\n')
-            time.sleep(0.2)
-            channel.send('pro929\n')
-            time.sleep(0.2)
-            channel.send('1\n')
-            time.sleep(0.2)
-            channel.send('capstone929!\n')
-            time.sleep(1)
-            channel.send('cd sims\n')
-            time.sleep(0.2)
-            channel.send('stty size\n')
-            time.sleep(0.5)
-            channel.send('reset -w\n')
-            time.sleep(0.5)
-            channel.send('stty size -w\n')
-            time.sleep(0.3)
-            time.sleep(0.2)
-            channel.send('tclmonte.sh ./' + mesh.meshFile.name + '.tcl' + '\n')
-            #time.sleep(15)
+            ftp.chdir('docker_sims/')
+            file=ftp.file('docker.sh', "w")
+            file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+            file.flush()
+            ftp.chmod('docker.sh', 700)
 
-            test = channel.recv(9999)
-            #print(test)
-            channel.close
+            ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+            ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+            ftp.close()
 
-
-
-
-            ##exit
-            #print("exit")
-            #stdin, stdout, stderr = client.exec_command('exit', get_pty=True)
-            #print("stdout")
-            #for line in stdout:
-            #    print('... ' + line.strip('\n'))
-            #print("stderr")
-            #for line in stderr:
-            #    print('... ' + line.strip('\n'))
-
-            print("______________________________________________________________")
-            #stdin, stdout, stderr = client.exec_command('cd docker_sims')
-            stdin, stdout, stderr = client.exec_command('cd docker_sims;ls')
-            for line in stdout:
-                print('... ' + line.strip('\n'))
-
-            #while()
-
-
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+            stdin, stdout, stderr = client.exec_command(command)
+            #print(stdout.readlines())
+            #print(stderr.readlines())
+            stdout_line = stdout.readlines()
+            stderr_line = stderr.readlines()
+            for line in stdout_line:
+                print (line)
+            for line in stderr_line:
+                print (line)
+            sys.stdout.flush()
             client.close()
 
-            return HttpResponseRedirect('/application/visualization')
+            return HttpResponseRedirect('/application/aws')
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -553,3 +519,33 @@ def change_password(request):
 # Heroku h12 timeout error
 def heroku_timeout(request):
     return render(request, 'heroku_timeout.html')
+
+def aws(request):
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+    
+    if request.method == 'POST':
+        print(request)
+        form = awsFiles(request.POST, request.FILES)
+        print(request.POST.get("DNS"))
+        if form.is_valid():
+            print(form.cleaned_data)
+            obj = form.save(commit = False)
+            obj.user = request.user;
+            obj.save()
+            request.session['DNS'] = form.cleaned_data['DNS']
+            # handle_uploaded_file(request.FILES['pemfile'])
+            sys.stdout.flush()
+
+            return HttpResponseRedirect('/application/simulator')
+    else:
+        form = awsFiles()
+
+    context = {
+        'form': form,
+    }
+    return render(request, "aws.html", context)
+
+def handle_uploaded_file(f):
+    for line in f:
+        print (line)

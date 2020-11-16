@@ -17,6 +17,15 @@ class tclInput(models.Model):
                              on_delete=models.CASCADE
                              )
 
+class awsFile(models.Model):
+    DNS = models.CharField(max_length=250)
+    pemfile = models.FileField(storage=PublicMediaStorage())
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,
