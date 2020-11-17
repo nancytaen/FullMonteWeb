@@ -7,3 +7,8 @@ application/migrations/
 fullMonteWeb/migrations/
 venv/
 fullMonteWeb/staticfiles/
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
