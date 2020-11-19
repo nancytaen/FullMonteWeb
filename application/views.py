@@ -49,7 +49,7 @@ from django.core.mail import EmailMessage
 
 from decouple import config
 from multiprocessing import Process
-
+import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
 
@@ -262,6 +262,7 @@ def fmSimulatorSource(request):
             private_key_file = io.StringIO(text_obj)
             
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            request.session['text_obj'] = text_obj
             client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
             ftp = client.open_sftp()
 
@@ -275,20 +276,47 @@ def fmSimulatorSource(request):
             ftp.putfo(tcl_file, './'+generated_tcl.script.name)
             ftp.close()
 
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
-            stdin, stdout, stderr = client.exec_command(command)
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
+            # stdin, stdout, stderr = client.exec_command(command)
+            channel = client.get_transport().open_session()
+            channel.exec_command(command)
+            time.sleep(3)   # wait tclsh start  # todo: improve this for performance
+                            # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
+            return HttpResponseRedirect('/application/running')
+            # while True:
+            #     if channel.exit_status_ready():
+            #         render(request, "simulation_fail.html")
+            #         break
+            #     rl, wl, xl = select.select([channel],[],[],0.0)
+            #     # if(flag is False):
+            #     #     print("redirect to somewhere")
+            #     #     flag = True
+            #     #     sys.stdout.flush()
+            #     #     return HttpResponseRedirect('/application/running')
+            #     if len(rl) > 0:
+            #         str = channel.recv(1024).decode()
+            #         print(str)
+            #         sys.stdout.flush()
+
+            #         if len(str.split()) > 2 and str.split()[0] == '[info]':
+            #             if str.split()[1] == 'Done':
+            #                 print("tcl started")
+            #                 sys.stdout.flush()
+            #                 return HttpResponseRedirect('/application/running')
+
+            # p = Process(target=exec_simulate, args=(request, channel, command,))
+            # p.start()
             #print(stdout.readlines())
             #print(stderr.readlines())
-            stdout_line = stdout.readlines()
-            stderr_line = stderr.readlines()
-            for line in stdout_line:
-                print (line)
-            for line in stderr_line:
-                print (line)
-            sys.stdout.flush()
-            client.close()
-
-            return HttpResponseRedirect('/application/aws')
+            # stdout_line = stdout.readlines()
+            # stderr_line = stderr.readlines()
+            # for line in stdout_line:
+            #     print (line)
+            # for line in stderr_line:
+            #     print (line)
+            # sys.stdout.flush()
+            # client.close()
+            # p.join()
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -549,3 +577,89 @@ def aws(request):
 def handle_uploaded_file(f):
     for line in f:
         print (line)
+
+def exec_simulate(request, channel, command):
+    
+    print("start running " + command)
+    sys.stdout.flush()
+    channel.exec_command(command)
+    while True:
+        if channel.exit_status_ready():
+            break
+        rl, wl, xl = select.select([channel],[],[],0.0)
+        if len(rl) > 0:
+            print(channel.recv(1024))
+            sys.stdout.flush()
+    print("finish running")
+    sys.stdout.flush()
+    return  HttpResponseRedirect('/application/simulation_fail')
+  
+def running(request):
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    # print("geting pid of tclsh")
+    stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
+    stdout_line = stdout.readlines()
+    pid = ''
+    pid = stdout_line[0]
+    # for line in stdout_line:
+    #     print (line)
+    #     pid = line
+    print("pid is " + pid)
+    sys.stdout.flush()
+    if not pid:
+        return render(request, "simulation_fail.html")
+    # request.session['pid'] = pid
+    stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
+    stdout_line = stdout.readlines()
+    count =0
+    for line in stdout_line:
+        print (line)
+        count+= 1
+        sys.stdout.flush()
+    
+    if count == 1:
+        print("tclsh finish")
+        sys.stdout.flush()
+        return HttpResponseRedirect('/application/simulation_finish')
+    
+    else:
+        time = stdout_line[1].split()[2]
+        print("tclsh not finished")
+        sys.stdout.flush()
+        return render(request, "running.html", {'time':time})
+
+
+    
+def simulation_fail(request):
+    return render(request, "simulation_fail.html")
+
+def simulation_finish(request):
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    ftp = client.open_sftp()
+    # ftp.chdir('docker_sims/')
+    file=ftp.file('sim_run.log', "r")
+    output = file.read().decode()
+    html_string=''
+    # add <p> to output string since html does not support '\n'
+    for e in output.splitlines():
+        html_string += '<p>'+ e + '</p>'
+    print(output)
+    sys.stdout.flush()
+    ftp.close()
+    client.close()
+
+    return render(request, "simulation_finish.html", {'output':html_string})
