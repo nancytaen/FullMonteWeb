@@ -67,6 +67,12 @@ urlpatterns = [
     url(r'^change_password/$', views.change_password, name='change_password'),
 
     path('please_login', views.please_login, name='please_login'),
+
+    path('running', views.running, name='running'),
+
+    path('simulation_fail', views.simulation_fail, name='simulation_fail'),
+
+    path('simulation_finish', views.simulation_finish, name='simulation_finish'),
                
     path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
 ]
