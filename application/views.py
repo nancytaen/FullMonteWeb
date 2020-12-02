@@ -801,7 +801,7 @@ def AWSsetup(request):
         print("set up progress: " + progress)
         print("end current progress")
         sys.stdout.flush()
-        progress = (float(progress) * 14)
+        progress = (float(progress) * 11)
         start_time = running_process.start_time
         current_time = datetime.now(timezone.utc)
         time_diff = current_time - start_time
