@@ -10,7 +10,7 @@ import socket
 import io
 import codecs
 import psutil
-
+from datetime import datetime, timezone
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
@@ -779,7 +779,34 @@ def AWSsetup(request):
     running_process = processRunning.objects.filter(user = request.user).latest('id')
     pid = running_process.pid
     if running_process.running:
-        return render(request, "AWSsetup.html")
+        client = paramiko.SSHClient()
+        paramiko.util.log_to_file("paramiko_log.txt")
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        print("get current progress")
+        sys.stdout.flush()
+        stdin, stdout, stderr = client.exec_command('head -1 ~/setup_aws.log')
+        stdout_line = stdout.readlines()
+        progress = ''
+        if len(stdout_line) > 0:
+            progress = stdout_line[0].split()[0]
+        else:
+            progress = '0.00'
+        
+        client.close()
+        print("set up progress: " + progress)
+        print("end current progress")
+        sys.stdout.flush()
+        progress = (float(progress) * 14)
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "AWSsetup.html", {'progress':progress, 'time':running_time})
     else:
         return HttpResponseRedirect('/application/simulator')
     
