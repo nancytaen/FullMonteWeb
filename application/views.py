@@ -9,6 +9,7 @@ import sys
 import socket
 import io
 import codecs
+import psutil
 
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
@@ -30,7 +31,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 import paramiko
-from django.db import models
+from django.db import models, connections
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from application.storage_backends import *
 from django.core.files.storage import default_storage
 from django.core import serializers
@@ -48,7 +50,8 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 
 from decouple import config
-from multiprocessing import Process
+from multiprocessing import Process, Event
+import threading
 import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
@@ -283,6 +286,16 @@ def fmSimulatorSource(request):
             time.sleep(3)   # wait tclsh start  # todo: improve this for performance
                             # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
             return HttpResponseRedirect('/application/running')
+            """
+            finished_event = Event()
+            #request.session['finished_event'] = finished_event
+            print("before:", request)
+            p = Process(target=run_fullmonte_remotely, args=(request, finished_event, ))
+            p.start()
+            
+            
+            return HttpResponseRedirect('/application/aws')
+            """
             # while True:
             #     if channel.exit_status_ready():
             #         render(request, "simulation_fail.html")
@@ -327,6 +340,80 @@ def fmSimulatorSource(request):
     }
 
     return render(request, "simulator_source.html", context)
+
+# https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
+def create_connection(alias=DEFAULT_DB_ALIAS):
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    return backend.DatabaseWrapper(db, alias)
+
+def run_fullmonte_remotely(request, finished_event):
+    time.sleep(3)
+    conn = create_connection()
+    conn.ensure_connection()
+    #print(conn)
+    print("inside:",request)
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+
+    script_path = tclGenerator(request.session, mesh, request.user)
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+
+    #mesh file
+    mesh_file = default_storage.open(mesh.meshFile.name)
+    tcl_file = default_storage.open(generated_tcl.script.name)
+    meshFileName = mesh.meshFile.name
+
+    print("DNS is", request.session['DNS'])
+    uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+    pemfile = uploadedAWSPemFile.pemfile
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print('SSH into the instance: {}'.format(request.session['DNS']))
+    
+    private_key_file = io.BytesIO()
+    for line in pemfile:
+        private_key_file.write(line)
+    private_key_file.seek(0)
+
+    byte_str = private_key_file.read()
+    text_obj = byte_str.decode('UTF-8')
+    private_key_file = io.StringIO(text_obj)
+    
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    #request.session['text_obj'] = text_obj
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    ftp = client.open_sftp()
+
+    ftp.chdir('docker_sims/')
+    file=ftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+    file.flush()
+    ftp.chmod('docker.sh', 700)
+
+    ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+    ftp.close()
+
+    #command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
+    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    #print(stdout.readlines())
+    #print(stderr.readlines())
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    sys.stdout.flush()
+    client.close()
+    finished_event.set()
+    print("finished executing")
+    sys.stdout.flush()
+    conn.close()
 
 # FullMonte Output page
 def fmVisualization(request):
@@ -563,8 +650,61 @@ def aws(request):
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
             # handle_uploaded_file(request.FILES['pemfile'])
-            sys.stdout.flush()
+            uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+            pemfile = uploadedAWSPemFile.pemfile
 
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            private_key_file = io.BytesIO()
+            for line in pemfile:
+                private_key_file.write(line)
+            private_key_file.seek(0)
+
+            byte_str = private_key_file.read()
+            text_obj = byte_str.decode('UTF-8')
+            private_key_file = io.StringIO(text_obj)
+            
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            request.session['text_obj'] = text_obj
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            sftp = client.open_sftp()
+            try:
+                sftp.stat('docker_sims/FullMonteSW_setup.sh')
+            except IOError:
+                # cluster that's not setup
+                client.close()
+            
+                print('before')
+                current_process = psutil.Process()
+                children = current_process.children(recursive=True)
+                for child in children:
+                    print('Child pid is {}'.format(child.pid))
+                connections.close_all()
+                p = Process(target=run_aws_setup, args=(request, ))
+                # print(p)
+                p.start()
+                print('after')
+                current_process = psutil.Process()
+                children = current_process.children(recursive=True)
+
+                form = processRunning()
+                form.user=request.user
+                
+                for child in children:
+                    form.pid = child.pid
+                    form.running = True
+                    print('Child pid is {}'.format(child.pid))
+                
+                conn = create_connection()
+                conn.ensure_connection()
+                form.save()
+                conn.close()
+                sys.stdout.flush()
+                # client.close()
+                
+                return HttpResponseRedirect('/application/AWSsetup')
+            
+            client.close()
             return HttpResponseRedirect('/application/simulator')
     else:
         form = awsFiles()
@@ -573,6 +713,76 @@ def aws(request):
         'form': form,
     }
     return render(request, "aws.html", context)
+
+def run_aws_setup(request):
+    time.sleep(3)
+    text_obj = request.session['text_obj']
+    # uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+    private_key_file = io.StringIO(text_obj)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    #tc file
+    source_setup = dir_path + '/scripts/setup_aws.sh'
+    source_setup = str(source_setup)
+
+    source_fullmonte = dir_path + '/scripts/FullMonteSW_setup.sh'
+    source_fullmonte = str(source_fullmonte)
+
+    sftp = client.open_sftp()
+    client.exec_command('mkdir -p docker_sims')
+    sftp.put(source_setup, 'docker_sims/setup_aws.sh')
+    sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
+    sftp.chmod('docker_sims/setup_aws.sh', 700)
+    sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
+
+    # create dummy script to run
+    sftp.chdir('docker_sims/')
+    file=sftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\n')
+    file.flush()
+    sftp.chmod('docker.sh', 700)
+
+    command = "sudo ~/docker_sims/setup_aws.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+
+    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    
+    # alias = 'manual'
+    conn = create_connection()
+    conn.ensure_connection()
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    running_process.running = False
+    running_process.save()
+    conn.close()
+    print('finished')
+    client.close()
+    sys.stdout.flush()
+
+def AWSsetup(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    pid = running_process.pid
+    if running_process.running:
+        return render(request, "AWSsetup.html")
+    else:
+        return HttpResponseRedirect('/application/simulator')
+    
 
 def handle_uploaded_file(f):
     for line in f:

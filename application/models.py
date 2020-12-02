@@ -26,6 +26,17 @@ class awsFile(models.Model):
                              on_delete=models.CASCADE
                              )
 
+class processRunning(models.Model):
+    running = models.BooleanField(default = False)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+    pid = models.IntegerField(default=0)
+    start_time = models.DateTimeField(auto_now=True)
+
+
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,

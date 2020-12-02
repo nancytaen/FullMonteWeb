@@ -69,6 +69,8 @@ urlpatterns = [
     path('please_login', views.please_login, name='please_login'),
 
     path('running', views.running, name='running'),
+    
+    path('AWSsetup', views.AWSsetup, name='AWSsetup'),
 
     path('simulation_fail', views.simulation_fail, name='simulation_fail'),
 

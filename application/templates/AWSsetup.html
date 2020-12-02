@@ -1,0 +1,14 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<head>
+<meta http-equiv="refresh" content="5"/>
+<h1>Your AWS computing node is being set up</h1> 
+<p>It appears that your AWS computing node does not contain the required softwares to perform the simulation.</p>
+<p>Click refresh to update status or auto-fresh every 5 seconds.</p>
+<p>You will be automatically redirected to simulation when the setup is finished.</p>>
+
+<form action="" method="get">
+    <input type="submit" value="Refresh" />
+</form>
+
+{% endblock %}
