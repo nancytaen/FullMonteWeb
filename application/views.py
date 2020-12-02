@@ -778,14 +778,15 @@ def run_aws_setup(request):
 def AWSsetup(request):
     running_process = processRunning.objects.filter(user = request.user).latest('id')
     pid = running_process.pid
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
     if running_process.running:
-        client = paramiko.SSHClient()
-        paramiko.util.log_to_file("paramiko_log.txt")
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        text_obj = request.session['text_obj']
-        private_key_file = io.StringIO(text_obj)
-        privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        
         print("get current progress")
         sys.stdout.flush()
         stdin, stdout, stderr = client.exec_command('head -1 ~/setup_aws.log')
@@ -808,6 +809,8 @@ def AWSsetup(request):
         running_time = running_time.split('.')[0]
         return render(request, "AWSsetup.html", {'progress':progress, 'time':running_time})
     else:
+        stdin, stdout, stderr = client.exec_command('rm -rf ~/setup_aws.log')
+        client.close()
         return HttpResponseRedirect('/application/simulator')
     
 

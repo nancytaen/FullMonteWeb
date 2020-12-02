@@ -14,4 +14,3 @@ sudo apt-get update
 echo 6 > ~/setup_aws.log
 sudo apt-get -y install docker-ce docker-ce-cli containerd.io
 echo 7 > ~/setup_aws.log
-rm -f ~/setup_aws.log
