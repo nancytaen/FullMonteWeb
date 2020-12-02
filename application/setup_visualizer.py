@@ -6,11 +6,11 @@ from multiprocessing import Process
 #     visualizer(ph)
 
 def visualizer(args):
-    cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/examples/"
+    cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/"
     fileName = args
 
-    # if (fileName):
-    #     cmd += " --load-file " + fileName
+    if (fileName):
+        cmd += " --load-file " + fileName
 
     print(cmd)
 
