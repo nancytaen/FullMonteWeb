@@ -279,7 +279,7 @@ def fmSimulatorSource(request):
             ftp.putfo(tcl_file, './'+generated_tcl.script.name)
             ftp.close()
 
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
             # stdin, stdout, stderr = client.exec_command(command)
             channel = client.get_transport().open_session()
             channel.exec_command(command)
@@ -813,7 +813,24 @@ def running(request):
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
 
-    # print("geting pid of tclsh")
+    stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/sim_run.log > ~/cleaned.log')
+    stdin, stdout, stderr = client.exec_command('sudo tail -1 ~/cleaned.log')
+    stdout_word = stdout.readlines()
+    progress = ''
+    if len(stdout_word) > 0:
+        # print(stdout_word[-1])
+        # sys.stdout.flush()
+        if stdout_word[-1].split()[0] == "Progress":
+            progress = stdout_word[-1].split()[-1]
+    if progress == '':
+        progress = '0.00%'
+        print("got progres: "+progress)
+        sys.stdout.flush()
+    else:
+        print("got progres: "+progress)
+        sys.stdout.flush()
+    progress = progress[:-2]
+    
     stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
     stdout_line = stdout.readlines()
     pid = ''
@@ -821,7 +838,7 @@ def running(request):
     # for line in stdout_line:
     #     print (line)
     #     pid = line
-    print("pid is " + pid)
+    print("pid of tclsh is " + pid)
     sys.stdout.flush()
     if not pid:
         return render(request, "simulation_fail.html")
@@ -829,6 +846,7 @@ def running(request):
     stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
     stdout_line = stdout.readlines()
     count =0
+    client.close()
     for line in stdout_line:
         print (line)
         count+= 1
@@ -843,7 +861,7 @@ def running(request):
         time = stdout_line[1].split()[2]
         print("tclsh not finished")
         sys.stdout.flush()
-        return render(request, "running.html", {'time':time})
+        return render(request, "running.html", {'time':time, 'progress':progress})
 
 
     
@@ -866,7 +884,8 @@ def simulation_finish(request):
     html_string=''
     # add <p> to output string since html does not support '\n'
     for e in output.splitlines():
-        html_string += '<p>'+ e + '</p>'
+        if len(e.split()) > 0  and  e.split()[0] != "Progress":
+            html_string += e + '<br />'
     print(output)
     sys.stdout.flush()
     ftp.close()
