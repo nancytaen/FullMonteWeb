@@ -32,7 +32,7 @@
                       <li class="nav-item active">
                         <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
                       </li>
-                      <li class="nav-item dropdown">
+                      <!-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                           Dropdown
                         </a>
@@ -42,7 +42,7 @@
                           <div class="dropdown-divider"></div>
                           <a class="dropdown-item" href="{% url 'about' %}">About</a>
                         </div>
-                      </li>
+                      </li> -->
                       {% if not request.user.is_authenticated %}
                       <li class="nav-item active">
                         <a class="nav-link" href="{% url 'signup' %}">Signup <span class="sr-only">(current)</span></a>
@@ -70,9 +70,9 @@
                     <ul class="sidebar-nav">
                         <li><a class="btn btn-primary" href="{% url 'home' %}">Home</a></li><br/>
                         <li><a class="btn btn-primary" href="{% url 'tutorial' %}">Tutorial</a></li><br/>
+                        <li><a class="btn btn-primary" href="{% url 'aws' %}">Simulation</a></li><br/>
                         <li><a class="btn btn-primary" href="{% url 'visualization' %}">Visualization</a></li><br/>
                         <li><a class="btn btn-primary" href="{% url 'download_output' %}">Download</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'aws' %}">AWS</a></li><br/>
                     </ul>
                     {% endblock %}
                 </div>

@@ -100,6 +100,7 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASS', 'sql'),
         'HOST': 'localhost',
         'PORT': '5432',
+        # 'CONN_MAX_AGE': 100, # keep database connected for 100s, in order for the child process to connect
     }
 }
 
