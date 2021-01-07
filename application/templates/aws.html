@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<p>Welcome to AWS!</p>
+<p>Welcome to Fullmonte Simulations. Fill in the following information to connect to your Amazon Web Services (AWS) computing node to perform the simulation.</p>
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
 
     <div class='table'>
@@ -28,6 +28,10 @@
     <p><br/><input type="submit" value="Next"></p>
 
 </form>
+
+<a href="{% url 'tutorial' %}">
+    Not sure where to find this information? Click here to watch starter guides for Amazon Web Services.
+</a>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>

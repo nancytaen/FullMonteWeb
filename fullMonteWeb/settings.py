@@ -93,11 +93,24 @@ WSGI_APPLICATION = 'fullMonteWeb.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+<<<<<<< HEAD
             'default': {
                         'ENGINE': 'django.db.backends.sqlite3',
                                 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
                                     }
             }
+=======
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ.get('DB_NAME', 'postgres'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASS', 'sql'),
+        'HOST': 'localhost',
+        'PORT': '5432',
+        # 'CONN_MAX_AGE': 100, # keep database connected for 100s, in order for the child process to connect
+    }
+}
+>>>>>>> 4a6b41141ef948713572529b6a8ab8597c9ab863
 
 
 # Password validation

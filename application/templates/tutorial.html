@@ -1,8 +1,30 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+{% load static %}
 <h1>Tutorial</h1>
 
+<h2>Starter guide on Amazon Web Services</h2>
+<p>1. First go to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a> and click on "Sign In to the Console" on the top right corner. Login or create an account if you don't already have one.</p>
+<img width="650" height="350" src="{% static 'images/AWS_signin.png' %}" alt="AWS_signin">
+<p>2. After login, select "EC2" from the service dropdown menu.</p>
+<img width="650" height="350" src="{% static 'images/AWS_service.png' %}" alt="AWS_service">
+<p>3. Scroll down and select "launch instance".</p>
+<img width="650" height="350" src="{% static 'images/AWS_launch_instance.png' %}" alt="AWS_launch_instance">
+<p>4. Scroll down and select "Ubuntu Server 18.04" in step 1, and select the appropriate CPU size that is suitable for your simulation in step 2.</p>
+<img width="650" height="350" src="{% static 'images/AWS_Ubuntu.png' %}" alt="AWS_Ubuntu">
+<img width="650" height="350" src="{% static 'images/AWS_CPU.png' %}" alt="AWS_CPU">
+<p>5. Skip Step 3 and selete the appropriate Memory size that is suitable for your simulation in Step 4.</p>
+<img width="650" height="350" src="{% static 'images/AWS_skip3.png' %}" alt="AWS_skip3">
+<img width="650" height="350" src="{% static 'images/AWS_mem.png' %}" alt="AWS_mem">
+<p>6. Launch the instance on the bottom right corner. Before launching, Amazon Web Services will ask you to create a private Key file, which is used to access your instance. This is the "Pemfile" that you will be uploading when running the simulation. Please carefully save it somewhere as you will not be able to download the file again.</p>
+<img width="650" height="350" src="{% static 'images/AWS_pem.png' %}" alt="AWS_pem">
+<p>7. After the instance is launched, go the running instances, and click on "connect". Take a note on the Public DNS name, this is the "DNS" field that you will be typing in when running the simulation.</p>
+<img width="650" height="350" src="{% static 'images/AWS_after_launch.png' %}" alt="AWS_after_launch">
+<img width="650" height="350" src="{% static 'images/AWS_connect.png' %}" alt="AWS_connect">
+<img width="650" height="350" src="{% static 'images/AWS_DNS.png' %}" alt="AWS_DNS">
+<br/>
+<br/>
 <h2>How to run a simulation using FullMonteWeb</h2>
 <iframe width="650" height="350" src="https://www.youtube.com/embed/1sqRCMTXvzo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 <br/>
@@ -14,6 +36,6 @@
 
 <h2>Next</h2>
 <p>
-When you are done with the tutorial, continue to the <a href="{% url 'simulator'%}">simulator</a>.
+When you are done with the tutorial, continue to the <a href="{% url 'aws'%}">simulator</a>.
 </p>
 {% endblock %}
