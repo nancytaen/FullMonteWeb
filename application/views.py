@@ -445,7 +445,7 @@ def fmVisualization(request):
 
     context = {'message': msg, 'dvhFig': dvhFig}
 
-    proc = Process(target=visualizer, args=(meshFileName,))
+    proc = Process(target=visualizer, args=(meshFileName, request, ))
     proc.start()
 
     return render(request, "visualization.html", context)
@@ -732,12 +732,17 @@ def run_aws_setup(request):
     source_fullmonte = dir_path + '/scripts/FullMonteSW_setup.sh'
     source_fullmonte = str(source_fullmonte)
 
+    source_paraview = dir_path + '/scripts/ParaView_setup.sh'
+    source_paraview = str(source_paraview)
+
     sftp = client.open_sftp()
     client.exec_command('mkdir -p docker_sims')
     sftp.put(source_setup, 'docker_sims/setup_aws.sh')
     sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
+    sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
     sftp.chmod('docker_sims/setup_aws.sh', 700)
     sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
+    sftp.chmod('docker_sims/ParaView_setup.sh', 700)
 
     # create dummy script to run
     sftp.chdir('docker_sims/')
@@ -756,6 +761,15 @@ def run_aws_setup(request):
         print (line)
 
     command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+
+    command = "sudo ~/docker_sims/ParaView_setup.sh"
     stdin, stdout, stderr = client.exec_command(command)
     stdout_line = stdout.readlines()
     stderr_line = stderr.readlines()
