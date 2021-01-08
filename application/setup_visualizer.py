@@ -20,7 +20,7 @@ def visualizer(args):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print ('connecting')
     
-    client.connect(hostname='ec2-99-79-193-202.ca-central-1.compute.amazonaws.com', username='ubuntu', pkey=privkey)
+    client.connect(hostname='ec2-52-60-58-57.ca-central-1.compute.amazonaws.com', username='ubuntu', pkey=privkey)
     print ('connected')
     stdin, stdout, stderr = client.exec_command(cmd)
     stdout_line = stdout.readlines()
