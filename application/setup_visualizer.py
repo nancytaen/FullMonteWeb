@@ -1,26 +1,27 @@
 import paramiko, sys
+import io
 from multiprocessing import Process
 
 # def visualizer():
 #     ph = ""
 #     visualizer(ph)
 
-def visualizer(args):
+def visualizer(meshFileName, request):
     cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/"
-    fileName = args
 
-    if (fileName):
-        cmd += " --load-file " + fileName
+    if (meshFileName):
+        cmd += " --load-file " + meshFileName
 
     print(cmd)
 
-    privkey = paramiko.RSAKey.from_private_key_file("/home/daixiao4/FullMonteWeb/application/LaunchUbuntuInstance.pem")
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
-    client.load_system_host_keys()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
     print ('connecting')
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
     
-    client.connect(hostname='ec2-52-60-58-57.ca-central-1.compute.amazonaws.com', username='ubuntu', pkey=privkey)
     print ('connected')
     stdin, stdout, stderr = client.exec_command(cmd)
     stdout_line = stdout.readlines()
