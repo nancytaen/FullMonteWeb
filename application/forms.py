@@ -99,7 +99,7 @@ class SignUpForm(UserCreationForm):
 class awsFiles(forms.ModelForm):
     class Meta:
         model = awsFile
-        fields = ('DNS', 'pemfile')
+        fields = ('DNS', 'pemfile', 'TCP_port')
     def __init__(self, *args, **kwargs):
         super(awsFiles, self).__init__(*args, **kwargs)
 

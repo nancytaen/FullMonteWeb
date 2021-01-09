@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<p>Welcome to Fullmonte Simulations. Fill in the following information to connect to your Amazon Web Services (AWS) computing node to perform the simulation.</p>
+<p>Welcome to Fullmonte Simulations. Fill in the following information to connect to your Amazon Web Services (AWS) computing node to perform the simulation. Please make sure your TCP Port number is between 8000 and 8999.</p>
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
 
     <div class='table'>
@@ -20,6 +20,13 @@
                 <td>
                     {{ form.pemfile.errors }}
                     {{ form.pemfile }}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.TCP_port.label_tag }}</th>
+                <td>
+                    {{ form.TCP_port.errors }}
+                    {{ form.TCP_port }}
                 </td>
             </tr>
         </table>
