@@ -435,7 +435,7 @@ def fmVisualization(request):
 
     # generate ParaView Visualization URL
     baseUrl = request.session['DNS']
-    tcpPort = "8080"
+    tcpPort = request.session['tcpPort']
     visURL = baseUrl + ":" + tcpPort
 
     if (meshFileName):
@@ -651,6 +651,7 @@ def aws(request):
             obj.user = request.user;
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
+            request.session['tcpPort'] = str(form.cleaned_data['TCP_port'])
             # handle_uploaded_file(request.FILES['pemfile'])
             uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
             pemfile = uploadedAWSPemFile.pemfile

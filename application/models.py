@@ -20,6 +20,7 @@ class tclInput(models.Model):
 class awsFile(models.Model):
     DNS = models.CharField(max_length=250)
     pemfile = models.FileField(storage=PublicMediaStorage())
+    TCP_port = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(8000), MaxValueValidator(8999)])
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,

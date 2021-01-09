@@ -7,7 +7,7 @@ from multiprocessing import Process
 #     visualizer(ph)
 
 def visualizer(meshFileName, request):
-    cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/"
+    cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + request.session['tcpPort']
 
     if (meshFileName):
         cmd += " --load-file " + meshFileName
