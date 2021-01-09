@@ -415,7 +415,7 @@ def run_fullmonte_remotely(request, finished_event):
     sys.stdout.flush()
     conn.close()
 
-# FullMonte Output page
+# FullMonte output Visualization page
 def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
@@ -429,14 +429,13 @@ def fmVisualization(request):
     meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
-    filePath = "/visualization/Meshes/183test21.out.vtk"
-
-    dvhFig = dvh(filePath)
+    # filePath = "/visualization/Meshes/183test21.out.vtk"
+    # dvhFig = dvh(filePath)
 
     # generate ParaView Visualization URL
-    baseUrl = request.session['DNS']
+    dns = request.session['DNS']
     tcpPort = request.session['tcpPort']
-    visURL = baseUrl + ":" + tcpPort
+    visURL = dns + ":" + tcpPort
 
     if (meshFileName):
         msg = "Using mesh " + meshFileName
@@ -445,9 +444,11 @@ def fmVisualization(request):
         msg = "No output mesh was found. Root folder will be loaded for visualization."
 
     # pass DVH and ParaView Visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    # context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    context = {'message': msg, 'visURL': visURL}
 
-    proc = Process(target=visualizer, args=(meshFileName, request, ))
+    text_obj = request.session['text_obj']
+    proc = Process(target=visualizer, args=(meshFileName, dns, tcpPort, text_obj, ))
     proc.start()
 
     return render(request, "visualization.html", context)
