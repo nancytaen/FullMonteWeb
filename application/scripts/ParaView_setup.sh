@@ -13,11 +13,11 @@ fi
 package='pvw-visualizer'
 if [ `npm list -g | grep -c $package` -eq 0 ]; then
     echo "No ParaView Visualizer commandline package detected. Starting installation..." >> ~/setup_paraview.log
-    sudo apt update && sudo apt upgrade
+    sudo apt update && sudo apt upgrade -y
     echo "Successfully updated and upgraded packages" >> ~/setup_paraview.log
-    sudo apt-get install libglu1
+    sudo apt-get -y install libglu1
     echo "Successfully installed libglu1" >> ~/setup_paraview.log
-    sudo apt install npm
+    sudo apt -y install npm
     echo "Successfully installed npm" >> ~/setup_paraview.log
     sudo npm install -g $package --no-shrinkwrap
     echo "Successfully installed pvw-visualizer" >> ~/setup_paraview.log
