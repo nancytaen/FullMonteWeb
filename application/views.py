@@ -420,10 +420,6 @@ def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
-    #
-    # context = {'dvhFig': dvhFig}
-
-    # meshFileName = "183test21.mesh.vtk"
     try:
         mesh = tclInput.objects.filter(user = request.user).latest('id')
     except:
@@ -437,13 +433,19 @@ def fmVisualization(request):
 
     dvhFig = dvh(filePath)
 
+    # generate ParaView Visualization URL
+    baseUrl = request.session['DNS']
+    tcpPort = "8080"
+    visURL = baseUrl + ":" + tcpPort
+
     if (meshFileName):
         msg = "Using mesh " + meshFileName
 
     else:
         msg = "No output mesh was found. Root folder will be loaded for visualization."
 
-    context = {'message': msg, 'dvhFig': dvhFig}
+    # pass DVH and ParaView Visualizer link to the HTML
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
 
     proc = Process(target=visualizer, args=(meshFileName, request, ))
     proc.start()
