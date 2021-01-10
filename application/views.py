@@ -280,11 +280,12 @@ def fmSimulatorSource(request):
             ftp.close()
 
             command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
-            # stdin, stdout, stderr = client.exec_command(command)
             channel = client.get_transport().open_session()
             channel.exec_command(command)
-            time.sleep(3)   # wait tclsh start  # todo: improve this for performance
-                            # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
+            request.session['start_time'] = str(datetime.now(timezone.utc))
+            request.session['started'] = "false"
+            # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
+            #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
             return HttpResponseRedirect('/application/running')
             """
             finished_event = Event()
@@ -769,14 +770,14 @@ def run_aws_setup(request):
     for line in stderr_line:
         print (line)
 
-    command = "sudo ~/docker_sims/ParaView_setup.sh"
-    stdin, stdout, stderr = client.exec_command(command)
-    stdout_line = stdout.readlines()
-    stderr_line = stderr.readlines()
-    for line in stdout_line:
-        print (line)
-    for line in stderr_line:
-        print (line)
+    # command = "sudo ~/docker_sims/ParaView_setup.sh"
+    # stdin, stdout, stderr = client.exec_command(command)
+    # stdout_line = stdout.readlines()
+    # stderr_line = stderr.readlines()
+    # for line in stdout_line:
+    #     print (line)
+    # for line in stderr_line:
+    #     print (line)
     
     # alias = 'manual'
     conn = create_connection()
@@ -867,45 +868,77 @@ def running(request):
         if stdout_word[-1].split()[0] == "Progress":
             progress = stdout_word[-1].split()[-1]
     if progress == '':
-        progress = '0.00%'
+        if request.session['started'] == "false":
+            progress = '0.00%'
+        else:
+            progress = '100.00%'
+
         print("got progres: "+progress)
         sys.stdout.flush()
     else:
+        request.session['started'] = "true"
         print("got progres: "+progress)
         sys.stdout.flush()
     progress = progress[:-2]
     
-    stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
-    stdout_line = stdout.readlines()
-    pid = ''
-    pid = stdout_line[0]
-    # for line in stdout_line:
-    #     print (line)
-    #     pid = line
-    print("pid of tclsh is " + pid)
+    start_time = datetime.strptime(request.session['start_time'], '%Y-%m-%d %H:%M:%S.%f%z')
+    current_time = datetime.now(timezone.utc)
+    time_diff = current_time - start_time
+    running_time = str(time_diff)
+    running_time = running_time.split('.')[0]
+    print("time is : ", running_time)
     sys.stdout.flush()
-    if not pid:
-        return render(request, "simulation_fail.html")
-    # request.session['pid'] = pid
-    stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
+
+    stdin, stdout, stderr = client.exec_command('tail -1 ~/cleaned.log')
     stdout_line = stdout.readlines()
-    count =0
-    client.close()
-    for line in stdout_line:
-        print (line)
-        count+= 1
-        sys.stdout.flush()
+    status = ""
+    if len(stdout_line) > 0:
+        status = stdout_line[0]
+        status = "".join(status.split())
     
-    if count == 1:
+    print("status:",status)
+    sys.stdout.flush()
+    client.close()
+    if status == "[info]Simulationrunfinished":
         print("tclsh finish")
         sys.stdout.flush()
         return HttpResponseRedirect('/application/simulation_finish')
-    
     else:
-        time = stdout_line[1].split()[2]
         print("tclsh not finished")
         sys.stdout.flush()
-        return render(request, "running.html", {'time':time, 'progress':progress})
+        return render(request, "running.html", {'time':running_time, 'progress':progress})
+
+    # stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
+    # stdout_line = stdout.readlines()
+    # pid = ''
+    # pid = stdout_line[0]
+    # # for line in stdout_line:
+    # #     print (line)
+    # #     pid = line
+    # print("pid of tclsh is " + pid)
+    # sys.stdout.flush()
+    # if not pid:
+    #     return render(request, "simulation_fail.html")
+    # # request.session['pid'] = pid
+    # stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
+    # stdout_line = stdout.readlines()
+    # count =0
+    # client.close()
+    # for line in stdout_line:
+    #     print (line)
+    #     count+= 1
+    #     sys.stdout.flush()
+    
+    # if count == 1:
+    #     print("tclsh finish")
+    #     sys.stdout.flush()
+    #     return HttpResponseRedirect('/application/simulation_finish')
+    
+    # else:
+    #     time = stdout_line[1].split()[2]
+    #     print("tclsh not finished")
+    #     sys.stdout.flush()
+    #     return render(request, "running.html", {'time':time, 'progress':progress})
 
 
     
@@ -932,6 +965,7 @@ def simulation_finish(request):
             html_string += e + '<br />'
     print(output)
     sys.stdout.flush()
+    stdin, stdout, stderr = client.exec_command('sudo rm -f ~/cleaned.log')
     ftp.close()
     client.close()
 
