@@ -808,7 +808,7 @@ def AWSsetup(request):
         
         print("get current progress")
         sys.stdout.flush()
-        stdin, stdout, stderr = client.exec_command('head -1 ~/setup_aws.log')
+        stdin, stdout, stderr = client.exec_command('head -1 ~/setup.log')
         stdout_line = stdout.readlines()
         progress = ''
         if len(stdout_line) > 0:
@@ -820,7 +820,7 @@ def AWSsetup(request):
         print("set up progress: " + progress)
         print("end current progress")
         sys.stdout.flush()
-        progress = (float(progress) * 11)
+        progress = (float(progress) * 7.5)
         start_time = running_process.start_time
         current_time = datetime.now(timezone.utc)
         time_diff = current_time - start_time
@@ -828,7 +828,7 @@ def AWSsetup(request):
         running_time = running_time.split('.')[0]
         return render(request, "AWSsetup.html", {'progress':progress, 'time':running_time})
     else:
-        stdin, stdout, stderr = client.exec_command('rm -rf ~/setup_aws.log')
+        stdin, stdout, stderr = client.exec_command('rm -rf ~/setup.log')
         client.close()
         return HttpResponseRedirect('/application/simulator')
     
