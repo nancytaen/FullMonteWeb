@@ -3,3 +3,12 @@
     margin: 12px;
     display: none;
 }
+
+img {
+    padding: .2rem;
+}
+
+.figure_container {
+    width: 100%;
+    padding: .5rem .5rem 1rem .5rem;
+}

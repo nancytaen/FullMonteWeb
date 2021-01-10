@@ -9,7 +9,8 @@ import sys
 import socket
 import io
 import codecs
-
+import psutil
+from datetime import datetime, timezone
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
@@ -30,7 +31,8 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import login, authenticate
 from application.forms import SignUpForm
 import paramiko
-from django.db import models
+from django.db import models, connections
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from application.storage_backends import *
 from django.core.files.storage import default_storage
 from django.core import serializers
@@ -48,8 +50,9 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 
 from decouple import config
-from multiprocessing import Process
-
+from multiprocessing import Process, Event
+import threading
+import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
 
@@ -262,6 +265,7 @@ def fmSimulatorSource(request):
             private_key_file = io.StringIO(text_obj)
             
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            request.session['text_obj'] = text_obj
             client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
             ftp = client.open_sftp()
 
@@ -275,20 +279,57 @@ def fmSimulatorSource(request):
             ftp.putfo(tcl_file, './'+generated_tcl.script.name)
             ftp.close()
 
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
-            stdin, stdout, stderr = client.exec_command(command)
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
+            # stdin, stdout, stderr = client.exec_command(command)
+            channel = client.get_transport().open_session()
+            channel.exec_command(command)
+            time.sleep(3)   # wait tclsh start  # todo: improve this for performance
+                            # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
+            return HttpResponseRedirect('/application/running')
+            """
+            finished_event = Event()
+            #request.session['finished_event'] = finished_event
+            print("before:", request)
+            p = Process(target=run_fullmonte_remotely, args=(request, finished_event, ))
+            p.start()
+            
+            
+            return HttpResponseRedirect('/application/aws')
+            """
+            # while True:
+            #     if channel.exit_status_ready():
+            #         render(request, "simulation_fail.html")
+            #         break
+            #     rl, wl, xl = select.select([channel],[],[],0.0)
+            #     # if(flag is False):
+            #     #     print("redirect to somewhere")
+            #     #     flag = True
+            #     #     sys.stdout.flush()
+            #     #     return HttpResponseRedirect('/application/running')
+            #     if len(rl) > 0:
+            #         str = channel.recv(1024).decode()
+            #         print(str)
+            #         sys.stdout.flush()
+
+            #         if len(str.split()) > 2 and str.split()[0] == '[info]':
+            #             if str.split()[1] == 'Done':
+            #                 print("tcl started")
+            #                 sys.stdout.flush()
+            #                 return HttpResponseRedirect('/application/running')
+
+            # p = Process(target=exec_simulate, args=(request, channel, command,))
+            # p.start()
             #print(stdout.readlines())
             #print(stderr.readlines())
-            stdout_line = stdout.readlines()
-            stderr_line = stderr.readlines()
-            for line in stdout_line:
-                print (line)
-            for line in stderr_line:
-                print (line)
-            sys.stdout.flush()
-            client.close()
-
-            return HttpResponseRedirect('/application/aws')
+            # stdout_line = stdout.readlines()
+            # stderr_line = stderr.readlines()
+            # for line in stdout_line:
+            #     print (line)
+            # for line in stderr_line:
+            #     print (line)
+            # sys.stdout.flush()
+            # client.close()
+            # p.join()
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -300,15 +341,85 @@ def fmSimulatorSource(request):
 
     return render(request, "simulator_source.html", context)
 
-# FullMonte Output page
+# https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
+def create_connection(alias=DEFAULT_DB_ALIAS):
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    return backend.DatabaseWrapper(db, alias)
+
+def run_fullmonte_remotely(request, finished_event):
+    time.sleep(3)
+    conn = create_connection()
+    conn.ensure_connection()
+    #print(conn)
+    print("inside:",request)
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+
+    script_path = tclGenerator(request.session, mesh, request.user)
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+
+    #mesh file
+    mesh_file = default_storage.open(mesh.meshFile.name)
+    tcl_file = default_storage.open(generated_tcl.script.name)
+    meshFileName = mesh.meshFile.name
+
+    print("DNS is", request.session['DNS'])
+    uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+    pemfile = uploadedAWSPemFile.pemfile
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print('SSH into the instance: {}'.format(request.session['DNS']))
+    
+    private_key_file = io.BytesIO()
+    for line in pemfile:
+        private_key_file.write(line)
+    private_key_file.seek(0)
+
+    byte_str = private_key_file.read()
+    text_obj = byte_str.decode('UTF-8')
+    private_key_file = io.StringIO(text_obj)
+    
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    #request.session['text_obj'] = text_obj
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    ftp = client.open_sftp()
+
+    ftp.chdir('docker_sims/')
+    file=ftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+    file.flush()
+    ftp.chmod('docker.sh', 700)
+
+    ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+    ftp.close()
+
+    #command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
+    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    #print(stdout.readlines())
+    #print(stderr.readlines())
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    sys.stdout.flush()
+    client.close()
+    finished_event.set()
+    print("finished executing")
+    sys.stdout.flush()
+    conn.close()
+
+# FullMonte output Visualization page
 def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
-    #
-    # context = {'dvhFig': dvhFig}
-
-    # meshFileName = "183test21.mesh.vtk"
     try:
         mesh = tclInput.objects.filter(user = request.user).latest('id')
     except:
@@ -318,9 +429,13 @@ def fmVisualization(request):
     meshFileName = mesh.meshFile.name
     msg = "Using mesh " + meshFileName[:-4]
 
-    filePath = "/visualization/Meshes/183test21.out.vtk"
+    # filePath = "/visualization/Meshes/183test21.out.vtk"
+    # dvhFig = dvh(filePath)
 
-    dvhFig = dvh(filePath)
+    # generate ParaView Visualization URL
+    dns = request.session['DNS']
+    tcpPort = request.session['tcpPort']
+    visURL = dns + ":" + tcpPort
 
     if (meshFileName):
         msg = "Using mesh " + meshFileName
@@ -328,9 +443,12 @@ def fmVisualization(request):
     else:
         msg = "No output mesh was found. Root folder will be loaded for visualization."
 
-    context = {'message': msg, 'dvhFig': dvhFig}
+    # pass DVH and ParaView Visualizer link to the HTML
+    # context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    context = {'message': msg, 'visURL': visURL}
 
-    proc = Process(target=visualizer, args=(meshFileName,))
+    text_obj = request.session['text_obj']
+    proc = Process(target=visualizer, args=(meshFileName, dns, tcpPort, text_obj, ))
     proc.start()
 
     return render(request, "visualization.html", context)
@@ -534,9 +652,63 @@ def aws(request):
             obj.user = request.user;
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
+            request.session['tcpPort'] = str(form.cleaned_data['TCP_port'])
             # handle_uploaded_file(request.FILES['pemfile'])
-            sys.stdout.flush()
+            uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+            pemfile = uploadedAWSPemFile.pemfile
 
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            private_key_file = io.BytesIO()
+            for line in pemfile:
+                private_key_file.write(line)
+            private_key_file.seek(0)
+
+            byte_str = private_key_file.read()
+            text_obj = byte_str.decode('UTF-8')
+            private_key_file = io.StringIO(text_obj)
+            
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            request.session['text_obj'] = text_obj
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            sftp = client.open_sftp()
+            try:
+                sftp.stat('docker_sims/FullMonteSW_setup.sh')
+            except IOError:
+                # cluster that's not setup
+                client.close()
+            
+                print('before')
+                current_process = psutil.Process()
+                children = current_process.children(recursive=True)
+                for child in children:
+                    print('Child pid is {}'.format(child.pid))
+                connections.close_all()
+                p = Process(target=run_aws_setup, args=(request, ))
+                # print(p)
+                p.start()
+                print('after')
+                current_process = psutil.Process()
+                children = current_process.children(recursive=True)
+
+                form = processRunning()
+                form.user=request.user
+                
+                for child in children:
+                    form.pid = child.pid
+                    form.running = True
+                    print('Child pid is {}'.format(child.pid))
+                
+                conn = create_connection()
+                conn.ensure_connection()
+                form.save()
+                conn.close()
+                sys.stdout.flush()
+                # client.close()
+                
+                return HttpResponseRedirect('/application/AWSsetup')
+            
+            client.close()
             return HttpResponseRedirect('/application/simulator')
     else:
         form = awsFiles()
@@ -546,6 +718,225 @@ def aws(request):
     }
     return render(request, "aws.html", context)
 
+def run_aws_setup(request):
+    time.sleep(3)
+    text_obj = request.session['text_obj']
+    # uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+    private_key_file = io.StringIO(text_obj)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    #tc file
+    source_setup = dir_path + '/scripts/setup_aws.sh'
+    source_setup = str(source_setup)
+
+    source_fullmonte = dir_path + '/scripts/FullMonteSW_setup.sh'
+    source_fullmonte = str(source_fullmonte)
+
+    source_paraview = dir_path + '/scripts/ParaView_setup.sh'
+    source_paraview = str(source_paraview)
+
+    sftp = client.open_sftp()
+    client.exec_command('mkdir -p docker_sims')
+    sftp.put(source_setup, 'docker_sims/setup_aws.sh')
+    sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
+    sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
+    sftp.chmod('docker_sims/setup_aws.sh', 700)
+    sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
+    sftp.chmod('docker_sims/ParaView_setup.sh', 700)
+
+    # create dummy script to run
+    sftp.chdir('docker_sims/')
+    file=sftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\n')
+    file.flush()
+    sftp.chmod('docker.sh', 700)
+
+    command = "sudo ~/docker_sims/setup_aws.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+
+    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+
+    command = "sudo ~/docker_sims/ParaView_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    
+    # alias = 'manual'
+    conn = create_connection()
+    conn.ensure_connection()
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    running_process.running = False
+    running_process.save()
+    conn.close()
+    print('finished')
+    client.close()
+    sys.stdout.flush()
+
+def AWSsetup(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    pid = running_process.pid
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    if running_process.running:
+        
+        print("get current progress")
+        sys.stdout.flush()
+        stdin, stdout, stderr = client.exec_command('head -1 ~/setup_aws.log')
+        stdout_line = stdout.readlines()
+        progress = ''
+        if len(stdout_line) > 0:
+            progress = stdout_line[0].split()[0]
+        else:
+            progress = '0.00'
+        
+        client.close()
+        print("set up progress: " + progress)
+        print("end current progress")
+        sys.stdout.flush()
+        progress = (float(progress) * 11)
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "AWSsetup.html", {'progress':progress, 'time':running_time})
+    else:
+        stdin, stdout, stderr = client.exec_command('rm -rf ~/setup_aws.log')
+        client.close()
+        return HttpResponseRedirect('/application/simulator')
+    
+
 def handle_uploaded_file(f):
     for line in f:
         print (line)
+
+def exec_simulate(request, channel, command):
+    
+    print("start running " + command)
+    sys.stdout.flush()
+    channel.exec_command(command)
+    while True:
+        if channel.exit_status_ready():
+            break
+        rl, wl, xl = select.select([channel],[],[],0.0)
+        if len(rl) > 0:
+            print(channel.recv(1024))
+            sys.stdout.flush()
+    print("finish running")
+    sys.stdout.flush()
+    return  HttpResponseRedirect('/application/simulation_fail')
+  
+def running(request):
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/sim_run.log > ~/cleaned.log')
+    stdin, stdout, stderr = client.exec_command('sudo tail -1 ~/cleaned.log')
+    stdout_word = stdout.readlines()
+    progress = ''
+    if len(stdout_word) > 0:
+        # print(stdout_word[-1])
+        # sys.stdout.flush()
+        if stdout_word[-1].split()[0] == "Progress":
+            progress = stdout_word[-1].split()[-1]
+    if progress == '':
+        progress = '0.00%'
+        print("got progres: "+progress)
+        sys.stdout.flush()
+    else:
+        print("got progres: "+progress)
+        sys.stdout.flush()
+    progress = progress[:-2]
+    
+    stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
+    stdout_line = stdout.readlines()
+    pid = ''
+    pid = stdout_line[0]
+    # for line in stdout_line:
+    #     print (line)
+    #     pid = line
+    print("pid of tclsh is " + pid)
+    sys.stdout.flush()
+    if not pid:
+        return render(request, "simulation_fail.html")
+    # request.session['pid'] = pid
+    stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
+    stdout_line = stdout.readlines()
+    count =0
+    client.close()
+    for line in stdout_line:
+        print (line)
+        count+= 1
+        sys.stdout.flush()
+    
+    if count == 1:
+        print("tclsh finish")
+        sys.stdout.flush()
+        return HttpResponseRedirect('/application/simulation_finish')
+    
+    else:
+        time = stdout_line[1].split()[2]
+        print("tclsh not finished")
+        sys.stdout.flush()
+        return render(request, "running.html", {'time':time, 'progress':progress})
+
+
+    
+def simulation_fail(request):
+    return render(request, "simulation_fail.html")
+
+def simulation_finish(request):
+    client = paramiko.SSHClient()
+    paramiko.util.log_to_file("paramiko_log.txt")
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    ftp = client.open_sftp()
+    # ftp.chdir('docker_sims/')
+    file=ftp.file('sim_run.log', "r")
+    output = file.read().decode()
+    html_string=''
+    # add <p> to output string since html does not support '\n'
+    for e in output.splitlines():
+        if len(e.split()) > 0  and  e.split()[0] != "Progress":
+            html_string += e + '<br />'
+    print(output)
+    sys.stdout.flush()
+    ftp.close()
+    client.close()
+
+    return render(request, "simulation_finish.html", {'output':html_string})

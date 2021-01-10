@@ -62,4 +62,24 @@ class Migration(migrations.Migration):
                 ('user', models.ForeignKey(default=0, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
+        migrations.CreateModel(
+            name='processRunning',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('running', models.BooleanField(default=False)),
+                ('pid', models.IntegerField(default=0)),
+                ('start_time', models.DateTimeField(auto_now=True)),
+                ('user', models.ForeignKey(default=0, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='awsFile',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('DNS', models.CharField(max_length=250)),
+                ('pemfile', models.FileField(storage=application.storage_backends.PublicMediaStorage(), upload_to='')),
+                ('TCP_port', models.IntegerField(blank=True, null=True, validators=[django.core.validators.MinValueValidator(8000), django.core.validators.MaxValueValidator(8999)])),
+                ('user', models.ForeignKey(default=0, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
     ]

@@ -42,6 +42,15 @@ def tclGenerator(session, mesh, current_user):
     #start writing to tcl script
     f = open(source, 'a')
     f.write('package require FullMonte\n')
+
+    f.write('proc progressTimer {} {\n')
+    f.write(indent + 'while { ![k done] } {\n')
+    f.write(indent + indent + 'puts -nonewline [format "\\rProgress %6.2f%%" [expr 100.0*[k progressFraction]]]\n')
+    f.write(indent + indent + 'flush stdout\n')
+    f.write(indent + indent + 'after 200\n')
+    f.write(indent + '}\n')
+    f.write(indent + 'puts [format "\\rProgress %6.2f%%" 100.0]\n')
+    f.write('}\n')
     
     #append mesh to tcl script
     #meshpath = dir_path + '/' + mesh.meshFile.name
@@ -116,7 +125,9 @@ def tclGenerator(session, mesh, current_user):
     f.write(indent + 'k materials MS\n\n')
 
     #run and wait
-    f.write(indent + 'k runSync\n\n')
+    f.write(indent + 'k startAsync\n')
+    f.write(indent + 'progressTimer\n')
+    f.write(indent + 'k finishAsync\n\n')
 
     #get results
     f.write('set ODC [k results]\n\n')

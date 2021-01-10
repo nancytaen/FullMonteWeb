@@ -20,11 +20,23 @@ class tclInput(models.Model):
 class awsFile(models.Model):
     DNS = models.CharField(max_length=250)
     pemfile = models.FileField(storage=PublicMediaStorage())
+    TCP_port = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(8000), MaxValueValidator(8999)])
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
                              on_delete=models.CASCADE
                              )
+
+class processRunning(models.Model):
+    running = models.BooleanField(default = False)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+    pid = models.IntegerField(default=0)
+    start_time = models.DateTimeField(auto_now=True)
+
 
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
