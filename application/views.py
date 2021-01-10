@@ -770,14 +770,14 @@ def run_aws_setup(request):
     for line in stderr_line:
         print (line)
 
-    # command = "sudo ~/docker_sims/ParaView_setup.sh"
-    # stdin, stdout, stderr = client.exec_command(command)
-    # stdout_line = stdout.readlines()
-    # stderr_line = stderr.readlines()
-    # for line in stdout_line:
-    #     print (line)
-    # for line in stderr_line:
-    #     print (line)
+    command = "sudo ~/docker_sims/ParaView_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
     
     # alias = 'manual'
     conn = create_connection()
