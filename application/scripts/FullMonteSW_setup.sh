@@ -38,3 +38,4 @@ DOCKER_COMMAND="docker run --rm  -v $HOME_DIR:/sims -v /tmp/.X11-unix/X0:/tmp/.X
 
 # run the docker command
 eval $DOCKER_COMMAND
+echo [info] Simulation run finished
