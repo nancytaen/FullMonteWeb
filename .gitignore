@@ -7,3 +7,4 @@ application/migrations/
 fullMonteWeb/migrations/
 venv/
 fullMonteWeb/staticfiles/
+*DS_Store*

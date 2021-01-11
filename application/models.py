@@ -37,6 +37,19 @@ class processRunning(models.Model):
     pid = models.IntegerField(default=0)
     start_time = models.DateTimeField(auto_now=True)
 
+class simulationHistory(models.Model):
+    simulation_type = models.CharField(max_length=250)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+    tcl_script_path = models.CharField(max_length=250)
+    mesh_file_path = models.CharField(max_length=250)
+    output_vtk_path = models.CharField(max_length=250)
+    output_txt_path = models.CharField(max_length=250)
+    output_dvh_path = models.CharField(max_length=250)
+    simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):
     script = models.FileField(storage=PublicMediaStorage())
