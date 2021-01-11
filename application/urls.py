@@ -77,6 +77,8 @@ urlpatterns = [
     path('simulation_finish', views.simulation_finish, name='simulation_finish'),
                
     path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
+
+    path('aws_setup_complete', views.aws_setup_complete, name='aws_setup_complete'),
 ]
 
 if settings.DEBUG:
