@@ -43,8 +43,10 @@
                                 break;
                             }
                         }
-                        
-                        if (!blnValid) {
+                        if(blnValid) {
+                            alert("Loading your mesh will take some time. Please wait.");
+                        }
+                        else {
                             alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
                             return false;
                         }
