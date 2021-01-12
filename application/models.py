@@ -83,3 +83,12 @@ class Material(models.Model):
 
     def __str__(self):
         return self.material_name
+
+class visualizeMesh(models.Model):
+    outputMeshFile = models.FileField(storage=PublicMediaStorage())
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+

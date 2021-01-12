@@ -103,5 +103,12 @@ class awsFiles(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(awsFiles, self).__init__(*args, **kwargs)
 
+class visualizeMeshForm(forms.ModelForm):
+    class Meta:
+        model = visualizeMesh
+        fields = ('outputMeshFile',)
+    def __init__(self, *args, **kwargs):
+        super(visualizeMeshForm, self).__init__(*args, **kwargs)
+
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
