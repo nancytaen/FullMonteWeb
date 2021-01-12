@@ -2,10 +2,7 @@ import paramiko, sys
 import io
 from multiprocessing import Process
 
-# def visualizer():
-#     ph = ""
-#     visualizer(ph)
-
+# 3D interactive visualizer using ParaView Visualizer
 def visualizer(meshFileName, fileExists, dns, tcpPort, text_obj):
     cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + tcpPort
 

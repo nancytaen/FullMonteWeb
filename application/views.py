@@ -21,8 +21,8 @@ try:
 except OSError:
     pass
 
-from .dvh import dose_volume_histogram as dvh
-from .setup_visualizer import visualizer
+from .visualizerDVH import dose_volume_histogram as dvh
+from .visualizer3D import visualizer
 from application.tclGenerator import *
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.views import LogoutView
@@ -50,7 +50,7 @@ from django.contrib import messages
 from django.core.mail import EmailMessage
 
 from decouple import config
-from multiprocessing import Process, Event
+from multiprocessing import Process, Event, Queue
 import threading
 import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -481,9 +481,6 @@ def fmVisualization(request):
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # filePath = "/visualization/Meshes/183test21.out.vtk"
-    # dvhFig = dvh(filePath)
-
     # generate ParaView Visualization URL
     dns = request.session['DNS']
     tcpPort = request.session['tcpPort']
@@ -507,14 +504,18 @@ def fmVisualization(request):
     sftp.close()
     client.close()
 
-    # pass DVH and ParaView Visualizer link to the HTML
-    # context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
-
+    # render 3D visualizer
     text_obj = request.session['text_obj']
-    proc = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
-    proc.start()
+    proc1 = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
+    proc1.start()
+
+    # generate DVH
+    dvhFig = Queue()
+    proc2 = Process(target=dvh, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig, ))
+    proc2.start()
     
-    context = {'message': msg, 'visURL': visURL}
+    # pass message, DVH figure, and 3D visualizer link to the HTML
+    context = {'message': msg, 'dvhFig': dvhFig.get(), 'visURL': visURL}
     return render(request, "visualization.html", context)
 
 # page for viewing and downloading files

@@ -1,6 +1,8 @@
 import mpld3
 import numpy as np
-import sys, os
+import sys, os, paramiko
+import io
+from multiprocessing import Process, Queue
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
@@ -156,11 +158,35 @@ def extract_mesh_subregion(mesh,regionBoundaries):
     return subregionAlgorithm.GetOutput()
 
 
-def dose_volume_histogram(filePath):
+def dose_volume_histogram(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig):
 
-    filePath = os.path.dirname(__file__) + filePath
+    if(not fileExists):
+        dvhFig.put("<p>Could not generate Dose Volume Histogram</p>")
+        return
 
-    output = import_data(filePath)
+    remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
+    localFilePath = os.path.dirname(__file__) + "/visualization/Meshes/" + outputMeshFileName
+
+    print("remote file path: "+remoteFilePath)
+    print("local file path: "+localFilePath)
+
+    # tempororily get mesh from remote server to local
+    private_key_file = io.StringIO(text_obj)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    print ('connecting')
+    client.connect(dns, username='ubuntu', pkey=privkey)
+    print ('connected')
+    sftp = client.open_sftp()
+    sftp.get(remoteFilePath, localFilePath)
+    sftp.close()
+    client.close()
+
+    output = import_data(localFilePath)
+
+    # delete temporory mesh
+    os.remove(localFilePath)
 
     ## regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
     ## output = extract_mesh_subregion(output, regionBoundaries)
@@ -203,4 +229,6 @@ def dose_volume_histogram(filePath):
     doseData = populate_dictionary(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    return plot_DVH(cumulativeDVH,noBins)
+    # pass dvh to Queue
+    dvhFig.put(plot_DVH(cumulativeDVH,noBins))
+
