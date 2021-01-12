@@ -6,10 +6,10 @@ from multiprocessing import Process
 #     ph = ""
 #     visualizer(ph)
 
-def visualizer(meshFileName, dns, tcpPort, text_obj):
+def visualizer(meshFileName, fileExists, dns, tcpPort, text_obj):
     cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + tcpPort
 
-    if (meshFileName):
+    if (fileExists):
         cmd += " --load-file " + meshFileName
 
     print(cmd)
@@ -20,8 +20,8 @@ def visualizer(meshFileName, dns, tcpPort, text_obj):
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     print ('connecting')
     client.connect(dns, username='ubuntu', pkey=privkey)
-    
     print ('connected')
+    
     stdin, stdout, stderr = client.exec_command(cmd)
     stdout_line = stdout.readlines()
     stderr_line = stderr.readlines()

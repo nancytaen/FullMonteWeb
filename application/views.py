@@ -251,7 +251,7 @@ def fmSimulatorSource(request):
             #mesh file
             mesh_file = default_storage.open(mesh.meshFile.name)
             tcl_file = default_storage.open(generated_tcl.script.name)
-            meshFileName = mesh.meshFile.name
+            meshFilePath = mesh.meshFile.name
 
             print("DNS is", request.session['DNS'])
             uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
@@ -424,6 +424,44 @@ def run_fullmonte_remotely(request, finished_event):
     sys.stdout.flush()
     conn.close()
 
+# Output mesh upload page
+def visualization_mesh_upload(request):
+    if request.method == 'POST':
+        print(request)
+        form = visualizeMeshForm(request.POST, request.FILES)
+        if form.is_valid():
+            print(form.cleaned_data)
+            # get mesh file from form
+            obj = form.save(commit = False)
+            obj.user = request.user;
+            obj.save()
+            uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
+            outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
+            request.session['outputMesh'] = outputMeshFileName
+            outputMeshFile = default_storage.open(outputMeshFileName)
+            print(outputMeshFileName)
+
+            # copy mesh into remote server
+            text_obj = request.session['text_obj']
+            private_key_file = io.StringIO(text_obj)
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+            sftp = client.open_sftp()
+            sftp.chdir('docker_sims/')
+            sftp.putfo(outputMeshFile, './'+outputMeshFileName)
+            sftp.close()
+            client.close()
+            return HttpResponseRedirect('/application/visualization')
+    else:
+        form = visualizeMeshForm(request.GET or None)
+    context = {
+        'form': form,
+    }
+    return render(request, "mesh_upload.html", context)
+
 # FullMonte output Visualization page
 def fmVisualization(request):
     if not request.user.is_authenticated:
@@ -438,13 +476,10 @@ def fmVisualization(request):
         return HttpResponseRedirect('/application/aws')
 
     try:
-        mesh = tclInput.objects.filter(user = request.user).latest('id')
+        outputMeshFileName = request.session['outputMesh']
     except:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
-        return render(request, "visualization.html")
-
-    meshFileName = mesh.meshFile.name
-    msg = "Using mesh " + meshFileName[:-4]
+        return HttpResponseRedirect('/application/mesh_upload')
 
     # filePath = "/visualization/Meshes/183test21.out.vtk"
     # dvhFig = dvh(filePath)
@@ -454,20 +489,32 @@ def fmVisualization(request):
     tcpPort = request.session['tcpPort']
     visURL = dns + ":" + tcpPort
 
-    if (meshFileName):
-        msg = "Using output mesh " + meshFileName + " from the latest simulation."
+    # check if file exists in the remote server
+    private_key_file = io.StringIO(text_obj)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(dns, username='ubuntu', pkey=privkey)
 
-    else:
-        msg = "No output mesh was found. Root folder will be loaded for visualization."
+    sftp = client.open_sftp()
+    try:
+        sftp.stat('docker_sims/'+outputMeshFileName)
+        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
+        fileExists = True
+    except:
+        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
+        fileExists = False
+    sftp.close()
+    client.close()
 
     # pass DVH and ParaView Visualizer link to the HTML
     # context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
-    context = {'message': msg, 'visURL': visURL}
 
     text_obj = request.session['text_obj']
-    proc = Process(target=visualizer, args=(meshFileName, dns, tcpPort, text_obj, ))
+    proc = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
     proc.start()
-
+    
+    context = {'message': msg, 'visURL': visURL}
     return render(request, "visualization.html", context)
 
 # page for viewing and downloading files
@@ -730,7 +777,7 @@ def aws(request):
                 return HttpResponseRedirect('/application/AWSsetup')
             
             client.close()
-            return HttpResponseRedirect('/application/aws_setup_complete')
+            return render(request, "aws_setup_complete.html")
     else:
         form = awsFiles()
 
@@ -852,17 +899,14 @@ def AWSsetup(request):
     else:
         stdin, stdout, stderr = client.exec_command('rm -rf ~/setup.log')
         client.close()
-        return HttpResponseRedirect('/application/aws_setup_complete')
-
-def aws_setup_complete(request):
-    return render(request, "aws_setup_complete.html")
+        return render(request, "aws_setup_complete.html")
     
 # parse lines in file
 def handle_uploaded_file(f):
     for line in f:
         print (line)
 
-# exicute FullMonte simulation
+# execute FullMonte simulation
 def exec_simulate(request, channel, command):
     
     print("start running " + command)
@@ -978,6 +1022,12 @@ def simulation_fail(request):
 
 # page for successfully finished simulation
 def simulation_finish(request):
+    # save output mesh file info
+    outputMeshFile = tclInput.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = outputMeshFile.meshFile.name
+    request.session['outputMesh'] = outputMeshFileName[:-4] + ".out.vtk"
+
+    # display simulation outputs
     client = paramiko.SSHClient()
     paramiko.util.log_to_file("paramiko_log.txt")
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
