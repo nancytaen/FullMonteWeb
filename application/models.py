@@ -4,12 +4,19 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings 
 
 user_model = settings.AUTH_USER_MODEL
+<<<<<<< HEAD
 # def per_user_path(instance, filename):
 #     return '{0}/{1}'.format(instance.user, filename)
 # Create your models here.
 
 class tclInput(models.Model):
     # meshFile = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+=======
+
+# Create your models here.
+
+class tclInput(models.Model):
+>>>>>>> master
     meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
@@ -21,7 +28,10 @@ class tclInput(models.Model):
 
 class awsFile(models.Model):
     DNS = models.CharField(max_length=250)
+<<<<<<< HEAD
     # pemfile = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+=======
+>>>>>>> master
     pemfile = models.FileField(storage=PublicMediaStorage())
     TCP_port = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(8000), MaxValueValidator(8999)])
     user = models.ForeignKey(user_model,
@@ -55,7 +65,10 @@ class simulationHistory(models.Model):
     simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):
+<<<<<<< HEAD
     # script = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+=======
+>>>>>>> master
     script = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,
                              default = 0,
@@ -64,8 +77,11 @@ class tclScript(models.Model):
                              )
 
 class fullmonteOutput(models.Model):
+<<<<<<< HEAD
     # outputVtk = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
     # outputFluence = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+=======
+>>>>>>> master
     outputVtk = models.FileField(storage=PublicMediaStorage())
     outputFluence = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,
@@ -75,7 +91,10 @@ class fullmonteOutput(models.Model):
                              )
 
 class preset(models.Model):
+<<<<<<< HEAD
     # presetMesh = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+=======
+>>>>>>> master
     presetMesh = models.FileField(storage=PublicMediaStorage())
     layerDesc = models.TextField(blank=True, null=True)
 
