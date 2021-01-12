@@ -4,12 +4,11 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings 
 
 user_model = settings.AUTH_USER_MODEL
-def per_user_path(instance, filename):
-    return '{0}/{1}'.format(instance.user, filename)
+
 # Create your models here.
 
 class tclInput(models.Model):
-    meshFile = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+    meshFile = models.FileField(storage=PublicMediaStorage())
     kernelType = models.CharField(max_length=255)
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     user = models.ForeignKey(user_model,
@@ -20,7 +19,7 @@ class tclInput(models.Model):
 
 class awsFile(models.Model):
     DNS = models.CharField(max_length=250)
-    pemfile = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+    pemfile = models.FileField(storage=PublicMediaStorage())
     TCP_port = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(8000), MaxValueValidator(8999)])
     user = models.ForeignKey(user_model,
                              default = 0,
@@ -53,7 +52,7 @@ class simulationHistory(models.Model):
     simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):
-    script = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+    script = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
@@ -61,8 +60,8 @@ class tclScript(models.Model):
                              )
 
 class fullmonteOutput(models.Model):
-    outputVtk = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
-    outputFluence = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+    outputVtk = models.FileField(storage=PublicMediaStorage())
+    outputFluence = models.FileField(storage=PublicMediaStorage())
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
@@ -70,7 +69,7 @@ class fullmonteOutput(models.Model):
                              )
 
 class preset(models.Model):
-    presetMesh = models.FileField(storage=PublicMediaStorage(), upload_to=per_user_path)
+    presetMesh = models.FileField(storage=PublicMediaStorage())
     layerDesc = models.TextField(blank=True, null=True)
 
 class Material(models.Model):
