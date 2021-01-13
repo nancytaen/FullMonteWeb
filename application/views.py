@@ -48,6 +48,8 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.contrib import messages
 from django.core.mail import EmailMessage
+from django.views.generic.detail import DetailView   
+from django.http import FileResponse
 
 from decouple import config
 from multiprocessing import Process, Event, Queue
@@ -57,6 +59,19 @@ import select
  #        ['to@example.com'], fail_silently=False)
 
 # Create your views here.
+class BaseFileDownloadView(DetailView):
+    def get(self, request, *args, **kwargs):
+        filename=self.kwargs.get('filename', None)
+        if filename is None:
+            raise ValueError("Found empty filename")
+        some_file = default_storage.open(filename)
+        response = FileResponse(some_file)
+        # https://docs.djangoproject.com/en/1.11/howto/outputting-csv/#streaming-large-csv-files
+        response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+        return response
+
+class fileDownloadView(BaseFileDownloadView):
+    pass
 
 # homepage
 def home(request):
@@ -258,7 +273,6 @@ def fmSimulatorSource(request):
             pemfile = uploadedAWSPemFile.pemfile
 
             client = paramiko.SSHClient()
-            paramiko.util.log_to_file("paramiko_log.txt")
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             print('SSH into the instance: {}'.format(request.session['DNS']))
             
@@ -294,50 +308,6 @@ def fmSimulatorSource(request):
             # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
             #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
             return HttpResponseRedirect('/application/running')
-            """
-            finished_event = Event()
-            #request.session['finished_event'] = finished_event
-            print("before:", request)
-            p = Process(target=run_fullmonte_remotely, args=(request, finished_event, ))
-            p.start()
-            
-            
-            return HttpResponseRedirect('/application/aws')
-            """
-            # while True:
-            #     if channel.exit_status_ready():
-            #         render(request, "simulation_fail.html")
-            #         break
-            #     rl, wl, xl = select.select([channel],[],[],0.0)
-            #     # if(flag is False):
-            #     #     print("redirect to somewhere")
-            #     #     flag = True
-            #     #     sys.stdout.flush()
-            #     #     return HttpResponseRedirect('/application/running')
-            #     if len(rl) > 0:
-            #         str = channel.recv(1024).decode()
-            #         print(str)
-            #         sys.stdout.flush()
-
-            #         if len(str.split()) > 2 and str.split()[0] == '[info]':
-            #             if str.split()[1] == 'Done':
-            #                 print("tcl started")
-            #                 sys.stdout.flush()
-            #                 return HttpResponseRedirect('/application/running')
-
-            # p = Process(target=exec_simulate, args=(request, channel, command,))
-            # p.start()
-            #print(stdout.readlines())
-            #print(stderr.readlines())
-            # stdout_line = stdout.readlines()
-            # stderr_line = stderr.readlines()
-            # for line in stdout_line:
-            #     print (line)
-            # for line in stderr_line:
-            #     print (line)
-            # sys.stdout.flush()
-            # client.close()
-            # p.join()
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -868,7 +838,6 @@ def AWSsetup(request):
     running_process = processRunning.objects.filter(user = request.user).latest('id')
     pid = running_process.pid
     client = paramiko.SSHClient()
-    paramiko.util.log_to_file("paramiko_log.txt")
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
@@ -927,7 +896,6 @@ def exec_simulate(request, channel, command):
 # simulation progress page
 def running(request):
     client = paramiko.SSHClient()
-    paramiko.util.log_to_file("paramiko_log.txt")
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
@@ -1030,7 +998,6 @@ def simulation_finish(request):
 
     # display simulation outputs
     client = paramiko.SSHClient()
-    paramiko.util.log_to_file("paramiko_log.txt")
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
@@ -1052,4 +1019,61 @@ def simulation_finish(request):
     ftp.close()
     client.close()
 
+    connections.close_all()
+    p = Process(target=populate_simulation_history, args=(request, ))
+    p.start()
+    # populate_simulation_history(request)
+
     return render(request, "simulation_finish.html", {'output':html_string})
+
+def populate_simulation_history(request):
+    conn = create_connection()
+    conn.ensure_connection()
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    ftp = client.open_sftp()
+    # store output files to S3, and populate simulation history
+    history = simulationHistory()
+    history.simulation_type = 'Fullmonte Simulation'
+    history.user = request.user
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    history.mesh_file_path = mesh.meshFile
+    history.tcl_script_path = tclScript.objects.filter(user = request.user).latest('id').script
+
+    mesh_vtk_name = mesh.meshFile.name
+    mesh_name = mesh_vtk_name[:-4]
+    tcl_name = mesh_name + '.tcl'
+    output_vtk_name = mesh_name + '.out.vtk'
+    output_txt_name = mesh_name + '.phi_v.txt'
+
+    output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
+    # default_storage.save(output_vtk_name, output_vtk_file)
+    output_txt_file = ftp.file('docker_sims/' + output_txt_name)
+    history.output_vtk_path.save(output_vtk_name, output_vtk_file)
+    history.output_txt_path.save(output_txt_name, output_txt_file)
+    # default_storage.save(output_txt_name, output_txt_file)
+    
+    ftp.close()
+    client.close()
+
+    '''
+    history.tcl_script_path = tcl_name
+    history.mesh_file_path = mesh_vtk_name
+    history.output_vtk_path = output_vtk_name
+    history.output_txt_path = output_txt_name
+    '''
+    # TODO: populate dvh path
+    # history.output_dvh_path = ''
+    history.save()
+
+    conn.close()
+
+def simulation_history(request):
+    history = simulationHistory.objects.filter(user=request.user)
+    return render(request, "simulation_history.html", {'history':history})
