@@ -1,49 +1,33 @@
 {% extends "base_generic.html" %}
+{% load static %}
 
 {% block content %}
+<h1>Upload Mesh File for Visualization</h1>
 
-<h1>Connect to an AWS Remote Server</h1> 
-<p>Welcome to Fullmonte Simulations. Fill in the following information to connect to your Amazon Web Services (AWS) computing node to perform the simulation. Please make sure your TCP Port number is between 8000 and 8999.</p>
+<p><b>Please upload an output mesh file here or run simulation to view results.</b></p>
+
+<!-- form for user to upload a mesh -->
 <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-
     <div class='table'>
         <table class='no_error'>
             {% csrf_token %}
             <tr>
-                <th>{{ form.DNS.label_tag }}</th>
+                <th>{{ form.outputMeshFile.label_tag }}</th>
                 <td>
-                    {{ form.DNS.errors }}
-                    {{ form.DNS }}
-                </td>
-            </tr>
-            <tr>
-                <th>{{ form.pemfile.label_tag }}</th>
-                <td>
-                    {{ form.pemfile.errors }}
-                    {{ form.pemfile }}
-                </td>
-            </tr>
-            <tr>
-                <th>{{ form.TCP_port.label_tag }}</th>
-                <td>
-                    {{ form.TCP_port.errors }}
-                    {{ form.TCP_port }}
+                    {{ form.outputMeshFile.errors }}
+                    {{ form.outputMeshFile }}
                 </td>
             </tr>
         </table>
     </div>
     
-    <p><br/><input type="submit" value="Next"></p>
+    <p><br/><input type="submit" value="Sumbit"></p>
 
 </form>
 
-<a href="{% url 'tutorial' %}">
-    Not sure where to find this information? Click here to watch starter guides for Amazon Web Services.
-</a>
-
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
-    var _validFileExtensions = [".pem"];
+    var _validFileExtensions = [".out.vtk"];
     function Validate(oForm) {
         var arrInputs = oForm.getElementsByTagName("input");
         for (var i = 0; i < arrInputs.length; i++) {
@@ -59,8 +43,10 @@
                                 break;
                             }
                         }
-                        
-                        if (!blnValid) {
+                        if(blnValid) {
+                            alert("Loading your mesh will take some time. Please wait.");
+                        }
+                        else {
                             alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
                             return false;
                         }

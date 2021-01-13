@@ -21,8 +21,8 @@ try:
 except OSError:
     pass
 
-from .dvh import dose_volume_histogram as dvh
-from .setup_visualizer import visualizer
+from .visualizerDVH import dose_volume_histogram as dvh
+from .visualizer3D import visualizer
 from application.tclGenerator import *
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.views import LogoutView
@@ -52,7 +52,7 @@ from django.views.generic.detail import DetailView
 from django.http import FileResponse
 
 from decouple import config
-from multiprocessing import Process, Event
+from multiprocessing import Process, Event, Queue
 import threading
 import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -94,6 +94,13 @@ def fmSimulator(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    try:
+        dns = request.session['DNS']
+        text_obj = request.session['text_obj']
+        tcpPort = request.session['tcpPort']
+    except:
+        messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
+        return HttpResponseRedirect('/application/aws')
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -259,7 +266,7 @@ def fmSimulatorSource(request):
             #mesh file
             mesh_file = default_storage.open(mesh.meshFile.name)
             tcl_file = default_storage.open(generated_tcl.script.name)
-            meshFileName = mesh.meshFile.name
+            meshFilePath = mesh.meshFile.name
 
             print("DNS is", request.session['DNS'])
             uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
@@ -320,42 +327,165 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
     backend = load_backend(db['ENGINE'])
     return backend.DatabaseWrapper(db, alias)
 
+# run fullMonte on EC2 instance specified by the user
+def run_fullmonte_remotely(request, finished_event):
+    time.sleep(3)
+    conn = create_connection()
+    conn.ensure_connection()
+    #print(conn)
+    print("inside:",request)
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+
+    script_path = tclGenerator(request.session, mesh, request.user)
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+
+    #mesh file
+    mesh_file = default_storage.open(mesh.meshFile.name)
+    tcl_file = default_storage.open(generated_tcl.script.name)
+    meshFileName = mesh.meshFile.name
+
+    print("DNS is", request.session['DNS'])
+    uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+    pemfile = uploadedAWSPemFile.pemfile
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    print('SSH into the instance: {}'.format(request.session['DNS']))
+    
+    private_key_file = io.BytesIO()
+    for line in pemfile:
+        private_key_file.write(line)
+    private_key_file.seek(0)
+
+    byte_str = private_key_file.read()
+    text_obj = byte_str.decode('UTF-8')
+    private_key_file = io.StringIO(text_obj)
+    
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    #request.session['text_obj'] = text_obj
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    ftp = client.open_sftp()
+
+    ftp.chdir('docker_sims/')
+    file=ftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+    file.flush()
+    ftp.chmod('docker.sh', 700)
+
+    ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+    ftp.close()
+
+    #command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
+    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
+    stdin, stdout, stderr = client.exec_command(command)
+    #print(stdout.readlines())
+    #print(stderr.readlines())
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    sys.stdout.flush()
+    client.close()
+    finished_event.set()
+    print("finished executing")
+    sys.stdout.flush()
+    conn.close()
+
+# Output mesh upload page
+def visualization_mesh_upload(request):
+    if request.method == 'POST':
+        print(request)
+        form = visualizeMeshForm(request.POST, request.FILES)
+        if form.is_valid():
+            print(form.cleaned_data)
+            # get mesh file from form
+            obj = form.save(commit = False)
+            obj.user = request.user;
+            obj.save()
+            uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
+            outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
+            request.session['outputMesh'] = outputMeshFileName
+            outputMeshFile = default_storage.open(outputMeshFileName)
+            print(outputMeshFileName)
+
+            # copy mesh into remote server
+            text_obj = request.session['text_obj']
+            private_key_file = io.StringIO(text_obj)
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+            sftp = client.open_sftp()
+            sftp.chdir('docker_sims/')
+            sftp.putfo(outputMeshFile, './'+outputMeshFileName)
+            sftp.close()
+            client.close()
+            return HttpResponseRedirect('/application/visualization')
+    else:
+        form = visualizeMeshForm(request.GET or None)
+    context = {
+        'form': form,
+    }
+    return render(request, "mesh_upload.html", context)
+
 # FullMonte output Visualization page
 def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
     try:
-        mesh = tclInput.objects.filter(user = request.user).latest('id')
+        dns = request.session['DNS']
+        text_obj = request.session['text_obj']
+        tcpPort = request.session['tcpPort']
     except:
-        messages.error(request, 'Error - please upload a mesh before trying to visualize')
-        return render(request, "visualization.html")
+        messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
+        return HttpResponseRedirect('/application/aws')
 
-    meshFileName = mesh.meshFile.name
-    msg = "Using mesh " + meshFileName[:-4]
-
-    # filePath = "/visualization/Meshes/183test21.out.vtk"
-    # dvhFig = dvh(filePath)
+    try:
+        outputMeshFileName = request.session['outputMesh']
+    except:
+        messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
+        return HttpResponseRedirect('/application/mesh_upload')
 
     # generate ParaView Visualization URL
     dns = request.session['DNS']
     tcpPort = request.session['tcpPort']
     visURL = dns + ":" + tcpPort
 
-    if (meshFileName):
-        msg = "Using mesh " + meshFileName
+    # check if file exists in the remote server
+    private_key_file = io.StringIO(text_obj)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(dns, username='ubuntu', pkey=privkey)
 
-    else:
-        msg = "No output mesh was found. Root folder will be loaded for visualization."
+    sftp = client.open_sftp()
+    try:
+        sftp.stat('docker_sims/'+outputMeshFileName)
+        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
+        fileExists = True
+    except:
+        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
+        fileExists = False
+    sftp.close()
+    client.close()
 
-    # pass DVH and ParaView Visualizer link to the HTML
-    # context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
-    context = {'message': msg, 'visURL': visURL}
-
+    # render 3D visualizer
     text_obj = request.session['text_obj']
-    proc = Process(target=visualizer, args=(meshFileName, dns, tcpPort, text_obj, ))
-    proc.start()
+    proc1 = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
+    proc1.start()
 
+    # generate DVH
+    dvhFig = Queue()
+    proc2 = Process(target=dvh, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig, ))
+    proc2.start()
+    
+    # pass message, DVH figure, and 3D visualizer link to the HTML
+    context = {'message': msg, 'dvhFig': dvhFig.get(), 'visURL': visURL}
     return render(request, "visualization.html", context)
 
 # page for viewing and downloading files
@@ -468,6 +598,7 @@ def downloadPreset(request):
 
     return render(request, "download_preset.html", context)
 
+# user account signup page
 def signup(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -497,6 +628,7 @@ def signup(request):
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
 
+# user account activation page
 def activate(request, uidb64, token):
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
@@ -512,12 +644,13 @@ def activate(request, uidb64, token):
     else:
         return HttpResponse('Activation link is invalid!')
 
+# user acount info page
 def account(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
     return render(request, "account.html")
 
-#for changing passwords
+# user account changing passwords page
 def change_password(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
@@ -543,6 +676,7 @@ def change_password(request):
 def heroku_timeout(request):
     return render(request, 'heroku_timeout.html')
 
+# AWS EC2 instance setup page
 def aws(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
@@ -614,7 +748,7 @@ def aws(request):
                 return HttpResponseRedirect('/application/AWSsetup')
             
             client.close()
-            return HttpResponseRedirect('/application/simulator')
+            return render(request, "aws_setup_complete.html")
     else:
         form = awsFiles()
 
@@ -623,6 +757,7 @@ def aws(request):
     }
     return render(request, "aws.html", context)
 
+# run AWS setup on the EC2 instance specified by user
 def run_aws_setup(request):
     time.sleep(3)
     text_obj = request.session['text_obj']
@@ -698,6 +833,7 @@ def run_aws_setup(request):
     client.close()
     sys.stdout.flush()
 
+# AWS setup progress page
 def AWSsetup(request):
     running_process = processRunning.objects.filter(user = request.user).latest('id')
     pid = running_process.pid
@@ -733,8 +869,31 @@ def AWSsetup(request):
     else:
         stdin, stdout, stderr = client.exec_command('rm -rf ~/setup.log')
         client.close()
-        return HttpResponseRedirect('/application/simulator')
-  
+        return render(request, "aws_setup_complete.html")
+    
+# parse lines in file
+def handle_uploaded_file(f):
+    for line in f:
+        print (line)
+
+# execute FullMonte simulation
+def exec_simulate(request, channel, command):
+    
+    print("start running " + command)
+    sys.stdout.flush()
+    channel.exec_command(command)
+    while True:
+        if channel.exit_status_ready():
+            break
+        rl, wl, xl = select.select([channel],[],[],0.0)
+        if len(rl) > 0:
+            print(channel.recv(1024))
+            sys.stdout.flush()
+    print("finish running")
+    sys.stdout.flush()
+    return  HttpResponseRedirect('/application/simulation_fail')
+
+# simulation progress page
 def running(request):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -793,10 +952,51 @@ def running(request):
         sys.stdout.flush()
         return render(request, "running.html", {'time':running_time, 'progress':progress})
 
+    # stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
+    # stdout_line = stdout.readlines()
+    # pid = ''
+    # pid = stdout_line[0]
+    # # for line in stdout_line:
+    # #     print (line)
+    # #     pid = line
+    # print("pid of tclsh is " + pid)
+    # sys.stdout.flush()
+    # if not pid:
+    #     return render(request, "simulation_fail.html")
+    # # request.session['pid'] = pid
+    # stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
+    # stdout_line = stdout.readlines()
+    # count =0
+    # client.close()
+    # for line in stdout_line:
+    #     print (line)
+    #     count+= 1
+    #     sys.stdout.flush()
+    
+    # if count == 1:
+    #     print("tclsh finish")
+    #     sys.stdout.flush()
+    #     return HttpResponseRedirect('/application/simulation_finish')
+    
+    # else:
+    #     time = stdout_line[1].split()[2]
+    #     print("tclsh not finished")
+    #     sys.stdout.flush()
+    #     return render(request, "running.html", {'time':time, 'progress':progress})
+
+
+# page for failed simulation
 def simulation_fail(request):
     return render(request, "simulation_fail.html")
 
+# page for successfully finished simulation
 def simulation_finish(request):
+    # save output mesh file info
+    outputMeshFile = tclInput.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = outputMeshFile.meshFile.name
+    request.session['outputMesh'] = outputMeshFileName[:-4] + ".out.vtk"
+
+    # display simulation outputs
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']

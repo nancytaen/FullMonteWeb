@@ -4,10 +4,18 @@
 {% block content %}
 <h1>Visualization</h1>
 
-<a href={{visURL}} target="_blank">Open interactive visualizer</a>
+<!-- message indicting the mesh being used -->
+<p><b> {{ message|safe }} </b></p>
 
-<!-- <p> {{ dvhFig|safe }} </p> -->
+<!-- allow user to upload a different mesh -->
+<p>To visualize a different output mesh, please <a href=mesh_upload>click here to upload the mesh file.</a></p>
+</br>
 
-<p> {{ message|safe }} </p>
+<p><b>3D Visualization</b></p>
+<p><a href={{visURL}} target="_blank">Open 3D interactive visualizer</a></p>
+</br>
+
+<p><b>Dose-Volume Histogram</b></p>
+<p> {{ dvhFig|safe }} </p>
 
 {% endblock %}
