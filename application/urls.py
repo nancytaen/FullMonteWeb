@@ -79,6 +79,8 @@ urlpatterns = [
     path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
 
     path('mesh_upload', views.visualization_mesh_upload, name='mesh_upload'),
+    
+    path('displayVisualization', views.displayVisualization, name='displayVisualization'),
 ]
 
 if settings.DEBUG:

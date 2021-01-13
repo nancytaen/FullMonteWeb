@@ -462,7 +462,7 @@ def visualization_mesh_upload(request):
     }
     return render(request, "mesh_upload.html", context)
 
-# FullMonte output Visualization page
+# FullMonte output Visualization - generate DVH
 def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
@@ -481,11 +481,6 @@ def fmVisualization(request):
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # generate ParaView Visualization URL
-    dns = request.session['DNS']
-    tcpPort = request.session['tcpPort']
-    visURL = dns + ":" + tcpPort
-
     # check if file exists in the remote server
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
@@ -497,26 +492,53 @@ def fmVisualization(request):
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
         msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
-        fileExists = True
+        request.session['fileExists'] = True
     except:
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
-        fileExists = False
+        request.session['fileExists'] = False
     sftp.close()
     client.close()
+
+    if(request.session['fileExists']):
+        # generate DVH
+        dvhFig = Queue()
+        proc = Process(target=dvh, args=(outputMeshFileName, dns, tcpPort, text_obj, dvhFig, ))
+        proc.start()
+        request.session['dvhFig'] = dvhFig.get()
+    
+    else:
+        # DBH cannot be generated
+        request.session['dvhFig'] = "<p>Could not generate Dose Volume Histogram</p>"
+    
+    return HttpResponseRedirect('/application/displayVisualization')
+
+# page that loads both the 3D visualization and DVH
+def displayVisualization(request):
+    outputMeshFileName = request.session['outputMesh']
+    fileExists = request.session['fileExists']
+    dvhFig = request.session['dvhFig']
+
+    # generate ParaView Visualization URL
+    dns = request.session['DNS']
+    tcpPort = request.session['tcpPort']
+    visURL = dns + ":" + tcpPort
 
     # render 3D visualizer
     text_obj = request.session['text_obj']
     proc1 = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
     proc1.start()
 
-    # generate DVH
-    dvhFig = Queue()
-    proc2 = Process(target=dvh, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig, ))
-    proc2.start()
+    # get message
+    if(fileExists):
+        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
+    else:
+        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig.get(), 'visURL': visURL}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
     return render(request, "visualization.html", context)
+
+
 
 # page for viewing and downloading files
 def downloadOutput(request):
