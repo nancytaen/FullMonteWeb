@@ -18,19 +18,35 @@ def visualizer(meshFileName, fileExists, dns, tcpPort, text_obj):
     print ('connecting')
     client.connect(dns, username='ubuntu', pkey=privkey)
     print ('connected')
-    
-    stdin, stdout, stderr = client.exec_command(cmd)
-    stdout_line = stdout.readlines()
-    stderr_line = stderr.readlines()
-    for line in stdout_line:
-        print (line)
-    for line in stderr_line:
-        print (line)
 
-    print('finished')
-    client.close()
-    sys.stdout.flush()
+    # set channel
+    ssh_transp = client.get_transport()
+    chan = ssh_transp.open_session()
+    chan.setblocking(0)
+    outdata, errdata = b'',b''
 
+    chan.exec_command(command=cmd)    
+
+    try:
+        while True:  # monitoring process
+            # Reading from output streams
+            while chan.recv_ready():
+                outdata += chan.recv(1000)
+            if chan.recv_stderr_ready():
+                errdata += chan.recv_stderr(1000)
+            if chan.exit_status_ready():  # If completed
+                break
+
+        print(outdata)
+        print(errdata)
+
+    finally:
+        retcode = chan.recv_exit_status()
+        ssh_transp.close()
+        client.close()
+
+        print("Visualizer process exited with code " + str(retcode))
+        return(retcode)
 
 
 if __name__ == "__main__":
