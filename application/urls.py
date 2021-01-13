@@ -26,6 +26,9 @@ urlpatterns = [
 
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
+    
+    path('simulation_history', views.simulation_history, name='simulation_history'),
+    url(r'download/(?P<filename>[-\w_\\-\\.]+)$', views.fileDownloadView.as_view(), name='file_download'),
 
     # /application/about
     path('about', views.about, name='about'),

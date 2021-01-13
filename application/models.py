@@ -44,11 +44,11 @@ class simulationHistory(models.Model):
                              null = True,
                              on_delete=models.CASCADE
                              )
-    tcl_script_path = models.CharField(max_length=250)
-    mesh_file_path = models.CharField(max_length=250)
-    output_vtk_path = models.CharField(max_length=250)
-    output_txt_path = models.CharField(max_length=250)
-    output_dvh_path = models.CharField(max_length=250)
+    tcl_script_path = models.FileField(storage=PublicMediaStorage())
+    mesh_file_path = models.FileField(storage=PublicMediaStorage())
+    output_vtk_path = models.FileField(storage=PublicMediaStorage())
+    output_txt_path = models.FileField(storage=PublicMediaStorage())
+    output_dvh_path = models.FileField(storage=PublicMediaStorage())
     simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):
