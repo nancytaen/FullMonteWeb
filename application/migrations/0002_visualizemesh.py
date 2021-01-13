@@ -15,6 +15,16 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
+            name='processRunning',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('running', models.BooleanField(default=False)),
+                ('pid', models.IntegerField(default=0)),
+                ('start_time', models.DateTimeField(auto_now=True)),
+                ('user', models.ForeignKey(default=0, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
             name='visualizeMesh',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
