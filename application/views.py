@@ -1076,4 +1076,7 @@ def populate_simulation_history(request):
 
 def simulation_history(request):
     history = simulationHistory.objects.filter(user=request.user)
-    return render(request, "simulation_history.html", {'history':history})
+    if history.count() > 0:
+        return render(request, "simulation_history.html", {'history':history})
+    else:
+        return render(request, "simulation_history_empty.html")
