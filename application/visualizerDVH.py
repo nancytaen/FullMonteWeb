@@ -158,11 +158,7 @@ def extract_mesh_subregion(mesh,regionBoundaries):
     return subregionAlgorithm.GetOutput()
 
 
-def dose_volume_histogram(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig):
-
-    if(not fileExists):
-        dvhFig.put("<p>Could not generate Dose Volume Histogram</p>")
-        return
+def dose_volume_histogram(outputMeshFileName, dns, tcpPort, text_obj, dvhFig):
 
     remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
     localFilePath = os.path.dirname(__file__) + "/visualization/Meshes/" + outputMeshFileName
@@ -175,9 +171,9 @@ def dose_volume_histogram(outputMeshFileName, fileExists, dns, tcpPort, text_obj
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    print ('connecting')
+    print ('connecting to remote server in visualizerDVH')
     client.connect(dns, username='ubuntu', pkey=privkey)
-    print ('connected')
+    print ('connected to remote server in visualizerDVH')
     sftp = client.open_sftp()
     sftp.get(remoteFilePath, localFilePath)
     sftp.close()
