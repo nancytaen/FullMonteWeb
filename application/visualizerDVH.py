@@ -2,11 +2,14 @@ import mpld3
 import numpy as np
 import sys, os, paramiko
 import io
-from multiprocessing import Process, Queue
+from .models import *
+from multiprocessing import Process
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
 from vtk.numpy_interface import dataset_adapter as npi
 from math import floor
 from matplotlib import pyplot as plt
+from django.db import models, connections
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 
 def import_data(filePath):
 
@@ -157,9 +160,18 @@ def extract_mesh_subregion(mesh,regionBoundaries):
     subregionAlgorithm.Update()
     return subregionAlgorithm.GetOutput()
 
+# https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
+def create_connection(alias=DEFAULT_DB_ALIAS):
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    return backend.DatabaseWrapper(db, alias)
 
-def dose_volume_histogram(outputMeshFileName, dns, tcpPort, text_obj, dvhFig):
 
+def dose_volume_histogram(user, dns, tcpPort, text_obj):
+    info = meshFileInfo.objects.filter(user = user).latest('id')
+    outputMeshFileName = info.fileName
     remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
     localFilePath = os.path.dirname(__file__) + "/visualization/Meshes/" + outputMeshFileName
 
@@ -225,6 +237,14 @@ def dose_volume_histogram(outputMeshFileName, dns, tcpPort, text_obj, dvhFig):
     doseData = populate_dictionary(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    # pass dvh to Queue
-    dvhFig.put(plot_DVH(cumulativeDVH,noBins))
+    # save the figure's html string to session
+    conn = create_connection()
+    conn.ensure_connection()
+    info.dvhFig = plot_DVH(cumulativeDVH,noBins)
+    info.save()
+    running_process = processRunning.objects.filter(user = user).latest('id')
+    running_process.running = False
+    running_process.save()
+    conn.close()
+    print("done generating DVH")
 

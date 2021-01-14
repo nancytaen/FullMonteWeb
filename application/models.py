@@ -37,6 +37,16 @@ class processRunning(models.Model):
     pid = models.IntegerField(default=0)
     start_time = models.DateTimeField(auto_now=True)
 
+class meshFileInfo(models.Model):
+    fileName = models.CharField(max_length=255)
+    remoteFileExists = models.BooleanField(default = False)
+    dvhFig = models.TextField(blank=True, null=True)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+
 class simulationHistory(models.Model):
     simulation_type = models.CharField(max_length=250)
     user = models.ForeignKey(user_model,
