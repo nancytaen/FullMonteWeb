@@ -472,38 +472,46 @@ def fmVisualization(request):
     sys.stdout.flush()
     info.save()
 
-     # generate DVH
+    # file exists for DVH
     if(info.remoteFileExists):
-        print('before')
-        current_process = psutil.Process()
-        children = current_process.children(recursive=True)
-        for child in children:
-            print('Child pid is {}'.format(child.pid))
-        connections.close_all()
-        p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
-        p.start()
-        print('after')
-        current_process = psutil.Process()
-        children = current_process.children(recursive=True)
+        # generate DVH
+        if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
+            print('generating DVH')
+            print('before')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+            for child in children:
+                print('Child pid is {}'.format(child.pid))
+            connections.close_all()
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
+            p.start()
+            print('after')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
 
-        form = processRunning()
-        form.user=request.user
+            form = processRunning()
+            form.user=request.user
 
-        for child in children:
-            form.pid = child.pid
-            form.running = True
-            print('Child pid is {}'.format(child.pid))
+            for child in children:
+                form.pid = child.pid
+                form.running = True
+                print('Child pid is {}'.format(child.pid))
 
-        conn = create_connection()
-        conn.ensure_connection()
-        form.save()
-        conn.close()
-        return HttpResponseRedirect('/application/runningDVH')
+            conn = create_connection()
+            conn.ensure_connection()
+            form.save()
+            conn.close()
+            return HttpResponseRedirect('/application/runningDVH')
+        # load saved DVH
+        else:
+            print('using last saved DVH')
+            return HttpResponseRedirect('/application/displayVisualization')
     
     # DBH cannot be generated
-    info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
-    info.save()
-    return HttpResponseRedirect('/application/displayVisualization')
+    else:
+        info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
+        info.save()
+        return HttpResponseRedirect('/application/displayVisualization')
 
 
 # Running DVH progress page
