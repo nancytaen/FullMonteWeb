@@ -255,59 +255,11 @@ def fmSimulatorSource(request):
                 request.session['vElement'].append(form.cleaned_data['vElement'])
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
-
+            
             mesh = tclInput.objects.filter(user = request.user).latest('id')
 
             script_path = tclGenerator(request.session, mesh, request.user)
-            generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
-
-            request.session['script_path'] = script_path
-
-            #mesh file
-            mesh_file = default_storage.open(mesh.meshFile.name)
-            tcl_file = default_storage.open(generated_tcl.script.name)
-            meshFilePath = mesh.meshFile.name
-
-            print("DNS is", request.session['DNS'])
-            uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
-            pemfile = uploadedAWSPemFile.pemfile
-
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            print('SSH into the instance: {}'.format(request.session['DNS']))
-            
-            private_key_file = io.BytesIO()
-            for line in pemfile:
-                private_key_file.write(line)
-            private_key_file.seek(0)
-
-            byte_str = private_key_file.read()
-            text_obj = byte_str.decode('UTF-8')
-            private_key_file = io.StringIO(text_obj)
-            
-            privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            request.session['text_obj'] = text_obj
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
-            ftp = client.open_sftp()
-
-            ftp.chdir('docker_sims/')
-            file=ftp.file('docker.sh', "w")
-            file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
-            file.flush()
-            ftp.chmod('docker.sh', 700)
-
-            ftp.putfo(mesh_file, './'+mesh.meshFile.name)
-            ftp.putfo(tcl_file, './'+generated_tcl.script.name)
-            ftp.close()
-
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
-            channel = client.get_transport().open_session()
-            channel.exec_command(command)
-            request.session['start_time'] = str(datetime.now(timezone.utc))
-            request.session['started'] = "false"
-            # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
-            #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
-            return HttpResponseRedirect('/application/running')
+            return HttpResponseRedirect('/application/simulation_confirmation')
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -318,6 +270,108 @@ def fmSimulatorSource(request):
     }
 
     return render(request, "simulator_source.html", context)
+
+def simulation_confirmation(request):
+    class Optional_Tcl(forms.Form):
+        tcl_file = forms.FileField(required=False)
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    if request.method == 'POST':
+        form = Optional_Tcl(request.POST, request.FILES)
+        if not request.POST.__contains__('tcl_file'):
+            # there is a file uploaded
+            default_storage.delete(request.FILES['tcl_file'].name)
+            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file'])
+        
+        #mesh file
+        mesh_file = default_storage.open(mesh.meshFile.name)
+        tcl_file = default_storage.open(generated_tcl.script.name)
+        meshFilePath = mesh.meshFile.name
+
+        print("DNS is", request.session['DNS'])
+        uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+        pemfile = uploadedAWSPemFile.pemfile
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        print('SSH into the instance: {}'.format(request.session['DNS']))
+        
+        private_key_file = io.BytesIO()
+        for line in pemfile:
+            private_key_file.write(line)
+        private_key_file.seek(0)
+
+        byte_str = private_key_file.read()
+        text_obj = byte_str.decode('UTF-8')
+        private_key_file = io.StringIO(text_obj)
+        
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        request.session['text_obj'] = text_obj
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        ftp = client.open_sftp()
+
+        ftp.chdir('docker_sims/')
+        file=ftp.file('docker.sh', "w")
+        file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+        file.flush()
+        ftp.chmod('docker.sh', 700)
+
+        ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+        ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+        ftp.close()
+
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
+        channel = client.get_transport().open_session()
+        channel.exec_command(command)
+        request.session['start_time'] = str(datetime.now(timezone.utc))
+        request.session['started'] = "false"
+        # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
+        #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
+        return HttpResponseRedirect('/application/running')
+    
+    class Material_Class:
+        pass
+    class Light_Source_Class:
+        pass
+
+    materials = []
+    for i in range(len(request.session['material'])):
+        temp = Material_Class()
+        temp.layer = i + 1
+        temp.material = request.session['material'][i]
+        temp.scatteringCoeff = request.session['scatteringCoeff'][i]
+        temp.absorptionCoeff = request.session['absorptionCoeff'][i]
+        temp.refractiveIndex = request.session['refractiveIndex'][i]
+        temp.anisotropy = request.session['anisotropy'][i]
+        materials.append(temp)
+
+    light_sources = []
+    for i in range(len(request.session['sourceType'])):
+        temp = Light_Source_Class()
+        temp.source = i + 1
+        temp.sourceType = request.session['sourceType'][i]
+        temp.xPos = request.session['xPos'][i]
+        temp.yPos = request.session['yPos'][i]
+        temp.zPos = request.session['zPos'][i]
+        temp.xDir = request.session['xDir'][i]
+        temp.yDir = request.session['yDir'][i]
+        temp.zDir = request.session['zDir'][i]
+        temp.vElement = request.session['vElement'][i]
+        temp.rad = request.session['rad'][i]
+        temp.power = request.session['power'][i]
+        light_sources.append(temp)
+    
+    tcl_form = Optional_Tcl()
+
+    context = {
+        'mesh_name': mesh.meshFile.name, 
+        'materials': materials,
+        'light_sources': light_sources,
+        'tcl_script_name': generated_tcl.script.name,
+        'tcl_form': tcl_form,
+    }
+
+    return render(request, 'simulation_confirmation.html', context)
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):

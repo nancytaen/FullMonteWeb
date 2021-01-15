@@ -24,6 +24,8 @@ urlpatterns = [
     # /application/simulator_source
     path('simulator_source', views.fmSimulatorSource, name='simulator_source'),
 
+    path('simulation_confirmation', views.simulation_confirmation, name='simulation_confirmation'),
+
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
     
