@@ -2,27 +2,29 @@
 
 {% block content %}
 <div class="txt_container">
-  <h2>Log in to FullMonte</h2>
+  <h1>Welcome Back to FullMonteWeb</h1>
   {% if form.errors %}
     <p style="color: red">Your username and password didn't match.</p>
   {% endif %}
-  <form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ next }}" />
-    {% for field in form %}
-      <p>
-        {{ field.label_tag }}<br>
-        {{ field }}<br>
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
-        {% endfor %}
-      </p>
-    {% endfor %}
-    <button type="submit">Log in</button>
-    <a href="{% url 'signup' %}">New to FullMonte? Sign up</a>
-    <div>
+  <div class="d-flex justify-content-center ">
+    <form class = 'card p-3 bg-dark' method="post" style="color: #fff;">
+      <h3>Login</h3>
+      <hr style="border-top: 1px solid #fff;">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      {% for field in form %}
+        <p>
+          {{ field.label_tag }}
+          {{ field }}<br>
+          {% for error in field.errors %}
+            <p style="color: red">{{ error }}</p>
+          {% endfor %}
+        </p>
+      {% endfor %}
+      <button type="submit" style="background: #0894d1; color: #fff;">Log in</button>
+      <a href="{% url 'signup' %}">New to FullMonte? Sign up</a>
       <a href="{% url 'password_reset' %}">Forgot your password?</a>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>
 {% endblock %}
