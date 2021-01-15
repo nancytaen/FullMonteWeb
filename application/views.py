@@ -52,7 +52,7 @@ from django.views.generic.detail import DetailView
 from django.http import FileResponse
 
 from decouple import config
-from multiprocessing import Process, Event, Queue
+from multiprocessing import Process, Event
 import threading
 import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -461,7 +461,10 @@ def visualization_mesh_upload(request):
             obj.save()
             uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
             outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
-            request.session['outputMesh'] = outputMeshFileName
+            info = meshFileInfo.objects.filter(user = request.user).latest('id')
+            info.fileName = outputMeshFileName
+            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.save()
             outputMeshFile = default_storage.open(outputMeshFileName)
             print(outputMeshFileName)
 
@@ -499,9 +502,9 @@ def fmVisualization(request):
         messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
         return HttpResponseRedirect('/application/aws')
 
-    try:
-        outputMeshFileName = request.session['outputMesh']
-    except:
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = info.fileName
+    if len(outputMeshFileName) == 0:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
@@ -515,32 +518,76 @@ def fmVisualization(request):
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
-        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
-        request.session['fileExists'] = True
+        info.remoteFileExists = True
     except:
-        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
-        request.session['fileExists'] = False
+        info.remoteFileExists = False
     sftp.close()
     client.close()
+    sys.stdout.flush()
+    info.save()
 
-    if(request.session['fileExists']):
+    # file exists for DVH
+    if(info.remoteFileExists):
         # generate DVH
-        dvhFig = Queue()
-        proc = Process(target=dvh, args=(outputMeshFileName, dns, tcpPort, text_obj, dvhFig, ))
-        proc.start()
-        request.session['dvhFig'] = dvhFig.get()
+        if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
+            print('generating DVH')
+            print('before')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+            for child in children:
+                print('Child pid is {}'.format(child.pid))
+            connections.close_all()
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
+            p.start()
+            print('after')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+
+            form = processRunning()
+            form.user=request.user
+
+            for child in children:
+                form.pid = child.pid
+                form.running = True
+                print('Child pid is {}'.format(child.pid))
+
+            conn = create_connection()
+            conn.ensure_connection()
+            form.save()
+            conn.close()
+            return HttpResponseRedirect('/application/runningDVH')
+        # load saved DVH
+        else:
+            print('using last saved DVH')
+            return HttpResponseRedirect('/application/displayVisualization')
     
+    # DBH cannot be generated
     else:
-        # DBH cannot be generated
-        request.session['dvhFig'] = "<p>Could not generate Dose Volume Histogram</p>"
-    
-    return HttpResponseRedirect('/application/displayVisualization')
+        info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
+        info.save()
+        return HttpResponseRedirect('/application/displayVisualization')
+
+
+# Running DVH progress page
+def runningDVH(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    if running_process.running:
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "waitingDVH.html", {'time':running_time})
+    else:
+        return HttpResponseRedirect('/application/displayVisualization')
+
 
 # page that loads both the 3D visualization and DVH
 def displayVisualization(request):
-    outputMeshFileName = request.session['outputMesh']
-    fileExists = request.session['fileExists']
-    dvhFig = request.session['dvhFig']
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = info.fileName
+    fileExists = info.remoteFileExists
+    dvhFig = info.dvhFig
 
     # generate ParaView Visualization URL
     dns = request.session['DNS']
@@ -549,8 +596,8 @@ def displayVisualization(request):
 
     # render 3D visualizer
     text_obj = request.session['text_obj']
-    proc1 = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
-    proc1.start()
+    p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
+    p.start()
 
     # get message
     if(fileExists):
@@ -762,6 +809,9 @@ def aws(request):
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
         if form.is_valid():
+            info = meshFileInfo() # prepare new mesh entry
+            info.user = request.user;
+            info.save()
             print(form.cleaned_data)
             obj = form.save(commit = False)
             obj.user = request.user;
@@ -1070,7 +1120,10 @@ def simulation_finish(request):
     # save output mesh file info
     outputMeshFile = tclInput.objects.filter(user = request.user).latest('id')
     outputMeshFileName = outputMeshFile.meshFile.name
-    request.session['outputMesh'] = outputMeshFileName[:-4] + ".out.vtk"
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
+    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.save()
 
     # display simulation outputs
     client = paramiko.SSHClient()

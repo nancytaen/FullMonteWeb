@@ -84,6 +84,8 @@ urlpatterns = [
     path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
 
     path('mesh_upload', views.visualization_mesh_upload, name='mesh_upload'),
+
+    path('runningDVH', views.runningDVH, name='runningDVH'),
     
     path('displayVisualization', views.displayVisualization, name='displayVisualization'),
 ]
