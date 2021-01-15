@@ -52,22 +52,25 @@
     <br/>
     </br>
 
-    <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-        <div id="advancedOption1" class="table">
-            <h6>Upload the modified TCL script to run the simulation (please make sure the filename is identical):</h6>
-            <table class='no_error'>
-                {% csrf_token %}
-                <tr>
-                    <th>{{ tcl_form.tcl_file.label_tag }}</th>
-                    <td>
-                        {{ tcl_form.tcl_file.errors }}
-                        {{ tcl_form.tcl_file }}
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <p><input type="submit" value="Confirm and Submit"></p>
-    </form>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <div id="advancedOption1" class="table">
+                <h6>Upload the modified TCL script to run the simulation (please make sure the filename is identical):</h6>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ tcl_form.tcl_file.label_tag }}</th>
+                        <td>
+                            {{ tcl_form.tcl_file.errors }}
+                            {{ tcl_form.tcl_file }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p><input type="submit" value="Confirm and Submit"></p>
+        </form>
+    </div>
+    <br>
 
     <form>
         <input type="button" value="Back" onclick="history.back()">

@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from django.db import models, connections
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 
+# read vtk file
 def import_data(filePath):
 
     reader = vtkUnstructuredGridReader()
@@ -22,7 +23,26 @@ def import_data(filePath):
 
     return output
 
+# map each region to its volumes
+def calculate_volumes(fullMonteOutputData, regionData, noCells):
 
+    volumeData = {}
+
+    for n in range(noCells):
+        key = regionData[n]
+        if (key == 0): continue
+
+        else:
+            if key not in volumeData:
+                volumeData[key] = []
+
+            curCell = fullMonteOutputData.GetCell(n)
+            volume = vtkMeshQuality.TetVolume(curCell)
+            volumeData[key].append(volume)
+
+    return volumeData
+
+# map each region to its doses (fluence)
 def populate_dictionary(fluenceData, regionData):
 
     maxFluence = fluenceData.max()
@@ -45,7 +65,12 @@ def populate_dictionary(fluenceData, regionData):
 
     return doseVolumeData
 
-
+# compute relative dose to relative volume mapping
+# with doseData and volumeData, each region can be associated with its volume
+# and dose arrays. Now for each region, loop through all its data points, get
+# its relative dose, which will be represented by the x-axis, get its volume,
+# and add its volume to the volume that is associated with the relative dose.
+# Finally, compute the relative volume (fraction of volume against total volume).
 def calculate_DVH(doseData, volumeData, noBins):
 
     maxFluence = 0
@@ -59,16 +84,18 @@ def calculate_DVH(doseData, volumeData, noBins):
     binSize = maxFluence / noBins
     doseVolumeData = {}
 
+    # for each region
     for key in doseData:
-
         totalVolume = 0
         doseVolumeData[key] = [0] * noBins
-
+        # for each point n on the region, cumulate volume_n to the volume at dose_n
         for n in range(len(doseData[key])):
-            totalVolume += volumeData[key][n]
+            # 500 (noBins) data points, so the dose on the x-axis is dose_n/max_dose * nBins
             idx = floor(doseData[key][n] / maxFluence * (noBins-1))
             doseVolumeData[key][idx] += volumeData[key][n]
+            totalVolume += volumeData[key][n]
 
+        # compute relative
         for n in range (len(doseVolumeData[key])):
             doseVolumeData[key][n] /= totalVolume
 
@@ -80,63 +107,12 @@ def calculate_DVH(doseData, volumeData, noBins):
 
     return doseVolumeData
 
-
-def calculate_volumes(fullMonteOutputData, regionData, noCells):
-
-    volumeData = {}
-
-    for n in range(noCells):
-        key = regionData[n]
-        if (key == 0): continue
-
-        else:
-            if key not in volumeData:
-                volumeData[key] = []
-
-            curCell = fullMonteOutputData.GetCell(n)
-            volume = vtkMeshQuality.TetVolume(curCell)
-            volumeData[key].append(volume)
-
-    return volumeData
-
-
-def plot_DVH(data, noBins):
-
-    SMALL_SIZE = 16
-    MEDIUM_SIZE = 18
-    LARGE_SIZE = 20
-
-    legendList = []
-
-    xVals = (np.array(range(noBins)) / noBins * 100)
-
-    for key in data:
-        yVals = np.array(data[key]) * 100
-        plt.plot(xVals[1:-1],yVals[1:-1])
-        legendList.append(str(key))
-
-    plt.title("Cumulative Dose-Volume Histogram")
-    plt.ylabel("Relative Volume (% of region volume)")
-    plt.xlabel("Relative Dose (% of max fluence)")
-    plt.legend(legendList, loc='upper right', title='Region ID')
-
-    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
-    plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
-    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
-    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
-    plt.rc('figure', titlesize=LARGE_SIZE)  # fontsize of the figure title
-
-    fig = plt.gcf()
-
-    return mpld3.fig_to_html(fig)
-
-
+# compute relative dose to cumulative relative volume mapping
 def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     cumulativeDVH = {}
 
+    # for each dose interval
     for key in doseVolumeData:
 
         if key not in cumulativeDVH:
@@ -150,15 +126,44 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     return cumulativeDVH
 
+# plot using matplotlib and convert to html string
+def plot_DVH(data, noBins):
+    FIG_WIDTH = 10
+    FIG_HEIGHT = 7
+    LINE_WIDTH = 3
+
+    fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
+    fig.suptitle('Figure 1', fontsize=50)
+    ax = fig.add_subplot(111)
+    fig.subplots_adjust(top=0.80)
+    ax.set_title('Cumulative Dose-Volume Histogram',fontsize= 30) # title of plot
+    ax.set_xlabel("Relative Dose (% of max fluence)",fontsize = 20) #xlabel
+    ax.set_ylabel("Relative Volume (% of region volume)", fontsize = 20)#ylabel
+    ax.grid(True)
+
+    legendList = []
+
+    xVals = (np.array(range(noBins)) / noBins * 100)
+
+    for key in data:
+        yVals = np.array(data[key]) * 100
+        ax.plot(xVals[1:-1],yVals[1:-1],'-o',linewidth=LINE_WIDTH)
+        legendList.append(str(key))
+
+    ax.legend(legendList, loc='upper right', title='Region ID')
+    fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
+
+    return mpld3.fig_to_html(fig)
+
 
 # regionBoundaries is a 6-entry vector of floating point values
 # This defines the boundaries of the subregion in the order xmin, xmax, ymin, ymax, zmin, zmax
-def extract_mesh_subregion(mesh,regionBoundaries):
-    subregionAlgorithm = vtkExtractUnstructuredGrid()
-    subregionAlgorithm.SetInputData(mesh)
-    subregionAlgorithm.SetExtent(regionBoundaries)
-    subregionAlgorithm.Update()
-    return subregionAlgorithm.GetOutput()
+# def extract_mesh_subregion(mesh,regionBoundaries):
+#     subregionAlgorithm = vtkExtractUnstructuredGrid()
+#     subregionAlgorithm.SetInputData(mesh)
+#     subregionAlgorithm.SetExtent(regionBoundaries)
+#     subregionAlgorithm.Update()
+#     return subregionAlgorithm.GetOutput()
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
@@ -205,6 +210,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj):
     try:
         fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
         regionData = numpyWrapper.CellData["Region"]
+        print()
 
         if (fluenceData.size != regionData.size):
             print("Fluence and region data do not match")
