@@ -2,28 +2,38 @@
 {% load static %}
 
 {% block content %}
-<h1>Upload Mesh File for Visualization</h1>
+<div class="txt_container">
+    <h1>Upload Mesh File for Visualization</h1>
 
-<p><b>Please upload an output mesh file here or run simulation to view results.</b></p>
+    <!-- form for user to upload a mesh -->
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <h3>Upload Mesh Here</h3>
 
-<!-- form for user to upload a mesh -->
-<form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-    <div class='table'>
-        <table class='no_error'>
-            {% csrf_token %}
-            <tr>
-                <th>{{ form.outputMeshFile.label_tag }}</th>
-                <td>
-                    {{ form.outputMeshFile.errors }}
-                    {{ form.outputMeshFile }}
-                </td>
-            </tr>
-        </table>
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.outputMeshFile.label_tag }}</th>
+                        <td>
+                            {{ form.outputMeshFile.errors }}
+                            {{ form.outputMeshFile }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p><br/><input type="submit" value="Sumbit"></p>
+
+        </form>
     </div>
-    
-    <p><br/><input type="submit" value="Sumbit"></p>
 
-</form>
+    <div class="center_container"">
+        <b><p>OR</p></b>
+        <b><a href="{% url 'simulator' %}">Run simulation to view its output.</a></b>
+    </div>
+
+</div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
@@ -57,5 +67,6 @@
             return true;
     }
 </script>
+
 
 {% endblock %}
