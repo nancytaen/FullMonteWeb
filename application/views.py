@@ -896,7 +896,7 @@ def AWSsetup(request):
         print("set up progress: " + progress)
         print("end current progress")
         sys.stdout.flush()
-        progress = (float(progress) * 7.5)
+        progress = (float(progress) * 6)
         start_time = running_process.start_time
         current_time = datetime.now(timezone.utc)
         time_diff = current_time - start_time
@@ -1467,6 +1467,7 @@ def pdt_space_finish(request):
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
 
+    stdin, stdout, stderr = client.exec_command('sudo cp ~/pdt_run.log ~/pdt_backup.log')
     stdin, stdout, stderr = client.exec_command('sudo rm -f ~/pdt_run.log')
     client.close()
 
