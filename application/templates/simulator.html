@@ -2,7 +2,8 @@
 
 {% block content %}
 <div class="txt_container">
-    <h1>FullMonte Simulator</h1>    
+    <h1>FullMonte Simulator</h1>   
+    <p>Currently connected to {{ aws_path }} through port {{ port }}.</p> 
 
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
