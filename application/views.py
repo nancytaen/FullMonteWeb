@@ -130,6 +130,8 @@ def fmSimulator(request):
 
     context = {
         'form': form,
+        'aws_path': request.session['DNS'],
+        'port': request.session['tcpPort'],
     }
 
     return render(request, "simulator.html", context)
