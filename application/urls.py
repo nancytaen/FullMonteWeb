@@ -46,6 +46,9 @@ urlpatterns = [
     # /application/simulation_confirmation
     path('simulation_confirmation', views.simulation_confirmation, name='simulation_confirmation'),
 
+    # /application/kernel_info
+    path('kernel_info', views.kernelInfo, name='kernel_info'),
+
     ####################### visualization #######################
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
@@ -98,9 +101,6 @@ urlpatterns = [
 
     # /application/download_output
     path('download_output', views.downloadOutput, name='download_output'),
-
-    # /application/kernel_info
-    path('kernel_info', views.kernelInfo, name='kernel_info'),
 
     # /application/download_preset
     path('download_preset', views.downloadPreset, name='download_preset'),

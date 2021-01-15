@@ -89,13 +89,13 @@
                             <li><a class="btn btn-primary btn-block" href="{% url 'aws' %}">AWS</a></li><br/>
                         {% endif %}
                         <!-- simulator button -->
-                        {% if request.path == '/application/simulator' or request.path == '/application/simulator_source' or request.path == '/application/simulator_material' or request.path == '/application/running' or request.path == '/application/simulation_fail' or request.path == '/application/simulation_finish' %}
+                        {% if request.path == '/application/simulator' or request.path == '/application/simulator_source' or request.path == '/application/simulator_material' or request.path == '/application/running' or request.path == '/application/simulation_fail' or request.path == '/application/simulation_finish' or request.path == '/application/kernel_info' %}
                             <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'simulator' %}">Simulation</a></li><br/>
                         {% else %}
                             <li><a class="btn btn-primary btn-block" href="{% url 'simulator' %}">Simulation</a></li><br/>
                         {% endif %}
                         <!-- visualization button -->
-                        {% if request.path == '/application/visualization' or request.path == mesh_upload or request.path == '/application/runningDVH' or request.path == '/application/displayVisualization' %}
+                        {% if request.path == '/application/visualization' or request.path == '/application/mesh_upload' or request.path == '/application/runningDVH' or request.path == '/application/displayVisualization' %}
                             <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'visualization' %}">Visualization</a></li><br/>
                         {% else %}
                             <li><a class="btn btn-primary btn-block" href="{% url 'visualization' %}">Visualization</a></li><br/>
