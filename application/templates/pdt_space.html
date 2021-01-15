@@ -1,0 +1,23 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<p>Welcome to PDT-SPACE. </p>
+<form action="" method="post">
+    <div class='table'>
+        <table class='no_error'>
+            {% csrf_token %}
+            <tr>
+                <th>{{ form.opt.label_tag }}</th>
+                <td>
+                    {{ form.opt.errors }}
+                    {{ form.opt }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    <p><br/><input type="submit" value="Next"></p>
+</form>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+{% endblock %}

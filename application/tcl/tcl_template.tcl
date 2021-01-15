@@ -1,6 +1,14 @@
 package require FullMonte
+proc progressTimer {} {
+     while { ![k done] } {
+          puts -nonewline [format "\rProgress %6.2f%%" [expr 100.0*[k progressFraction]]]
+          flush stdout
+          after 200
+     }
+     puts [format "\rProgress %6.2f%%" 100.0]
+}
 
-set fn "/sims/Bladder.mesh_hRPZ5Te.vtk"
+set fn "/sims/Bladder.mesh_PVWg2MD.vtk"
 
 VTKMeshReader R
      R filename $fn
@@ -16,24 +24,24 @@ Material air
      air     refractiveIndex     1.0
      air     anisotropy     0.0
 
-Material bladder
-     bladder     scatteringCoeff     14.6
-     bladder     absorptionCoeff     0.45
-     bladder     refractiveIndex     1.37
-     bladder     anisotropy     0.9
+Material blader
+     blader     scatteringCoeff     14.6
+     blader     absorptionCoeff     0.45
+     blader     refractiveIndex     1.33
+     blader     anisotropy     0.9
 
 Material water
      water     scatteringCoeff     1.7e-06
      water     absorptionCoeff     4.09e-05
-     water     refractiveIndex     1.33
+     water     refractiveIndex     1.37
      water     anisotropy     0.8
 
 MS exterior air
-MS append bladder
+MS append blader
 MS append water
 
 Point P1
-     P1 position "-2.9 20.0 1400.0"
+     P1 position "-2.9 23.0 1400.0"
      P1 power 1
 
 TetraSVKernel k
@@ -42,7 +50,9 @@ TetraSVKernel k
      k geometry $M
      k materials MS
 
-     k runSync
+     k startAsync
+     progressTimer
+     k finishAsync
 
 set ODC [k results]
 
@@ -55,12 +65,12 @@ EnergyToFluence EF
      EF update
 
 VTKMeshWriter W
-     W filename "/sims/Bladder.mesh_hRPZ5Te.out.vtk"
+     W filename "/sims/Bladder.mesh_PVWg2MD.out.vtk"
      W addData "Fluence" [EF result]
      W mesh $M
      W write
 
 TextFileMatrixWriter TW
-     TW filename "/sims/Bladder.mesh_hRPZ5Te.phi_v.txt"
+     TW filename "/sims/Bladder.mesh_PVWg2MD.phi_v.txt"
      TW source [EF result]
      TW write

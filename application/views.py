@@ -711,9 +711,19 @@ def aws(request):
             request.session['text_obj'] = text_obj
             client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
             sftp = client.open_sftp()
+            need_setup = "false"
+
             try:
                 sftp.stat('docker_sims/FullMonteSW_setup.sh')
             except IOError:
+                need_setup = "true"
+            
+            try:
+                sftp.stat('docker_pdt/pdt_space_setup.sh')
+            except IOError:
+                need_setup = "true"
+            
+            if need_setup == "true":
                 # cluster that's not setup
                 client.close()
             
@@ -779,14 +789,24 @@ def run_aws_setup(request):
     source_paraview = dir_path + '/scripts/ParaView_setup.sh'
     source_paraview = str(source_paraview)
 
+    source_pdt_space = dir_path + '/scripts/pdt_space_setup.sh'
+    source_pdt_space = str(source_pdt_space)
+
+    source_license = dir_path + '/license/mosek.lic'
+    source_license = str(source_license)
+
     sftp = client.open_sftp()
     client.exec_command('mkdir -p docker_sims')
+    client.exec_command('mkdir -p docker_pdt')
     sftp.put(source_setup, 'docker_sims/setup_aws.sh')
     sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
     sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
+    sftp.put(source_pdt_space, 'docker_pdt/pdt_space_setup.sh')
+    sftp.put(source_license, 'docker_pdt/mosek.lic')
     sftp.chmod('docker_sims/setup_aws.sh', 700)
     sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
     sftp.chmod('docker_sims/ParaView_setup.sh', 700)
+    sftp.chmod('docker_pdt/pdt_space_setup.sh', 700)
 
     # create dummy script to run
     sftp.chdir('docker_sims/')
@@ -822,6 +842,23 @@ def run_aws_setup(request):
     for line in stderr_line:
         print (line)
     
+    #pdt-space
+    print('start setup pdt-space')
+    file=sftp.file('../docker_pdt/docker.sh', "w")
+    file.write('#!/bin/bash\n')
+    file.write('echo dockertest')
+    file.flush()
+    sftp.chmod('../docker_pdt/docker.sh', 700)
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"ls /usr/local/pdt-space/data\""
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    print('end setup pdt-space')
+
     # alias = 'manual'
     conn = create_connection()
     conn.ensure_connection()
@@ -1077,3 +1114,360 @@ def populate_simulation_history(request):
 def simulation_history(request):
     history = simulationHistory.objects.filter(user=request.user)
     return render(request, "simulation_history.html", {'history':history})
+
+def pdt_space(request):
+    print("in pdt_space")
+    sys.stdout.flush()
+
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
+    try:
+        dns = request.session['DNS']
+        text_obj = request.session['text_obj']
+        tcpPort = request.session['tcpPort']
+    except:
+        messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
+        return HttpResponseRedirect('/application/aws')
+    
+    print('before')
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+    for child in children:
+        print('Child pid is {}'.format(child.pid))
+    connections.close_all()
+    p = Process(target=search_pdt_space, args=(request, ))
+    p.start()
+    print('after')
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+    form = processRunning()
+    form.user=request.user
+    for child in children:
+        form.pid = child.pid
+        form.running = True
+        print('Child pid is {}'.format(child.pid))
+    conn = create_connection()
+    conn.ensure_connection()
+    form.save()
+    conn.close()
+    sys.stdout.flush()
+    return HttpResponseRedirect('/application/pdt_spcae_wait')
+
+
+def pdt_spcae_wait(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    pid = running_process.pid
+    # client = paramiko.SSHClient()
+    # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # text_obj = request.session['text_obj']
+    # private_key_file = io.StringIO(text_obj)
+    # privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    # client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    if running_process.running:
+        print("get current progress")
+        sys.stdout.flush()
+        return render(request, "pdt_spcae_wait.html")
+
+    else:
+        # client.close()
+        print("progress done")
+        sys.stdout.flush()
+        return HttpResponseRedirect('/application/pdt_space_material')
+
+
+def search_pdt_space(request):
+    time.sleep(3)
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    foo_list = []
+    addr_list = []
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.opt\""
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    
+    for line in stdout_line:
+        if line.rstrip().endswith('.opt'):
+            request.session[line.rstrip().split('/')[-1]] = line.rstrip()
+            foo_list.append(line.rstrip().split('/')[-1])
+            addr_list.append(line.rstrip())
+            # print (line)
+    opt_list = ",".join(foo_list)
+    opt_addr = ",".join(addr_list)
+    request.session['opt_list'] = opt_list
+    print(request.session['opt_list'])
+    print("This is all preset .opt files")
+    sys.stdout.flush()
+    
+    foo_list = []
+    addr_list = []
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.mesh\""
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    
+    for line in stdout_line:
+        if line.rstrip().endswith('.mesh'):
+            request.session[line.rstrip().split('/')[-1]] = line.rstrip()
+            foo_list.append(line.rstrip().split('/')[-1])
+            addr_list.append(line.rstrip())
+            # print (line)
+    mesh_list = ",".join(foo_list)
+    mesh_addr = ",".join(addr_list)
+    request.session['mesh_list'] = mesh_list
+    print(request.session['mesh_list'])
+    print("This is all preset .mesh files")
+    
+    conn = create_connection()
+    conn.ensure_connection()
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    running_process.running = False
+    running_process.save()
+    conn.close()
+
+    form = pdtPresetData()
+    form.user=request.user
+    form.opt_list = opt_list
+    form.mesh_list = mesh_list
+
+    form.opt_addr = opt_addr
+    form.mesh_addr = mesh_addr
+    conn = create_connection()
+    conn.ensure_connection()
+    form.save()
+    conn.close()
+    print('finished')
+    client.close()
+    sys.stdout.flush()
+
+
+
+
+
+def pdt_space_material(request):
+    print("in pdt_space_material")
+    sys.stdout.flush()
+
+    conn = create_connection()
+    conn.ensure_connection()
+    print("1")
+    pdt_info = pdtPresetData.objects.filter(user = request.user).latest('id')
+    print("2")
+    opt_str = pdt_info.opt_list
+    mesh_str = pdt_info.mesh_list
+
+    opt_addr = pdt_info.opt_addr
+    mesh_addr = pdt_info.mesh_addr
+    # opt_str = request.session['opt_list']
+    # mesh_str = request.session['mesh_list']
+
+    print("the opt str is ",opt_str)
+    print("the mesh str is ",mesh_str)
+
+    print("the opt addr is ",opt_addr)
+    print("the mesh addr is ",mesh_addr)
+    conn.close()
+    sys.stdout.flush()
+    # sys.stdout.flush()
+
+    _opt_list=[]
+    _mesh_list=[]
+    for sinlge in opt_str.split(','):
+        _opt_list.append(sinlge)
+    
+    for sinlge in mesh_str.split(','):
+        _mesh_list.append(sinlge)
+        
+    if request.method == 'POST':
+        
+        form = pdtForm(opt_list =_opt_list, mesh_list=_mesh_list, data = request.POST)
+        if form.is_valid():
+            print(form.cleaned_data)
+            op_file = opFileInput()
+            op_file.user=request.user
+            op_file.total_energy = form.cleaned_data['total_energy']
+            op_file.num_packets = form.cleaned_data['num_packets']
+            op_file.wave_length = form.cleaned_data['wave_length']
+            
+            op_file.tumor_weight = form.cleaned_data['tumor_weight']
+            
+            mesh_name = form.cleaned_data['mesh']
+            opt_name = form.cleaned_data['opt']
+            op_file.data_name = mesh_name.split('.')[0]
+            # op_file.placement_file = request.FILES['light_placement_file']
+            # print("light file name is ", op_file.placement_file.name)
+            # sys.stdout.flush()
+            for sub in mesh_addr.split(','):
+                if sub.split('/')[-1] == mesh_name:
+                    op_file.data_dir = "/".join(sub.split('/')[:-1])
+
+            for sub in opt_addr.split(','):
+                if sub.split('/')[-1] == opt_name:
+                    op_file.opt_file = sub
+
+
+
+            conn = create_connection()
+            conn.ensure_connection()
+            op_file.save()
+            conn.close()
+            
+        else:
+            print("not valid")
+            print(form.errors)
+        sys.stdout.flush()
+        # return render(request, "pdt_lightsource.html")
+        return HttpResponseRedirect('/application/pdt_lightsource')
+    else:
+        
+        form = pdtForm(opt_list=_opt_list, mesh_list=_mesh_list)
+    context = {
+        'form': form,
+    }
+    return render(request, "pdt_space_material.html", context)
+
+
+def pdt_lightsource(request):
+    print("in pdt_lightsource")
+
+    if request.method == 'POST':
+        form = pdtPlaceFile(request.POST, request.FILES)
+        if form.is_valid():
+            conn = create_connection()
+            conn.ensure_connection()
+            opfile = opFileInput.objects.filter(user = request.user).latest('id')
+            opfile.placement_file = request.FILES['light_placement_file']
+            opfile.source_type = form.cleaned_data['source_type']
+            opfile.placement_type = form.cleaned_data['placement_type']
+            
+            opfile.save()
+            opfile.light_source_file = "/sims/" + str(opfile.placement_file.name)
+
+            print("check data")
+            print(opfile.total_energy)
+            print(opfile.num_packets)
+            print(opfile.wave_length)
+            print(opfile.data_dir)
+            print(opfile.data_name)
+            print(opfile.source_type)
+            print(opfile.tumor_weight)
+            print(opfile.placement_type)
+            print(opfile.opt_file)
+            print(opfile.light_source_file)
+            print(opfile.placement_file.name)
+            sys.stdout.flush()
+
+
+            #generate .op file
+            dir_path = os.path.dirname(os.path.abspath(__file__))
+            source = dir_path + '/pdtOp/pdt_space.op'
+
+            #start by wiping script template
+            with open(source, 'r') as f:
+                lines = f.readlines()
+            
+            f = open(source, 'w')
+            for line in lines[::-1]:
+                del lines[-1]
+            
+            f = open(source, 'a')
+            f.write('RUN_TESTS = false\n\n')
+            f.write('TOTAL_ENERGY = ' + opfile.total_energy + '\n\n')
+            f.write('NUM_PACKETS = ' + opfile.num_packets + '\n\n')
+            f.write('WAVELENGTH = ' + opfile.wave_length + '\n\n')
+            f.write('DATA_DIR = ' + opfile.data_dir + '\n\n')
+            f.write('DATA_NAME = ' + opfile.data_name + '\n\n')
+            f.write('READ_VTK = false\n\n')
+            f.write('source_type = ' + opfile.source_type + '\n\n')
+            f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+            f.write('PLACEMENT_TYPE = ' + opfile.placement_type + '\n\n')
+            f.write('TAILORED = false\n\n')
+            f.write('OPTICAL_FILE = ' + opfile.opt_file + '\n\n')
+            f.write('INIT_PLACEMENT_FILE = ' + opfile.light_source_file + '\n\n')
+            f.close()
+            f = open(source, 'r')
+            ##transfer files
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            text_obj = request.session['text_obj']
+            private_key_file = io.StringIO(text_obj)
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            ftp = client.open_sftp()
+            ftp.chdir('docker_pdt/')
+            file=ftp.file('docker.sh', "w")
+            file.write('#!/bin/bash\nexport MOSEKLM_LICENSE_FILE=/sims/mosek.lic\ncd sims/\npdt_space pdt_space.op')
+            file.flush()
+            ftp.chmod('docker.sh', 700)
+            ftp.putfo(f,'./pdt_space.op')
+            ftp.putfo(opfile.placement_file, './'+opfile.placement_file.name)
+            ftp.close()
+            conn.close()
+            f.close()
+            channel = client.get_transport().open_session()
+            command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" > pdt_run.log"
+            channel.exec_command(command)
+            time.sleep(3)
+            client.close()
+            return HttpResponseRedirect('/application/pdt_space_running')
+        else:
+            print(form.errors)
+            sys.stdout.flush()
+            return HttpResponseRedirect('/application/pdt_space_running')
+    else:
+        form = pdtPlaceFile()
+        context = {
+            'form': form,
+        }
+
+
+    return render(request, "pdt_lightsource.html", context)
+
+def pdt_space_running(request):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    # stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/pdt_run.log > ~/cleaned_pdt_run.log')
+    stdin, stdout, stderr = client.exec_command('tail -1 ~/pdt_run.log')
+    stdout_line = stdout.readlines()
+    status = ""
+
+    if len(stdout_line) > 0:
+        status = stdout_line[0]
+        status = "".join(status.split())
+    
+    print("status:",status)
+    sys.stdout.flush()
+    client.close()
+    
+    if status == "[info]PDT-SPACErunfinished":
+        print("pdt space finish")
+        sys.stdout.flush()
+        return HttpResponseRedirect('/application/pdt_space_finish')
+    else:
+        print("pdt space not finished")
+        sys.stdout.flush()
+        return render(request, "pdt_space_running.html")
+
+def pdt_space_finish(request):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    stdin, stdout, stderr = client.exec_command('sudo rm -f ~/pdt_run.log')
+    client.close()
+
+    return render(request, "pdt_space_finish.html")

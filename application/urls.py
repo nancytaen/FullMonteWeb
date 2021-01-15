@@ -48,6 +48,8 @@ urlpatterns = [
     # /application/aws
     path('aws', views.aws, name='aws'),
 
+    path('pdt_space', views.pdt_space, name='pdt_space'),
+
     url(r'^password_reset/$', auth_views.PasswordResetView.as_view() , name='password_reset'),
     url(r'^password_reset/done/$', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
@@ -74,6 +76,16 @@ urlpatterns = [
     path('running', views.running, name='running'),
     
     path('AWSsetup', views.AWSsetup, name='AWSsetup'),
+
+    path('pdt_spcae_wait', views.pdt_spcae_wait, name='pdt_spcae_wait'),
+
+    path('pdt_space_material', views.pdt_space_material, name='pdt_space_material'),
+
+    path('pdt_lightsource', views.pdt_lightsource, name='pdt_lightsource'),
+
+    path('pdt_space_running', views.pdt_space_running, name='pdt_space_running'),
+
+    path('pdt_space_finish', views.pdt_space_finish, name='pdt_space_finish'),
 
     path('simulation_fail', views.simulation_fail, name='simulation_fail'),
 

@@ -37,6 +37,34 @@ class processRunning(models.Model):
     pid = models.IntegerField(default=0)
     start_time = models.DateTimeField(auto_now=True)
 
+class pdtPresetData(models.Model):
+    opt_list = models.CharField(max_length=1024)
+    mesh_list = models.CharField(max_length=1024)
+    opt_addr = models.CharField(max_length=1024)
+    mesh_addr = models.CharField(max_length=1024)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+class opFileInput(models.Model):
+    total_energy = models.CharField(max_length=64)
+    num_packets = models.CharField(max_length=64)
+    wave_length = models.CharField(max_length=64)
+    data_dir = models.CharField(max_length=255)
+    data_name = models.CharField(max_length=255)
+    source_type = models.CharField(max_length=64)
+    tumor_weight = models.CharField(max_length=64)
+    placement_type = models.CharField(max_length=64)
+    opt_file = models.CharField(max_length=255)
+    light_source_file = models.CharField(max_length=255)
+    placement_file = models.FileField(storage=PublicMediaStorage())
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+
 class simulationHistory(models.Model):
     simulation_type = models.CharField(max_length=250)
     user = models.ForeignKey(user_model,
