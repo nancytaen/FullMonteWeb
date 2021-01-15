@@ -1,264 +1,265 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>FullMonte Simulator</h1>
+<div class="txt_container">
+    <h1>FullMonte Simulator</h1>
 
-<form action="" method="post" onsubmit="return confirm('This will run the Full Monte Simulator and will take some time. Please wait.');">
-    <h3>Light Source</h3>
-    {{ formset2.management_form }}
-    <div id="form_set" class="table">
-        <hr>
-        {% for form in formset2.forms %}
-            <table class='no_error'>
-                {% csrf_token %}
-                <tr>
-                    <th>{{ form.sourceType.label_tag }}</th>
-                    <td>
-                        {{ form.sourceType.errors }}
-                        {{ form.sourceType }}
-                    </td>
-                </tr>
-                <!-- Point Source Type -->
-                <tbody id="Point" style="display: none">
-                    <tr>
-                        <th><label>Position</label></th>
-                        <td>
-                            {{ form.xPos.errors }}
-                            {{ form.yPos.errors }}
-                            {{ form.zPos.errors }}
-                            {{ form.xPos }}
-                            {{ form.yPos }}
-                            {{ form.zPos }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Point Source Type -->
-                <!-- PencilBeam Source Type -->
-                <tbody id="PencilBeam" style="display:none">
-                    <tr>
-                        <th><label>Direction</label></th>
-                        <td>
-                            {{ form.xDir.errors }}
-                            {{ form.yDir.errors }}
-                            {{ form.zDir.errors }}
-                            {{ form.xDir }}
-                            {{ form.yDir }}
-                            {{ form.zDir }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- PencilBeam Source Type -->
-                <!-- Volume Source Type -->
-                <tbody id="Volume" style="display: none">
-                    <tr>
-                        <th><label>Volume Element ID</label></th>
-                        <td>
-                            {{ form.vElement.errors }}
-                            {{ form.vElement }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Volume Source Type -->
-                <!-- Ball Source Type -->
-                <tbody id="Ball" style="display: none">
-                    <tr>
-                        <th>{{ form.rad.label_tag }}</th>
-                        <td>
-                            {{ form.rad.errors }}
-                            {{ form.rad }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Ball Source Type -->
-                <tr>
-                    <th>{{ form.power.label_tag }}</th>
-                    <td>
-                        {{ form.power.errors }}
-                        {{ form.power }}
-                    </td>
-                </tr>
-            </table>
-        {% endfor %}
-        <hr>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" onsubmit="return confirm('This will run the Full Monte Simulator and will take some time. Please wait.');">
+            <h3>Light Source</h3>
+            {{ formset2.management_form }}
+            <div id="form_set" class="table">
+                {% for form in formset2.forms %}
+                    <table class='no_error'>
+                        {% csrf_token %}
+                        <tr>
+                            <th>{{ form.sourceType.label_tag }}</th>
+                            <td>
+                                {{ form.sourceType.errors }}
+                                {{ form.sourceType }}
+                            </td>
+                        </tr>
+                        <!-- Point Source Type -->
+                        <tbody id="Point" style="display: none">
+                            <tr>
+                                <th><label>Position</label></th>
+                                <td>
+                                    {{ form.xPos.errors }}
+                                    {{ form.yPos.errors }}
+                                    {{ form.zPos.errors }}
+                                    {{ form.xPos }}
+                                    {{ form.yPos }}
+                                    {{ form.zPos }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Point Source Type -->
+                        <!-- PencilBeam Source Type -->
+                        <tbody id="PencilBeam" style="display:none">
+                            <tr>
+                                <th><label>Direction</label></th>
+                                <td>
+                                    {{ form.xDir.errors }}
+                                    {{ form.yDir.errors }}
+                                    {{ form.zDir.errors }}
+                                    {{ form.xDir }}
+                                    {{ form.yDir }}
+                                    {{ form.zDir }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- PencilBeam Source Type -->
+                        <!-- Volume Source Type -->
+                        <tbody id="Volume" style="display: none">
+                            <tr>
+                                <th><label>Volume Element ID</label></th>
+                                <td>
+                                    {{ form.vElement.errors }}
+                                    {{ form.vElement }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Volume Source Type -->
+                        <!-- Ball Source Type -->
+                        <tbody id="Ball" style="display: none">
+                            <tr>
+                                <th>{{ form.rad.label_tag }}</th>
+                                <td>
+                                    {{ form.rad.errors }}
+                                    {{ form.rad }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Ball Source Type -->
+                        <tr>
+                            <th>{{ form.power.label_tag }}</th>
+                            <td>
+                                {{ form.power.errors }}
+                                {{ form.power }}
+                            </td>
+                        </tr>
+                    </table>
+                {% endfor %}
+            </div>
+
+            <input type="button" value="Add Row" id="add_row">
+            <input type="button" value="Remove Row" id="remove_row">
+                <div id="empty_form" class="table" style="display:none">
+                    <table class='no_error'>
+                        {% csrf_token %}
+                        <tr>
+                            <th>{{ formset2.empty_form.sourceType.label_tag }}</th>
+                            <td>
+                                {{ formset2.empty_form.sourceType.errors }}
+                                {{ formset2.empty_form.sourceType }}
+                            </td>
+                        </tr>
+                        <!-- Point Source Type -->
+                        <tbody id="temp_point" style="display: none">
+                            <tr>
+                                <th><label>Position</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xPos.errors }}
+                                    {{ formset2.empty_form.yPos.errors }}
+                                    {{ formset2.empty_form.zPos.errors }}
+                                    {{ formset2.empty_form.xPos }}
+                                    {{ formset2.empty_form.yPos }}
+                                    {{ formset2.empty_form.zPos }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Point Source Type -->
+                        <!-- PencilBeam Source Type -->
+                        <tbody id="temp_pencilbeam" style="display:none">
+                            <tr>
+                                <th><label>Direction</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xDir.errors }}
+                                    {{ formset2.empty_form.yDir.errors }}
+                                    {{ formset2.empty_form.zDir.errors }}
+                                    {{ formset2.empty_form.xDir }}
+                                    {{ formset2.empty_form.yDir }}
+                                    {{ formset2.empty_form.zDir }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- PencilBeam Source Type -->
+                        <!-- Volume Source Type -->
+                        <tbody id="temp_volume" style="display: none">
+                            <tr>
+                                <th>Volume Element ID</th>
+                                <td>
+                                    {{ formset2.empty_form.vElement.errors }}
+                                    {{ formset2.empty_form.vElement }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Volume Source Type -->
+                        <!-- Ball Source Type -->
+                        <tbody id="temp_ball" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.rad.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.rad.errors }}
+                                    {{ formset2.empty_form.rad }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Ball Source Type -->
+                        <tr>
+                            <th>{{ formset2.empty_form.power.label_tag }}</th>
+                            <td>
+                                {{ formset2.empty_form.power.errors }}
+                                {{ formset2.empty_form.power }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+            <p></p>
+
+            <p><input type="submit"></p>
+
+        </form>
     </div>
 
-    <input type="button" value="Add Row" id="add_row">
-    <input type="button" value="Remove Row" id="remove_row">
-        <div id="empty_form" class="table" style="display:none">
-            <table class='no_error'>
-                {% csrf_token %}
-                <tr>
-                    <th>{{ formset2.empty_form.sourceType.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.sourceType.errors }}
-                        {{ formset2.empty_form.sourceType }}
-                    </td>
-                </tr>
-                <!-- Point Source Type -->
-                <tbody id="temp_point" style="display: none">
-                    <tr>
-                        <th><label>Position</label></th>
-                        <td>
-                            {{ formset2.empty_form.xPos.errors }}
-                            {{ formset2.empty_form.yPos.errors }}
-                            {{ formset2.empty_form.zPos.errors }}
-                            {{ formset2.empty_form.xPos }}
-                            {{ formset2.empty_form.yPos }}
-                            {{ formset2.empty_form.zPos }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Point Source Type -->
-                <!-- PencilBeam Source Type -->
-                <tbody id="temp_pencilbeam" style="display:none">
-                    <tr>
-                        <th><label>Direction</label></th>
-                        <td>
-                            {{ formset2.empty_form.xDir.errors }}
-                            {{ formset2.empty_form.yDir.errors }}
-                            {{ formset2.empty_form.zDir.errors }}
-                            {{ formset2.empty_form.xDir }}
-                            {{ formset2.empty_form.yDir }}
-                            {{ formset2.empty_form.zDir }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- PencilBeam Source Type -->
-                <!-- Volume Source Type -->
-                <tbody id="temp_volume" style="display: none">
-                    <tr>
-                        <th>Volume Element ID</th>
-                        <td>
-                            {{ formset2.empty_form.vElement.errors }}
-                            {{ formset2.empty_form.vElement }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Volume Source Type -->
-                <!-- Ball Source Type -->
-                <tbody id="temp_ball" style="display: none">
-                    <tr>
-                        <th><label>{{ formset2.empty_form.rad.label_tag }}</label></th>
-                        <td>
-                            {{ formset2.empty_form.rad.errors }}
-                            {{ formset2.empty_form.rad }}
-                        </td>
-                    </tr>
-                </tbody>
-                <!-- Ball Source Type -->
-                <tr>
-                    <th>{{ formset2.empty_form.power.label_tag }}</th>
-                    <td>
-                        {{ formset2.empty_form.power.errors }}
-                        {{ formset2.empty_form.power }}
-                    </td>
-                </tr>
-            </table>
-            <hr>
-        </div>
-        
-    <p></p>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+        $('#add_row').click(function() {
+                            var form_idx = $('#id_form-TOTAL_FORMS').val();
+                            $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+                            $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                            var x_point = document.getElementById("temp_point");
+                            var x_pencilbeam = document.getElementById("temp_pencilbeam");
+                            var x_volume = document.getElementById("temp_volume");
+                            var x_ball = document.getElementById("temp_ball");
+                            x_point.id = "Point" + String(form_idx)
+                            x_pencilbeam.id = "PencilBeam" + String(form_idx)
+                            x_volume.id = "Volume" + String(form_idx)
+                            x_ball.id = "Ball" + String(form_idx)
+                            if ('#id_form-' + form_idx + '-sourceType'){
+                                var point = "#Point" + String(form_idx)
+                                $(point).show()
+                                $('#id_form-' + form_idx + '-sourceType').on('change', function () {
+                                                            var pencilbeam = "#PencilBeam" + String(form_idx)
+                                                            var volume = "#Volume" + String(form_idx)
+                                                            var ball = "#Ball" + String(form_idx)
+                                                            
+                                                            $(point).hide()
+                                                            $(pencilbeam).hide()
+                                                            $(volume).hide()
+                                                            $(ball).hide()
+                                                            var selection = $(this).val();
+                                                            switch (selection) {
+                                                                case "Point":
+                                                                    $(point).show()
+                                                                break;
+                                                                case "PencilBeam":
+                                                                    $(point).show()
+                                                                    $(pencilbeam).show()
+                                                                break;
+                                                                case "Volume":
+                                                                    $(volume).show()
+                                                                break;
+                                                                case "Ball":
+                                                                    $(point).show()
+                                                                    $(ball).show()
+                                                                break;
+                                                                default:
+                                                            }
+                                                            });
+                            }
+                            });
+        $('#remove_row').click(function() {
+                            var form_idx = $('#id_form-TOTAL_FORMS').val();
+                            if (parseInt(form_idx) > 1) {
+                                $('.no_error')[parseInt(form_idx)-1].remove();
+                                $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
+                            }
+                            });
+    </script>
 
-    <p><input type="submit"></p>
+    <script type="text/javascript" src="jquery-ui-1.10.0/tests/jquery-1.9.0.js"></script>
+    <script src="jquery-ui-1.10.0/ui/jquery-ui.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#Point").show();
+        });
 
-</form>
+        $('#id_form-0-sourceType').on('change', function () {
+            $("#Point").hide()
+            $("#PencilBeam").hide()
+            $("#Volume").hide()
+            $("#Ball").hide()
+            var selection = $(this).val();
+            switch (selection) {
+                case "Point":
+                    $("#Point").show()
+                    break;
+                case "PencilBeam":
+                    $("#Point").show()
+                    $("#PencilBeam").show()
+                    break;
+                case "Volume":
+                    $("#Volume").show()
+                    break;
+                case "Ball":
+                    $("#Point").show()
+                    $("#Ball").show()
+                    break;
+                default:
+            }
+        });
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script>
-    $('#add_row').click(function() {
-                        var form_idx = $('#id_form-TOTAL_FORMS').val();
-                        $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
-                        $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-                        var x_point = document.getElementById("temp_point");
-                        var x_pencilbeam = document.getElementById("temp_pencilbeam");
-                        var x_volume = document.getElementById("temp_volume");
-                        var x_ball = document.getElementById("temp_ball");
-                        x_point.id = "Point" + String(form_idx)
-                        x_pencilbeam.id = "PencilBeam" + String(form_idx)
-                        x_volume.id = "Volume" + String(form_idx)
-                        x_ball.id = "Ball" + String(form_idx)
-                        if ('#id_form-' + form_idx + '-sourceType'){
-                            var point = "#Point" + String(form_idx)
-                            $(point).show()
-                            $('#id_form-' + form_idx + '-sourceType').on('change', function () {
-                                                        var pencilbeam = "#PencilBeam" + String(form_idx)
-                                                        var volume = "#Volume" + String(form_idx)
-                                                        var ball = "#Ball" + String(form_idx)
-                                                        
-                                                          $(point).hide()
-                                                          $(pencilbeam).hide()
-                                                          $(volume).hide()
-                                                          $(ball).hide()
-                                                          var selection = $(this).val();
-                                                          switch (selection) {
-                                                            case "Point":
-                                                                $(point).show()
-                                                            break;
-                                                            case "PencilBeam":
-                                                                $(point).show()
-                                                                $(pencilbeam).show()
-                                                            break;
-                                                            case "Volume":
-                                                                $(volume).show()
-                                                            break;
-                                                            case "Ball":
-                                                                $(point).show()
-                                                                $(ball).show()
-                                                            break;
-                                                            default:
-                                                          }
-                                                          });
-                        }
-                        });
-    $('#remove_row').click(function() {
-                           var form_idx = $('#id_form-TOTAL_FORMS').val();
-                           if (parseInt(form_idx) > 1) {
-                            $('.no_error')[parseInt(form_idx)-1].remove();
-                            $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
-                           }
-                           });
-</script>
-
-<script type="text/javascript" src="jquery-ui-1.10.0/tests/jquery-1.9.0.js"></script>
-<script src="jquery-ui-1.10.0/ui/jquery-ui.js"></script>
-<script>
-    $(document).ready(function () {
-        $("#Point").show();
-    });
-
-    $('#id_form-0-sourceType').on('change', function () {
-        $("#Point").hide()
-        $("#PencilBeam").hide()
-        $("#Volume").hide()
-        $("#Ball").hide()
-        var selection = $(this).val();
-        switch (selection) {
-            case "Point":
-                $("#Point").show()
-                break;
-            case "PencilBeam":
-                $("#Point").show()
-                $("#PencilBeam").show()
-                break;
-            case "Volume":
-                $("#Volume").show()
-                break;
-            case "Ball":
-                $("#Point").show()
-                $("#Ball").show()
-                break;
-            default:
-        }
-    });
-
-</script>
+    </script>
 
 
 
-<form>
-    <input type="button" value="Back" onclick="history.back()">
-</form>
+    <form>
+        <input type="button" value="Back" onclick="history.back()">
+    </form>
 
-<br/>
+    <br/>
+</div>
 
 {% endblock %}

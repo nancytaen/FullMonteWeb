@@ -1,6 +1,7 @@
 {% extends 'base_generic.html' %}
 
 {% block content %}
+<div class="txt_container">
   <h2>Log in to FullMonte</h2>
   {% if form.errors %}
     <p style="color: red">Your username and password didn't match.</p>
@@ -23,4 +24,5 @@
       <a href="{% url 'password_reset' %}">Forgot your password?</a>
     </div>
   </form>
+</div>
 {% endblock %}
