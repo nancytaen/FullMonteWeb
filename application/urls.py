@@ -43,6 +43,9 @@ urlpatterns = [
     # /application/simulation_finish
     path('simulation_finish', views.simulation_finish, name='simulation_finish'),
 
+    # /application/simulation_confirmation
+    path('simulation_confirmation', views.simulation_confirmation, name='simulation_confirmation'),
+
     ####################### visualization #######################
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),

@@ -1,0 +1,114 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+
+<h1>Please Confirm your simulation parameters</h1> 
+
+<h6>Mesh: {{ mesh_name }}</h6>
+
+<br/>
+
+<h6>Optical Materials:</h6>
+{% for item in materials %}
+    <h6>Layer {{ item.layer }}:</h6>
+    <h6>Material: {{ item.material }}</h6>
+    <h6>Scattering Coefficient: {{ item.scatteringCoeff }}</h6>
+    <h6>Absorption Coefficient: {{ item.absorptionCoeff }}</h6>
+    <h6>Refractive Index: {{ item.refractiveIndex }}</h6>
+    <h6>Anisotropy: {{ item.anisotropy }}</h6>
+{% endfor %}
+
+<br/>
+
+<h6>Light Sources:</h6>
+{% for item in light_sources %}
+    <h6>Light Source {{ item.source }}:</h6>
+    {% if item.sourceType == "Point" %}
+        <h6>Source Type: {{ item.sourceType }}</h6>
+        <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
+        <h6>Power: {{ item.power }}</h6>
+    {% elif item.sourceType == "PencilBeam" %}
+        <h6>Source Type: {{ item.sourceType }}</h6>
+        <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
+        <h6>Direction: x={{ item.xDir }}, y={{ item.yDir }}, z={{ item.zDir }}</h6>
+        <h6>Power: {{ item.power }}</h6>
+    {% elif item.sourceType == "Volume" %}
+        <h6>Source Type: {{ item.sourceType }}</h6>
+        <h6>Volume Element ID: {{ item.vElement }}</h6>
+        <h6>Power: {{ item.power }}</h6>
+    {% elif item.sourceType == "Ball" %}
+        <h6>Source Type: {{ item.sourceType }}</h6>
+        <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
+        <h6>Radius: {{ item.rad }}</h6>
+        <h6>Power: {{ item.power }}</h6>
+    {% endif %}
+{% endfor %}
+<br/>
+
+<button id='advanced'>Advanced Options</button>
+<div id='advancedOption' class='table'>
+    <h6>Click here to download the auto-generated TCL script if you wish to make changes: <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a></h6>
+</div>
+<br/>
+</br>
+
+<form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+    <div id="advancedOption1" class="table">
+        <h6>Upload the modified TCL script to run the simulation (please make sure the filename is identical):</h6>
+        <table class='no_error'>
+            {% csrf_token %}
+            <tr>
+                <th>{{ tcl_form.tcl_file.label_tag }}</th>
+                <td>
+                    {{ tcl_form.tcl_file.errors }}
+                    {{ tcl_form.tcl_file }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    <p><input type="submit" value="Confirm and Submit"></p>
+</form>
+
+<form>
+    <input type="button" value="Back" onclick="history.back()">
+</form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    function Validate(oForm) {
+        var arrInputs = oForm.getElementsByTagName("input");
+        var tcl_script_name = '{{ tcl_script_name|escapejs }}';
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var filename = sFileName.replace(/^.*[\\\/]/, '');
+                        var blnValid = (filename === tcl_script_name);
+                        
+                        if(blnValid) {
+                            return confirm('This will run the Full Monte Simulator and will take some time. Please wait.'); 
+                        }
+                        
+                        if (!blnValid) {
+                            alert("Sorry, " + filename + " is invalid. Please change your uploaded TCL script to be " + tcl_script_name);
+                            return false;
+                        }
+                    }
+                }
+            }
+        
+            return true;
+    }
+</script>
+
+<script>
+    $(document).ready(function(){
+        $("#advancedOption1").hide();
+                      $("#advanced").click(function(){
+                                        $("#advancedOption").toggle();
+                                        $("#advancedOption1").toggle();
+                                        });
+                      });
+</script>
+
+{% endblock %}
