@@ -1,16 +1,25 @@
 {% extends 'base_generic.html' %}
 {% block content %}
-<head>
+
 <meta http-equiv="refresh" content="5"/>
-<h1>PDT-SPACE</h1> 
-<p>PDT-SPACE search preset data</p> 
-<p>Searching all available preset mesh and optical file</p>
-<p>Click refresh to update status or auto-fresh every 5 seconds.</p>
-<p>You will be automatically redirected to simulation when the setup is finished.</p>
+<div class="txt_container" style="text-align: center;">
+    <h1>PDT-SPACE</h1> 
+    <p>PDT-SPACE search preset data</p> 
+    <p>Searching all available preset mesh and optical file</p>
+    <p>Click refresh to update status or auto-fresh every 5 seconds.</p>
 
+    <div class="d-flex justify-content-center">
+        <div class="spinner-grow text-info" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
 
-<form action="" method="get">
-    <input type="submit" value="Refresh" />
-</form>
+    <br>
+
+    <form action="" method="get">
+        <input type="submit" value="Refresh" />
+    </form>
+</div>
+
 
 {% endblock %}

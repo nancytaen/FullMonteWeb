@@ -1,36 +1,41 @@
 {% extends 'base_generic.html' %}
 {% block content %}
-<head>
-<h1>PDT-SPACE</h1> 
-<p>Please enter light source properties and upload a placement file for light sources</p>
-<form action="" method="post" enctype="multipart/form-data">
-    <div class='table'>
-        <table class='no_error'>
-            {% csrf_token %}
-            <tr>
-                <th>{{ form.placement_type.label_tag }}</th>
-                <td>
-                    {{ form.placement_type.errors }}
-                    {{ form.placement_type }}
-                </td>
-            </tr>
-            <tr>
-                <th>{{ form.source_type.label_tag }}</th>
-                <td>
-                    {{ form.source_type.errors }}
-                    {{ form.source_type }}
-                </td>
-            </tr>
-            <tr>
-                <th>{{ form.light_placement_file.label_tag }}</th>
-                <td>
-                    {{ form.light_placement_file.errors }}
-                    {{ form.light_placement_file }}
-                </td>
-            </tr>
-        </table>
+<div class="txt_container" style="text-align: center;">
+    <h1>PDT-SPACE</h1> 
+    <p><b>Please enter light source properties and upload a placement file for light sources.</b></p>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data">
+            <b><p>Input parameters for PDT-SPACE</p></b>
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.placement_type.label_tag }}</th>
+                        <td>
+                            {{ form.placement_type.errors }}
+                            {{ form.placement_type }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.source_type.label_tag }}</th>
+                        <td>
+                            {{ form.source_type.errors }}
+                            {{ form.source_type }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.light_placement_file.label_tag }}</th>
+                        <td>
+                            {{ form.light_placement_file.errors }}
+                            {{ form.light_placement_file }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p><input type="submit" value="Upload" /></p>
+        </form>
     </div>
-    
-    <p><input type="submit" value="Upload" /></p>
-</form>
+</div>
+
 {% endblock %}

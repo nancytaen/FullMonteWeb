@@ -49,12 +49,12 @@ class materialForm(forms.ModelForm):
         fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
 
 class pdtForm(forms.Form):
-    opt = forms.ChoiceField(label="opt")
-    mesh = forms.ChoiceField(label="mesh")
-    total_energy = forms.CharField(label='total_energy', required = True, max_length=255)
-    num_packets = forms.CharField(label='num_packets', required = True, max_length=255)
-    wave_length = forms.CharField(label='wave_length', required = True, max_length=255)
-    tumor_weight = forms.CharField(label='tumor_weight', required = True, max_length=255)
+    opt = forms.ChoiceField(label="Optical File")
+    mesh = forms.ChoiceField(label="Mesh File")
+    total_energy = forms.CharField(label='Total Energy', required = True, max_length=255)
+    num_packets = forms.CharField(label='Num Packets', required = True, max_length=255)
+    wave_length = forms.CharField(label='Wave Length', required = True, max_length=255)
+    tumor_weight = forms.CharField(label='Tumor Weight', required = True, max_length=255)
     
     # light_placement_file = forms.FileField(label='light_placement_file')
 
@@ -68,19 +68,17 @@ class pdtForm(forms.Form):
             self.fields['mesh'].choices = choice_mesh
         
 class pdtPlaceFile(forms.Form):
-    placement_type = forms.ChoiceField(label='placement_type', choices=(('fixed','fixed'),
+    placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed','fixed'),
                                                                         ('virtual', 'virtual'),))
-    source_type = forms.ChoiceField(label='source_type', choices=(('point','point'),
+    source_type = forms.ChoiceField(label='Source Type', choices=(('point','point'),
                                                                         ('line', 'line'),))
     light_placement_file = forms.FileField(
-        label='light_placement_file',
-        help_text='max. 42 megabytes'
+        label='Placement File'
     )
 
 class mosekLicense(forms.Form):
     mosek_license = forms.FileField(
-        label='Mosek license',
-        help_text='max. 42 megabytes'
+        label='Mosek license'
     )
         
 

@@ -1265,6 +1265,7 @@ def pdt_space(request):
         messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
         return HttpResponseRedirect('/application/aws')
     
+    #lanuch job to search all preset mesh and optical files in the PDT-SPACE repo
     print('before')
     current_process = psutil.Process()
     children = current_process.children(recursive=True)
