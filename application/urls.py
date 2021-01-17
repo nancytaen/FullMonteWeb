@@ -9,12 +9,22 @@ from . import views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
+    ####################### home #######################
     # /application
     path('', views.home, name='home'),
 
+    ####################### tutorial #######################
     # /application/tutorial
     path('tutorial', views.fmTutorial, name='tutorial'),
 
+    ####################### AWS #######################
+    # /application/aws
+    path('aws', views.aws, name='aws'),
+
+    # /application/AWSsetup
+    path('AWSsetup', views.AWSsetup, name='AWSsetup'),
+
+    ####################### simulator #######################
     # /application/simulator
     path('simulator', views.fmSimulator, name='simulator'),
 
@@ -24,32 +34,65 @@ urlpatterns = [
     # /application/simulator_source
     path('simulator_source', views.fmSimulatorSource, name='simulator_source'),
 
-    # /application/visualization
-    path('visualization', views.fmVisualization, name='visualization'),
-    
-    path('simulation_history', views.simulation_history, name='simulation_history'),
-    url(r'download/(?P<filename>[-\w_\\-\\.]+)$', views.fileDownloadView.as_view(), name='file_download'),
+    # /application/running
+    path('running', views.running, name='running'),
 
-    # /application/about
-    path('about', views.about, name='about'),
+    # /application/simulation_fail
+    path('simulation_fail', views.simulation_fail, name='simulation_fail'),
 
-    # /application/download_output
-    path('download_output', views.downloadOutput, name='download_output'),
+    # /application/simulation_finish
+    path('simulation_finish', views.simulation_finish, name='simulation_finish'),
+
+    # /application/simulation_confirmation
+    path('simulation_confirmation', views.simulation_confirmation, name='simulation_confirmation'),
 
     # /application/kernel_info
     path('kernel_info', views.kernelInfo, name='kernel_info'),
 
-    # /application/download_preset
-    path('download_preset', views.downloadPreset, name='download_preset'),
+    ####################### visualization #######################
+    # /application/visualization
+    path('visualization', views.fmVisualization, name='visualization'),
 
+    # /application/mesh_upload
+    path('mesh_upload', views.visualization_mesh_upload, name='mesh_upload'),
+
+    # /application/runningDVH
+    path('runningDVH', views.runningDVH, name='runningDVH'),
+    
+    # /application/displayVisualization
+    path('displayVisualization', views.displayVisualization, name='displayVisualization'),
+    
+    ####################### history #######################
+    # /application/simulation_history
+    path('simulation_history', views.simulation_history, name='simulation_history'),
+    url(r'download/(?P<filename>[-\w_\\-\\.]+)$', views.fileDownloadView.as_view(), name='file_download'),
+
+    ####################### PDT-SPACE #######################
+    path('pdt_space', views.pdt_space, name='pdt_space'),
+    
+    # /application/pdt_spcae_wait
+    path('pdt_spcae_wait', views.pdt_spcae_wait, name='pdt_spcae_wait'),
+
+    # /application/pdt_space_license
+    path('pdt_space_license', views.pdt_space_license, name='pdt_space_license'),
+
+    # /application/pdt_space_material
+    path('pdt_space_material', views.pdt_space_material, name='pdt_space_material'),
+
+    # /application/pdt_space_lightsource
+    path('pdt_space_lightsource', views.pdt_space_lightsource, name='pdt_space_lightsource'),
+
+    # /application/pdt_space_running
+    path('pdt_space_running', views.pdt_space_running, name='pdt_space_running'),
+
+    # /application/pdt_space_finish
+    path('pdt_space_finish', views.pdt_space_finish, name='pdt_space_finish'),
+
+    ####################### presets #######################
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),
 
-    # /application/aws
-    path('aws', views.aws, name='aws'),
-
-    path('pdt_space', views.pdt_space, name='pdt_space'),
-
+    ####################### account & registration #######################
     url(r'^password_reset/$', auth_views.PasswordResetView.as_view() , name='password_reset'),
     url(r'^password_reset/done/$', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     url(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
@@ -73,29 +116,18 @@ urlpatterns = [
 
     path('please_login', views.please_login, name='please_login'),
 
-    path('running', views.running, name='running'),
-    
-    path('AWSsetup', views.AWSsetup, name='AWSsetup'),
+    ####################### not in use (for now) #######################
+    # /application/about
+    path('about', views.about, name='about'),
 
-    path('pdt_spcae_wait', views.pdt_spcae_wait, name='pdt_spcae_wait'),
+    path('download_output', views.downloadOutput, name='download_output'),
 
-    path('pdt_space_license', views.pdt_space_license, name='pdt_space_license'),
+    # /application/download_preset
+    path('download_preset', views.downloadPreset, name='download_preset'),
 
-    path('pdt_space_material', views.pdt_space_material, name='pdt_space_material'),
-
-    path('pdt_space_lightsource', views.pdt_space_lightsource, name='pdt_space_lightsource'),
-
-    path('pdt_space_running', views.pdt_space_running, name='pdt_space_running'),
-
-    path('pdt_space_finish', views.pdt_space_finish, name='pdt_space_finish'),
-
-    path('simulation_fail', views.simulation_fail, name='simulation_fail'),
-
-    path('simulation_finish', views.simulation_finish, name='simulation_finish'),
-               
+    # /application/heroku_timeout    
     path('heroku_timeout', views.heroku_timeout, name='heroku_timeout'),
 
-    path('mesh_upload', views.visualization_mesh_upload, name='mesh_upload'),
 ]
 
 if settings.DEBUG:

@@ -52,7 +52,7 @@ from django.views.generic.detail import DetailView
 from django.http import FileResponse
 
 from decouple import config
-from multiprocessing import Process, Event, Queue
+from multiprocessing import Process, Event
 import threading
 import select
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -130,6 +130,8 @@ def fmSimulator(request):
 
     context = {
         'form': form,
+        'aws_path': request.session['DNS'],
+        'port': request.session['tcpPort'],
     }
 
     return render(request, "simulator.html", context)
@@ -255,59 +257,11 @@ def fmSimulatorSource(request):
                 request.session['vElement'].append(form.cleaned_data['vElement'])
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
-
+            
             mesh = tclInput.objects.filter(user = request.user).latest('id')
 
             script_path = tclGenerator(request.session, mesh, request.user)
-            generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
-
-            request.session['script_path'] = script_path
-
-            #mesh file
-            mesh_file = default_storage.open(mesh.meshFile.name)
-            tcl_file = default_storage.open(generated_tcl.script.name)
-            meshFilePath = mesh.meshFile.name
-
-            print("DNS is", request.session['DNS'])
-            uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
-            pemfile = uploadedAWSPemFile.pemfile
-
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            print('SSH into the instance: {}'.format(request.session['DNS']))
-            
-            private_key_file = io.BytesIO()
-            for line in pemfile:
-                private_key_file.write(line)
-            private_key_file.seek(0)
-
-            byte_str = private_key_file.read()
-            text_obj = byte_str.decode('UTF-8')
-            private_key_file = io.StringIO(text_obj)
-            
-            privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            request.session['text_obj'] = text_obj
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
-            ftp = client.open_sftp()
-
-            ftp.chdir('docker_sims/')
-            file=ftp.file('docker.sh', "w")
-            file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
-            file.flush()
-            ftp.chmod('docker.sh', 700)
-
-            ftp.putfo(mesh_file, './'+mesh.meshFile.name)
-            ftp.putfo(tcl_file, './'+generated_tcl.script.name)
-            ftp.close()
-
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
-            channel = client.get_transport().open_session()
-            channel.exec_command(command)
-            request.session['start_time'] = str(datetime.now(timezone.utc))
-            request.session['started'] = "false"
-            # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
-            #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
-            return HttpResponseRedirect('/application/running')
+            return HttpResponseRedirect('/application/simulation_confirmation')
 
     # If this is a GET (or any other method) create the default form.
     else:
@@ -318,6 +272,108 @@ def fmSimulatorSource(request):
     }
 
     return render(request, "simulator_source.html", context)
+
+def simulation_confirmation(request):
+    class Optional_Tcl(forms.Form):
+        tcl_file = forms.FileField(required=False)
+    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    if request.method == 'POST':
+        form = Optional_Tcl(request.POST, request.FILES)
+        if not request.POST.__contains__('tcl_file'):
+            # there is a file uploaded
+            default_storage.delete(request.FILES['tcl_file'].name)
+            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file'])
+        
+        #mesh file
+        mesh_file = default_storage.open(mesh.meshFile.name)
+        tcl_file = default_storage.open(generated_tcl.script.name)
+        meshFilePath = mesh.meshFile.name
+
+        print("DNS is", request.session['DNS'])
+        uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
+        pemfile = uploadedAWSPemFile.pemfile
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        print('SSH into the instance: {}'.format(request.session['DNS']))
+        
+        private_key_file = io.BytesIO()
+        for line in pemfile:
+            private_key_file.write(line)
+        private_key_file.seek(0)
+
+        byte_str = private_key_file.read()
+        text_obj = byte_str.decode('UTF-8')
+        private_key_file = io.StringIO(text_obj)
+        
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        request.session['text_obj'] = text_obj
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        ftp = client.open_sftp()
+
+        ftp.chdir('docker_sims/')
+        file=ftp.file('docker.sh', "w")
+        file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+        file.flush()
+        ftp.chmod('docker.sh', 700)
+
+        ftp.putfo(mesh_file, './'+mesh.meshFile.name)
+        ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+        ftp.close()
+
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
+        channel = client.get_transport().open_session()
+        channel.exec_command(command)
+        request.session['start_time'] = str(datetime.now(timezone.utc))
+        request.session['started'] = "false"
+        # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
+        #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
+        return HttpResponseRedirect('/application/running')
+    
+    class Material_Class:
+        pass
+    class Light_Source_Class:
+        pass
+
+    materials = []
+    for i in range(len(request.session['material'])):
+        temp = Material_Class()
+        temp.layer = i + 1
+        temp.material = request.session['material'][i]
+        temp.scatteringCoeff = request.session['scatteringCoeff'][i]
+        temp.absorptionCoeff = request.session['absorptionCoeff'][i]
+        temp.refractiveIndex = request.session['refractiveIndex'][i]
+        temp.anisotropy = request.session['anisotropy'][i]
+        materials.append(temp)
+
+    light_sources = []
+    for i in range(len(request.session['sourceType'])):
+        temp = Light_Source_Class()
+        temp.source = i + 1
+        temp.sourceType = request.session['sourceType'][i]
+        temp.xPos = request.session['xPos'][i]
+        temp.yPos = request.session['yPos'][i]
+        temp.zPos = request.session['zPos'][i]
+        temp.xDir = request.session['xDir'][i]
+        temp.yDir = request.session['yDir'][i]
+        temp.zDir = request.session['zDir'][i]
+        temp.vElement = request.session['vElement'][i]
+        temp.rad = request.session['rad'][i]
+        temp.power = request.session['power'][i]
+        light_sources.append(temp)
+    
+    tcl_form = Optional_Tcl()
+
+    context = {
+        'mesh_name': mesh.meshFile.name, 
+        'materials': materials,
+        'light_sources': light_sources,
+        'tcl_script_name': generated_tcl.script.name,
+        'tcl_form': tcl_form,
+    }
+
+    return render(request, 'simulation_confirmation.html', context)
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
@@ -407,7 +463,10 @@ def visualization_mesh_upload(request):
             obj.save()
             uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
             outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
-            request.session['outputMesh'] = outputMeshFileName
+            info = meshFileInfo.objects.filter(user = request.user).latest('id')
+            info.fileName = outputMeshFileName
+            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.save()
             outputMeshFile = default_storage.open(outputMeshFileName)
             print(outputMeshFileName)
 
@@ -432,7 +491,7 @@ def visualization_mesh_upload(request):
     }
     return render(request, "mesh_upload.html", context)
 
-# FullMonte output Visualization page
+# FullMonte output Visualization - generate DVH
 def fmVisualization(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
@@ -445,16 +504,11 @@ def fmVisualization(request):
         messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
         return HttpResponseRedirect('/application/aws')
 
-    try:
-        outputMeshFileName = request.session['outputMesh']
-    except:
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = info.fileName
+    if len(outputMeshFileName) == 0:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
-
-    # generate ParaView Visualization URL
-    dns = request.session['DNS']
-    tcpPort = request.session['tcpPort']
-    visURL = dns + ":" + tcpPort
 
     # check if file exists in the remote server
     private_key_file = io.StringIO(text_obj)
@@ -466,27 +520,98 @@ def fmVisualization(request):
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
-        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
-        fileExists = True
+        info.remoteFileExists = True
     except:
-        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
-        fileExists = False
+        info.remoteFileExists = False
     sftp.close()
     client.close()
+    sys.stdout.flush()
+    info.save()
+
+    # file exists for DVH
+    if(info.remoteFileExists):
+        # generate DVH
+        if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
+            print('generating DVH')
+            print('before')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+            for child in children:
+                print('Child pid is {}'.format(child.pid))
+            connections.close_all()
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
+            p.start()
+            print('after')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+
+            form = processRunning()
+            form.user=request.user
+
+            for child in children:
+                form.pid = child.pid
+                form.running = True
+                print('Child pid is {}'.format(child.pid))
+
+            conn = create_connection()
+            conn.ensure_connection()
+            form.save()
+            conn.close()
+            return HttpResponseRedirect('/application/runningDVH')
+        # load saved DVH
+        else:
+            print('using last saved DVH')
+            return HttpResponseRedirect('/application/displayVisualization')
+    
+    # DBH cannot be generated
+    else:
+        info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
+        info.save()
+        return HttpResponseRedirect('/application/displayVisualization')
+
+
+# Running DVH progress page
+def runningDVH(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    if running_process.running:
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "waitingDVH.html", {'time':running_time})
+    else:
+        return HttpResponseRedirect('/application/displayVisualization')
+
+
+# page that loads both the 3D visualization and DVH
+def displayVisualization(request):
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = info.fileName
+    fileExists = info.remoteFileExists
+    dvhFig = info.dvhFig
+
+    # generate ParaView Visualization URL
+    dns = request.session['DNS']
+    tcpPort = request.session['tcpPort']
+    visURL = dns + ":" + tcpPort
 
     # render 3D visualizer
     text_obj = request.session['text_obj']
-    proc1 = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
-    proc1.start()
+    p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
+    p.start()
 
-    # generate DVH
-    dvhFig = Queue()
-    proc2 = Process(target=dvh, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, dvhFig, ))
-    proc2.start()
+    # get message
+    if(fileExists):
+        msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
+    else:
+        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig.get(), 'visURL': visURL}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
     return render(request, "visualization.html", context)
+
+
 
 # page for viewing and downloading files
 def downloadOutput(request):
@@ -686,6 +811,9 @@ def aws(request):
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
         if form.is_valid():
+            info = meshFileInfo() # prepare new mesh entry
+            info.user = request.user;
+            info.save()
             print(form.cleaned_data)
             obj = form.save(commit = False)
             obj.user = request.user;
@@ -1031,7 +1159,10 @@ def simulation_finish(request):
     # save output mesh file info
     outputMeshFile = tclInput.objects.filter(user = request.user).latest('id')
     outputMeshFileName = outputMeshFile.meshFile.name
-    request.session['outputMesh'] = outputMeshFileName[:-4] + ".out.vtk"
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
+    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.save()
 
     # display simulation outputs
     client = paramiko.SSHClient()
@@ -1113,6 +1244,10 @@ def populate_simulation_history(request):
 
 def simulation_history(request):
     history = simulationHistory.objects.filter(user=request.user)
+    if history.count() > 0:
+        return render(request, "simulation_history.html", {'history':history})
+    else:
+        return render(request, "simulation_history_empty.html")
     return render(request, "simulation_history.html", {'history':history})
 
 def pdt_space(request):

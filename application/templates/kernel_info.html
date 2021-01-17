@@ -3,85 +3,84 @@
 {% block content %}
 
 <style>
-    p {
-        margin-right: 20%;
-    }
-
     table, th, td {
         border: 1px solid black;
     }
 </style>
 
-<h1>FullMonte Simulator</h1>
+<div class="txt_container">
 
-<h2>Kernel Type</h2>
+    <h1>FullMonte Simulator</h1>
 
-<p>
-There are 5 kernel types that can be used in FullMonte. Based on the defined kernel, the method with which the results are written to the files need to change. All called methods are the same for each kernel type. The only thing that changes here is the instantiation of the kernel. You have to be aware however that each Kernel exhibits a different runtime. The more event get logged from the Kernel, the longer the runtime is. To put this roughly into perspective and to determine for yourself if the increase in runtime is even a factor for your simulation, please have a look at the following table:
-</p>
+    <h2>Kernel Type</h2>
 
-<table style="width:80%">
-    <tr>
-        <th>Runtime Comparison</th>
-        <th>1.000.000 photons</th>
-        <th>10.000.000 photons</th>
-        <th>Runtime Ratio</th>
-    </tr>
-    <tr>
-        <td>TetraSurfaceKernel</td>
-        <td>72s</td>
-        <td>716s</td>
-        <td>1/1 base measurement</td>
-    </tr>
-    <tr>
-        <td>TetraVolumeKernel</td>
-        <td>75s</td>
-        <td>745s</td>
-        <td>1.04/1.04</td>
-    </tr>
-    <tr>
-        <td>TetraSVKernel</td>
-        <td>76s</td>
-        <td>774s</td>
-        <td>1.05/1.08</td>
-    </tr>
-    <tr>
-        <td>TetraInternalKernel</td>
-        <td>83s</td>
-        <td>827s</td>
-        <td>1.15/1.16</td>
-    </tr>
-</table>
+    <p>
+    There are 5 kernel types that can be used in FullMonte. Based on the defined kernel, the method with which the results are written to the files need to change. All called methods are the same for each kernel type. The only thing that changes here is the instantiation of the kernel. You have to be aware however that each Kernel exhibits a different runtime. The more event get logged from the Kernel, the longer the runtime is. To put this roughly into perspective and to determine for yourself if the increase in runtime is even a factor for your simulation, please have a look at the following table:
+    </p>
 
-</br>
-<p>
-What these measurements show, is that there is not a huge difference between TetraSurface-, TetraVolume, or TetraSVKernel regarding their runtime. You get a 15-16% slowdown compared to TetraSurfaceKernel when using TetraInternalKernel. If you do not require the features of TetraInternalKernel, it is better to use one of the other kernels.
-</p>
+    <table style="width:80%">
+        <tr>
+            <th>Runtime Comparison</th>
+            <th>1.000.000 photons</th>
+            <th>10.000.000 photons</th>
+            <th>Runtime Ratio</th>
+        </tr>
+        <tr>
+            <td>TetraSurfaceKernel</td>
+            <td>72s</td>
+            <td>716s</td>
+            <td>1/1 base measurement</td>
+        </tr>
+        <tr>
+            <td>TetraVolumeKernel</td>
+            <td>75s</td>
+            <td>745s</td>
+            <td>1.04/1.04</td>
+        </tr>
+        <tr>
+            <td>TetraSVKernel</td>
+            <td>76s</td>
+            <td>774s</td>
+            <td>1.05/1.08</td>
+        </tr>
+        <tr>
+            <td>TetraInternalKernel</td>
+            <td>83s</td>
+            <td>827s</td>
+            <td>1.15/1.16</td>
+        </tr>
+    </table>
 
-<h2>TetraSVKernel (Default)</h2>
-<p>
-TetraSVKernel gathers data about the amount of energy that has been absorbed by the tetras (volume) and the amount of energy that exits the (exterior) surface of the mesh.
-</p>
+    </br>
+    <p>
+    What these measurements show, is that there is not a huge difference between TetraSurface-, TetraVolume, or TetraSVKernel regarding their runtime. You get a 15-16% slowdown compared to TetraSurfaceKernel when using TetraInternalKernel. If you do not require the features of TetraInternalKernel, it is better to use one of the other kernels.
+    </p>
 
-<h2>TetraSurfaceKernel</h2>
-<p>
-TetraSurfaceKernel gathers data about the amount of energy that exits the (exterior) surface of the mesh.
-</p>
+    <h2>TetraSVKernel (Default)</h2>
+    <p>
+    TetraSVKernel gathers data about the amount of energy that has been absorbed by the tetras (volume) and the amount of energy that exits the (exterior) surface of the mesh.
+    </p>
 
-<h2>TetraVolumeKernel</h2>
-<p>
-TetraVolumeKernel gathers data about the amount of energy that has been absorbed by the tetras (volume).
-</p>
+    <h2>TetraSurfaceKernel</h2>
+    <p>
+    TetraSurfaceKernel gathers data about the amount of energy that exits the (exterior) surface of the mesh.
+    </p>
 
-<h2>TetraInternalKernel</h2>
-<p>
-TetraInternalKernel is a special case in the kernels since it has an additional feature that requires a slightly different setup to make it work. TetraInternalKernel gathers data about the amount of energy that has been absorbed by the tetras (volume), the amount of energy that exits the surface of the mesh, and the directed fluence which passes through an interior surface. This kernel type incorporates all data that can be logged by FullMonte and should not be used when only one specific set of data is of interest, because logging all data sets costs performance.
-</p>
+    <h2>TetraVolumeKernel</h2>
+    <p>
+    TetraVolumeKernel gathers data about the amount of energy that has been absorbed by the tetras (volume).
+    </p>
 
-<form>
-    <input type="button" value="Back" onclick="history.back()">
-</form>
+    <h2>TetraInternalKernel</h2>
+    <p>
+    TetraInternalKernel is a special case in the kernels since it has an additional feature that requires a slightly different setup to make it work. TetraInternalKernel gathers data about the amount of energy that has been absorbed by the tetras (volume), the amount of energy that exits the surface of the mesh, and the directed fluence which passes through an interior surface. This kernel type incorporates all data that can be logged by FullMonte and should not be used when only one specific set of data is of interest, because logging all data sets costs performance.
+    </p>
 
-<br/>
+    <form>
+        <input type="button" value="Back" onclick="history.back()">
+    </form>
+
+    <br/>
+</div>
 
 {% endblock %}

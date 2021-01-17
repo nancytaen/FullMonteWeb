@@ -1,94 +1,103 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>FullMonte Simulator</h1>
+<div class="txt_container">
+    <h1>FullMonte Simulator</h1>
+    
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <h3>Create preset material</h3>
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.material_name.label_tag }}</th>
+                        <td>
+                            {{ form.material_name }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.scattering_coeff.label_tag }}</th>
+                        <td>
+                            {{ form.scattering_coeff }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.absorption_coeff.label_tag }}</th>
+                        <td>
+                            {{ form.absorption_coeff }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.refractive_index.label_tag }}</th>
+                        <td>
+                            {{ form.refractive_index }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.anisotropy.label_tag }}</th>
+                        <td>
+                            {{ form.anisotropy }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        
+            <p><br/><input type="submit" value="Submit"></p>
+            
+        </form>
+    </div>
 
+    <br><br><br>
+
+    <div class="center_container">
+        <h3>All Preset Materials</h3>
+    </div>
     <form action="" method="post">
         {% csrf_token %}
-        <br/>
         <p><input type="submit" name="reset" value="Delete All Preset Materials" onclick="return confirm('Are you sure?');"></p>
     </form>
-    
-    <h3>Create preset material</h3>
-    <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-        
-        <div class='table'>
-            <table class='no_error'>
-                {% csrf_token %}
-                <tr>
-                    <th>{{ form.material_name.label_tag }}</th>
-                    <td>
-                        {{ form.material_name }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.scattering_coeff.label_tag }}</th>
-                    <td>
-                        {{ form.scattering_coeff }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.absorption_coeff.label_tag }}</th>
-                    <td>
-                        {{ form.absorption_coeff }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.refractive_index.label_tag }}</th>
-                    <td>
-                        {{ form.refractive_index }}
-                    </td>
-                </tr>
-                <tr>
-                    <th>{{ form.anisotropy.label_tag }}</th>
-                    <td>
-                        {{ form.anisotropy }}
-                    </td>
-                </tr>
-            </table>
+    <div class="row justify-content-center ">
+        <div class="col-auto">
+            <div class='table'>
+                <table class='no_error'>
+                    <thead>
+                        <tr>
+                            <th>Material Name</th>
+                            <th>Scattering Coefficient</th>
+                            <th>Absorption Coefficient</th>
+                            <th>Refractive Index</th>
+                            <th>Anisotropy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for material in presetMaterials %}
+                        <tr>
+                            <td>{{ material.material_name }}</td>
+                            <td>{{ material.scattering_coeff }}</td>
+                            <td>{{ material.absorption_coeff }}</td>
+                            <td>{{ material.refractive_index }}</td>
+                            <td>{{ material.anisotropy }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No data.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <br/>
+                
+                <b>
+                    <a href="{% url 'simulator_material' %}">
+                        Back to simulator.
+                    </a>
+                </b>
+                <br/>
+                <br/>
+            </div>
         </div>
-        
-        <p><br/><input type="submit" value="Submit"></p>
-            
-    </form>
-
-<h3>All Preset Materials</h3>
-<div class='table'>
-    <table class='no_error'>
-        <thead>
-            <tr>
-                <th>Material Name</th>
-                <th>Scattering Coefficient</th>
-                <th>Absorption Coefficient</th>
-                <th>Refractive Index</th>
-                <th>Anisotropy</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for material in presetMaterials %}
-            <tr>
-                <td>{{ material.material_name }}</td>
-                <td>{{ material.scattering_coeff }}</td>
-                <td>{{ material.absorption_coeff }}</td>
-                <td>{{ material.refractive_index }}</td>
-                <td>{{ material.anisotropy }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3">No data.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <br/>
-    
-    <b>
-        <a href="{% url 'simulator_material' %}">
-            Back to simulator.
-        </a>
-    </b>
-    <br/>
-    <br/>
+    </div>
 </div>
 
 {% endblock %}

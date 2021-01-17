@@ -2,66 +2,72 @@
 
 {% block content %}
 {% load static %}
-<h1>Tutorial</h1>
+<div class="txt_container">
+    <h1>Tutorial</h1>
 
-<h2>Starter guide on Amazon Web Services</h2>
-<h6>1. First go to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a> and click on "Sign In to the Console" on the top right corner. Login or create an account if you don't already have one.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_signin.png' %}" alt="AWS_signin">
-</div>
-<h6>2. After login, select "EC2" from the service dropdown menu.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_service.png' %}" alt="AWS_service">
-</div>
-<h6>3. Scroll down and select "launch instance".</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_launch_instance.png' %}" alt="AWS_launch_instance">
-</div>
-<h6>4. Scroll down and select "Ubuntu Server 18.04" in step 1, and select the appropriate CPU size that is suitable for your simulation in step 2.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_Ubuntu.png' %}" alt="AWS_Ubuntu">
-    <img width="650" height="350" src="{% static 'images/AWS_CPU.png' %}" alt="AWS_CPU">
-</div>
-<h6>5. Skip Step 3 and selete the appropriate Memory size that is suitable for your simulation in Step 4.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_skip3.png' %}" alt="AWS_skip3">
-    <img width="650" height="350" src="{% static 'images/AWS_mem.png' %}" alt="AWS_mem">
-</div>
-<h6>6. Launch the instance on the bottom right corner. Before launching, Amazon Web Services will ask you to create a private Key file, which is used to access your instance. This is the "Pemfile" that you will be uploading when running the simulation. Please carefully save it somewhere as you will not be able to download the file again.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_pem.png' %}" alt="AWS_pem">
-</div>
-<h6>7. After the instance is launched, go the running instances, and click on "connect". Take a note on the Public DNS name, this is the "DNS" field that you will be typing in when running the simulation.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_after_launch.png' %}" alt="AWS_after_launch">
-    <img width="650" height="350" src="{% static 'images/AWS_connect.png' %}" alt="AWS_connect">
-    <img width="650" height="350" src="{% static 'images/AWS_DNS.png' %}" alt="AWS_DNS">
-</div>
-<h6>8. Go back to the running instance and click on "Security". Under this tab, click on the security group.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_security.png' %}" alt="AWS_security">
-    <img width="650" height="350" src="{% static 'images/AWS_security_groups.png' %}" alt="AWS_security_groups">
-</div>
-<h6>9. Under "Inbound rules", keep the SSH entry as default and add two new rules:</h6>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. Type: HTTP; Port range: 80; Source: 0.0.0.0/0</p>
-<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. Type: Custom TCP; Port range: a number between 8000 and 8999; Source: 0.0.0.0/0</p>
-<h6>&nbsp;&nbsp;&nbsp;Take a note on the Custom TCP port range number, this is the "TCP Port" field that you will be typing in when running the simulation.</h6>
-<div class="figure_container">
-    <img width="650" height="350" src="{% static 'images/AWS_set_ports.png' %}" alt="AWS_set_ports">
-</div>
-<br/>
-<br/>
-<h2>How to run a simulation using FullMonteWeb</h2>
-<iframe width="650" height="350" src="https://www.youtube.com/embed/1sqRCMTXvzo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-<br/>
-<br/>
-<h2>Visualization and downloading results using FullMonteWeb</h2>
-<iframe width="650" height="350" src="https://www.youtube.com/embed/0gcd8nju8Wc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-<br/>
-<br/>
+    <h2>Starter guide on Amazon Web Services</h2>
+    <p>1. First go to <a href="https://aws.amazon.com/" target="_blank">https://aws.amazon.com/</a> and click on "Sign In to the Console" on the top right corner. Login or create an account if you don't already have one.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_signin.png' %}" alt="AWS_signin">
+    </div>
+    <p>2. After login, select "EC2" from the service dropdown menu.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_service.png' %}" alt="AWS_service">
+    </div>
+    <p>3. Scroll down and select "launch instance".</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_launch_instance.png' %}" alt="AWS_launch_instance">
+    </div>
+    <p>4. Scroll down and select "Ubuntu Server 18.04" in step 1, and select the appropriate CPU size that is suitable for your simulation in step 2.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_Ubuntu.png' %}" alt="AWS_Ubuntu">
+        <img class="tutorial_image" src="{% static 'images/AWS_CPU.png' %}" alt="AWS_CPU">
+    </div>
+    <p>5. Skip Step 3 and selete the appropriate Memory size that is suitable for your simulation in Step 4.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_skip3.png' %}" alt="AWS_skip3">
+        <img class="tutorial_image" src="{% static 'images/AWS_mem.png' %}" alt="AWS_mem">
+    </div>
+    <p>6. Launch the instance on the bottom right corner. Before launching, Amazon Web Services will ask you to create a private Key file, which is used to access your instance. This is the "Pemfile" that you will be uploading when running the simulation. Please carefully save it somewhere as you will not be able to download the file again.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_pem.png' %}" alt="AWS_pem">
+    </div>
+    <p>7. After the instance is launched, go the running instances, and click on "connect". Take a note on the Public DNS name, this is the "DNS" field that you will be typing in when running the simulation.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_after_launch.png' %}" alt="AWS_after_launch">
+        <img class="tutorial_image" src="{% static 'images/AWS_connect.png' %}" alt="AWS_connect">
+        <img class="tutorial_image" src="{% static 'images/AWS_DNS.png' %}" alt="AWS_DNS">
+    </div>
+    <p>8. Go back to the running instance and click on "Security". Under this tab, click on the security group.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_security.png' %}" alt="AWS_security">
+        <img class="tutorial_image" src="{% static 'images/AWS_security_groups.png' %}" alt="AWS_security_groups">
+    </div>
+    <p>9. Under "Inbound rules", keep the SSH entry as default and add two new rules:</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a. Type: HTTP; Port range: 80; Source: 0.0.0.0/0</p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. Type: Custom TCP; Port range: a number between 8000 and 8999; Source: 0.0.0.0/0</p>
+    <p>&nbsp;&nbsp;&nbsp;Take a note on the Custom TCP port range number, this is the "TCP Port" field that you will be typing in when running the simulation.</p>
+    <div class="figure_container">
+        <img class="tutorial_image" src="{% static 'images/AWS_set_ports.png' %}" alt="AWS_set_ports">
+    </div>
+    <br/>
+    <br/>
+    <h2>How to run a simulation using FullMonteWeb</h2>
+    <div class="figure_container">
+        <iframe class="tutorial_vid" src="https://www.youtube.com/embed/1sqRCMTXvzo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+    <br/>
+    <br/>
+    <h2>Visualization and downloading results using FullMonteWeb</h2>
+    <div class="figure_container">
+        <iframe class="tutorial_vid" src="https://www.youtube.com/embed/0gcd8nju8Wc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+    <br/>
+    <br/>
 
-<h2>Next</h2>
-<p>
-When you are done with the tutorial, continue to the <a href="{% url 'aws'%}">simulator</a>.
-</p>
+    <h2>Next</h2>
+    <p>
+    When you are done with the tutorial, continue to the <a href="{% url 'aws'%}">simulator</a>.
+    </p>
+</div>
 {% endblock %}

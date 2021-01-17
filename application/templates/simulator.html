@@ -1,49 +1,54 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>FullMonte Simulator</h1>
+<div class="txt_container">
+    <h1>FullMonte Simulator</h1>   
+    <p>Currently connected to {{ aws_path }} through port {{ port }}.</p> 
 
-<b>
-<a href="{% url 'download_preset' %}">
-    Click here to download a preset mesh.
-</a>
-</b>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
 
-<form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <div class="center_container">
+                <b><a href="{% url 'download_preset' %}">
+                    Click here to download a preset mesh.
+                </a></b>
+            </d>
 
-    <div class='table'>
-        <table class='no_error'>
-            {% csrf_token %}
-            <tr>
-                <th>{{ form.meshFile.label_tag }}</th>
-                <td>
-                    {{ form.meshFile.errors }}
-                    {{ form.meshFile }}
-                </td>
-            </tr>
-        </table>
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.meshFile.label_tag }}</th>
+                        <td>
+                            {{ form.meshFile.errors }}
+                            {{ form.meshFile }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <button id='advanced'>Advanced Options</button>
+            
+            <div id='advancedOption' class='table'>
+                {% csrf_token %}
+                {{ form.kernelType.label_tag }}
+                {{ form.kernelType.errors }}
+                {{ form.kernelType }}
+                <br/>
+                {{ form.packetCount.label_tag }}
+                {{ form.packetCount.errors }}
+                {{ form.packetCount }}
+                </br>
+                <a href="{% url 'kernel_info' %}">
+                    Click here for more info about the kernel type.
+                </a>
+            </div>
+            
+            <p><br/><input type="submit" value="Next"></p>
+
+        </form>
     </div>
-
-    <button id='advanced'>Advanced Options</button>
-    
-    <div id='advancedOption' class='table'>
-        {% csrf_token %}
-        {{ form.kernelType.label_tag }}
-        {{ form.kernelType.errors }}
-        {{ form.kernelType }}
-        <br/>
-        {{ form.packetCount.label_tag }}
-        {{ form.packetCount.errors }}
-        {{ form.packetCount }}
-        </br>
-        <a href="{% url 'kernel_info' %}">
-            Click here for more info about the kernel type.
-        </a>
-    </div>
-    
-    <p><br/><input type="submit" value="Next"></p>
-
-</form>
+</div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
@@ -82,10 +87,11 @@
 
 <script>
     $(document).ready(function(){
-                      $("#advanced").click(function(){
+                    $("#advanced").click(function(){
                                         $("#advancedOption").toggle();
                                         });
-                      });
+                    });
 </script>
+
 
 {% endblock %}

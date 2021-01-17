@@ -15,9 +15,21 @@ def visualizer(meshFileName, fileExists, dns, tcpPort, text_obj):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    print ('connecting')
+    print ('connecting to remote server in visualizer3D')
     client.connect(dns, username='ubuntu', pkey=privkey)
-    print ('connected')
+    print ('connected to remote server in visualizer3D')
+
+    # kill any existing processes running on tcpPort
+    print("sudo kill -9 `sudo lsof -t -i:" + tcpPort + "`")
+    stdin, stdout, stderr = client.exec_command("sudo kill -9 `sudo lsof -t -i:" + tcpPort + "`")
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    sys.stdout.flush()
+
 
     # set channel
     ssh_transp = client.get_transport()

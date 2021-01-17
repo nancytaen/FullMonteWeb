@@ -22,45 +22,47 @@
                     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     </head>
     <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <span style="font-size:200%" class="font-weight-bold text-primary">FullMonte</span>
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+            <img width="60" src="{% static 'images/rat_logo.png' %}" alt="logo">
+            <span style="font-size:200%" class="font-weight-bold text-white">FullMonte</span>
+            <span style="font-size:200%" class="font-weight-bold text-blue">Web</span>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav mr-auto">
-                      <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
-                      </li>
-                      <!-- <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                          Dropdown
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                          <a class="dropdown-item" href="{% url 'tutorial' %}">Tutorial</a>
-                          <a class="dropdown-item" href="{% url 'visualization' %}">Visualization</a>
-                          <div class="dropdown-divider"></div>
-                          <a class="dropdown-item" href="{% url 'about' %}">About</a>
-                        </div>
-                      </li> -->
-                      {% if not request.user.is_authenticated %}
-                      <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'signup' %}">Signup <span class="sr-only">(current)</span></a>
-                      </li>
-                      <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'login' %}">Login <span class="sr-only">(current)</span></a>
-                      </li>
-                      {% endif %}
-                      {% if request.user.is_authenticated %}
-                      <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'account' %}">Account Info  <span class="sr-only">(current)</span></a>
-                      </li>
-                      <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'logout' %}">Logout <span class="sr-only">(current)</span></a>
-                      </li>
-                      {% endif %}
-                    </ul>
-                </div>
+            <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+              <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                  <a class="nav-link" href="{% url 'home' %}">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <!-- <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Dropdown
+                  </a>
+                  <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item" href="{% url 'tutorial' %}">Tutorial</a>
+                    <a class="dropdown-item" href="{% url 'visualization' %}">Visualization</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{% url 'about' %}">About</a>
+                  </div>
+                </li> -->
+                {% if not request.user.is_authenticated %}
+                <li class="nav-item active">
+                  <a class="nav-link" href="{% url 'signup' %}">Signup <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                  <a class="nav-link" href="{% url 'login' %}">Login <span class="sr-only">(current)</span></a>
+                </li>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                <li class="nav-item active">
+                  <a class="nav-link" href="{% url 'account' %}">Account Info  <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                  <a class="nav-link" href="{% url 'logout' %}">Logout <span class="sr-only">(current)</span></a>
+                </li>
+                {% endif %}
+              </ul>
+          </div>
         </nav>
         
         <div class="container-fluid">
@@ -68,18 +70,126 @@
                 <div class="col-sm-2">
                     {% block sidebar %}
                     <ul class="sidebar-nav">
-                        <li><a class="btn btn-primary" href="{% url 'home' %}">Home</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'tutorial' %}">Tutorial</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'aws' %}">AWS</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'simulator' %}">Simulation</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'visualization' %}">Visualization</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'simulation_history' %}">History</a></li><br/>
-                        <li><a class="btn btn-primary" href="{% url 'pdt_space' %}">PDT-SPACE</a></li><br/>
+                        <!-- home button -->
+                        {% if request.path == '/application/' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'home' %}">Home</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'home' %}">Home</a></li><br/>
+                        {% endif %}
+                        <!-- tutorial button -->
+                        {% if request.path == '/application/tutorial' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'tutorial' %}">Tutorial</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'tutorial' %}">Tutorial</a></li><br/>
+                        {% endif %}
+                        <!-- AWS button -->
+                        {% if request.path == '/application/aws' or request.path == '/application/AWSsetup' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'aws' %}">AWS</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'aws' %}">AWS</a></li><br/>
+                        {% endif %}
+                        <!-- simulator button -->
+                        {% if request.path == '/application/simulator' or request.path == '/application/simulator_source' or request.path == '/application/simulator_material' or request.path == '/application/running' or request.path == '/application/simulation_fail' or request.path == '/application/simulation_finish' or request.path == '/application/kernel_info' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'simulator' %}">Simulation</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'simulator' %}">Simulation</a></li><br/>
+                        {% endif %}
+                        <!-- visualization button -->
+                        {% if request.path == '/application/visualization' or request.path == '/application/mesh_upload' or request.path == '/application/runningDVH' or request.path == '/application/displayVisualization' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'visualization' %}">Visualization</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'visualization' %}">Visualization</a></li><br/>
+                        {% endif %}
+                        <!-- history button -->
+                        {% if request.path == '/application/simulation_history' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'simulation_history' %}">History</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'simulation_history' %}">History</a></li><br/>
+                        {% endif %}
+                        <!-- PDT-SPACE button -->
+                        {% if request.path == '/application/pdt_space' or request.path == '/application/pdt_spcae_wait' or request.path == '/application/pdt_space_license' or request.path == '/application/pdt_space_material' or request.path == '/application/pdt_space_lightsource' or request.path == '/application/pdt_space_running' or request.path == '/application/pdt_space_finish' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'pdt_space' %}">PDT-SPACE</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'pdt_space' %}">PDT-SPACE</a></li><br/>
+                        {% endif %}
                     </ul>
                     {% endblock %}
                 </div>
                 <div class="col-sm-10 ">{% block content %}{% endblock %}</div>
             </div>
         </div>
+
+        <footer>
+          <div class="container">
+            <div class="row">
+              
+              <div class="col-lg-4 col-md-6">
+                <h3>Site Map</h3>
+                <ul class="list-unstyled three-column">
+                  <li>Home</li>
+                  <li>Tutorial</li>
+                  <li>Account</li>
+                  <li>About</li>
+                  <li>Code</li>
+                  <li>Contact</li>
+                </ul>
+                <ul class="list-unstyled socila-list">
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                </ul>
+              </div>
+              
+              <div class="col-lg-4 col-md-6">
+                <h3>More Information</h3>
+                <div class="media">
+                  <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5332935/" class="pull-left">
+                    <img src="{% static 'images/ipdt_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  </a>
+                  <div class="media-body">
+                    <h4 class="media-heading">I-PDT Background</h4>
+                    <p>Interstitial Photodynamic Therapy—A Focused Review.</p>
+                  </div>
+                </div>
+                
+                <div class="media">
+                  <a href="https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-08/085001/High-performance-robustly-verified-Monte-Carlo-simulation-with-FullMonte/10.1117/1.JBO.23.8.085001.full?SSO=1" class="pull-left">
+                    <img src="{% static 'images/paper_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  </a>
+                  <div class="media-body">
+                    <h4 class="media-heading">FullMonte Paper</h4>
+                    <p>High-performance, robustly verified Monte Carlo simulation with FullMonte.</p>
+                  </div>
+                </div>
+                
+                <div class="media">
+                  <a href="https://fullmonte.gitlab.io/" class="pull-left">
+                    <img src="{% static 'images/fullmonte_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  </a>
+                  <div class="media-body">
+                    <h4 class="media-heading">FullMonte Project</h4>
+                    <p>This website introduces the FullMonte Project. </p>
+                  </div>
+                </div>
+                
+              </div>
+              
+              <div class="col-lg-4">
+                <h3>Our Work</h3>
+                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
+                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
+                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
+                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
+              </div>
+              
+            </div>
+          </div>
+          <div class="copyright text-center">
+            Copyright &copy; 2021 <span>The FullMonte Project</span>
+          </div>
+        </footer>
     </body>
 </html>

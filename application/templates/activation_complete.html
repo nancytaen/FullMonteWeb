@@ -1,16 +1,18 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>
-    Thank you for completing your account registration
-</h1>
-<div>
-    <p>
-        You now have access to the simulator.
-    </p>
-</div>
-<div>
-    <a href="{% url 'home' %}">Click here to return to the home page</a>
-</div>
+<div class="txt_container">
+    <h1>
+        Thank you for completing your account registration
+    </h1>
+    <div>
+        <p>
+            You now have access to the simulator.
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'home' %}">Click here to return to the home page</a>
+    </div>
+ </div>
 
 {% endblock %}

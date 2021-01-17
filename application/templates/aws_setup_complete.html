@@ -1,13 +1,15 @@
 {% extends 'base_generic.html' %}
 {% block content %}
-<h1>The AWS Remote Server Setup is Complete.</h1> 
-<p><b>You have successfully connected to your AWS remote server. You may now run simulations and visualize results.</b></p>
-<p><b>Suggestions for next steps:</b></p>
-<ul class="suggestion-list">
-    <li><a href=simulator>Run the simulator</a></li><br/>
-    <li><a href=visualization>Upload and visualize a mesh</a></li><br/>
-    <li><a href=pdt_space>Run PDT-SPACE</a></li>
-</ul>
+<div class="txt_container">
+    <h1>The AWS Remote Server Setup is Complete.</h1> 
+    <p><b>You have successfully connected to your AWS remote server. You may now run simulations and visualize results.</b></p>
+    <p><b>Suggestions for next steps:</b></p>
+    <ul class="suggestion-list">
+        <li><a href=simulator>Run the simulator</a></li><br/>
+        <li><a href=visualization>Upload and visualize a mesh</a></li><br/>
+        <li><a href=pdt_space>Run PDT-SPACE</a></li>
+    </ul>
+</div>
 
 
 {% endblock %}

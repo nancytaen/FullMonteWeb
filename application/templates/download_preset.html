@@ -1,121 +1,131 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>FullMonte Simulator</h1>
-
-<h3>Download preset mesh</h3>
-<div class='table'>
-    <table class='no_error'>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for preset in presetObjects %}
-        <tr>
-            <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
-            <td>{{ preset.presetMesh.size|filesizeformat }}</td>
-            <td>{{ preset.layerDesc|linebreaks }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="3">No data.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-    <br/>
-    
-    <b>
-    <a href="{% url 'simulator' %}">
-        Back to simulator.
-    </a>
-    </b>
-    <br/>
-    <br/>
-</div>
-
-<br/>
-
-<button id='advanced'>Developer Options</button>
-
-<div id='advancedOption'>
-
-<h3>Upload preset material (developer only)</h3>
-    
-<form action="" method="post">
-    {% csrf_token %}
-    <br/>
-    <p><input type="submit" name="reset" value="Delete All Preset Meshes" onclick="return confirm('Are you sure?');"></p>
-</form>
-
-<h3>Upload preset mesh</h3>
-<form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
-    
-    <div class='table'>
-        <table class='no_error'>
-            {% csrf_token %}
-            <tr>
-                <th>{{ form.presetMesh.label_tag }}</th>
-                <td>
-                    {{ form.presetMesh }}
-                </td>
-            </tr>
-            <tr>
-                <th>{{ form.layerDesc.label_tag }}</th>
-                <td>
-                    {{ form.layerDesc }}
-                </td>
-            </tr>
-        </table>
+<div class="txt_container">
+    <h1>FullMonte Simulator</h1>
+    <div class="center_container">
+        <h3>Download preset mesh</h3>
     </div>
-    
-    <p><br/><input type="submit" value="Submit"></p>
-        
-</form>
+    <div class="row justify-content-center ">
+        <div class="col-auto">
+            <div class='table'>
+                <table class='no_error'>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Size</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for preset in presetObjects %}
+                    <tr>
+                        <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
+                        <td>{{ preset.presetMesh.size|filesizeformat }}</td>
+                        <td>{{ preset.layerDesc|linebreaks }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3">No data.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+                <br/>
+                
+                <b>
+                <a href="{% url 'simulator' %}">
+                    Back to simulator.
+                </a>
+                </b>
+                <br/>
+                <br/>
+            </div>
+        </div>
+    </div>
 
-</div>
+    <br/>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-<script>
-    var _validFileExtensions = [".vtk"];
-    function Validate(oForm) {
-        var arrInputs = oForm.getElementsByTagName("input");
-        for (var i = 0; i < arrInputs.length; i++) {
-            var oInput = arrInputs[i];
-            if (oInput.type == "file") {
-                var sFileName = oInput.value;
-                if (sFileName.length > 0) {
-                    var blnValid = false;
-                    for (var j = 0; j < _validFileExtensions.length; j++) {
-                        var sCurExtension = _validFileExtensions[j];
-                        if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
-                            blnValid = true;
-                            break;
-                        }
-                    }
+    <div class="center_container">
+        <button id='advanced'>Developer Options</button>
+    </div>
+
+    <div id='advancedOption'>
+        <div class="center_container">
+            <h3>Upload preset material (developer only)</h3>
+            <form action="" method="post">
+                {% csrf_token %}
+                <br/>
+                <p><input type="submit" name="reset" value="Delete All Preset Meshes" onclick="return confirm('Are you sure?');"></p>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-center ">
+            <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+                <h3>Upload preset mesh</h3>
+                <div class='table'>
+                    <table class='no_error'>
+                        {% csrf_token %}
+                        <tr>
+                            <th>{{ form.presetMesh.label_tag }}</th>
+                            <td>
+                                {{ form.presetMesh }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>{{ form.layerDesc.label_tag }}</th>
+                            <td>
+                                {{ form.layerDesc }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p><br/><input type="submit" value="Submit"></p>
                     
-                    if (!blnValid) {
-                        alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
-                        return false;
+            </form>
+        </div>
+
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script>
+        var _validFileExtensions = [".vtk"];
+        function Validate(oForm) {
+            var arrInputs = oForm.getElementsByTagName("input");
+            for (var i = 0; i < arrInputs.length; i++) {
+                var oInput = arrInputs[i];
+                if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var blnValid = false;
+                        for (var j = 0; j < _validFileExtensions.length; j++) {
+                            var sCurExtension = _validFileExtensions[j];
+                            if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                                blnValid = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!blnValid) {
+                            alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
+                            return false;
+                        }
                     }
                 }
             }
+            
+            return true;
         }
-        
-        return true;
-    }
-</script>
+    </script>
 
-<script>
-    $(document).ready(function(){
-                      $("#advanced").click(function(){
-                                           $("#advancedOption").toggle();
-                                           });
-                      });
-</script>
+    <script>
+        $(document).ready(function(){
+                        $("#advanced").click(function(){
+                                            $("#advancedOption").toggle();
+                                            });
+                        });
+    </script>
+</div>
 
 {% endblock %}

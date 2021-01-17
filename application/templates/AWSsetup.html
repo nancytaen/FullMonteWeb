@@ -1,18 +1,21 @@
 {% extends 'base_generic.html' %}
 {% block content %}
+
 <head>
 <meta http-equiv="refresh" content="5"/>
-<h1>Your AWS computing node is being set up</h1> 
-<p>It appears that your AWS computing node does not contain the required softwares to perform the simulation.</p>
-<p>Click refresh to update status or auto-fresh every 5 seconds.</p>
-<p>You will be automatically redirected to simulation when the setup is finished.</p>
-<p>Status: running {{time}}</p>
-<label for="file">AWS Setup Progress: <b>{{progress}}%<b> </label>
-<progress id="file" value="{{progress}}" max="100"> 32% </progress>
+<div class="txt_container" style="text-align: center;">
+    <h1>Your AWS computing node is being set up</h1> 
+    <p>It appears that your AWS computing node does not contain the required softwares to perform the simulation.</p>
+    <p>Click refresh to update status or auto-fresh every 5 seconds.</p>
+    <p>You will be automatically redirected to simulation when the setup is finished.</p>
+    <p>Status: running {{time}}</p>
+    <label for="file">AWS Setup Progress: <b>{{progress}}%<b> </label>
+    <progress id="file" value="{{progress}}" max="100"> 32% </progress>
 
 
-<form action="" method="get">
-    <input type="submit" value="Refresh" />
-</form>
+    <form action="" method="get">
+        <input type="submit" value="Refresh" />
+    </form>
+</div>
 
 {% endblock %}
