@@ -1,0 +1,64 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="txt_container" style="text-align: center;">
+    <h1>PDT-SPACE</h1> 
+    <p><b>Please enter parameters for PDT-SPACE run.</b></p>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post">
+            <b><p>Input parameters for PDT-SPACE</p></b>
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.total_energy.label_tag }}</th>
+                        <td>
+                            {{ form.total_energy.errors }}
+                            {{ form.total_energy }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.num_packets.label_tag }}</th>
+                        <td>
+                            {{ form.num_packets.errors }}
+                            {{ form.num_packets }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.opt.label_tag }}</th>
+                        <td>
+                            {{ form.opt.errors }}
+                            {{ form.opt }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.mesh.label_tag }}</th>
+                        <td>
+                            {{ form.mesh.errors }}
+                            {{ form.mesh }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.wave_length.label_tag }}</th>
+                        <td>
+                            {{ form.wave_length.errors }}
+                            {{ form.wave_length }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.tumor_weight.label_tag }}</th>
+                        <td>
+                            {{ form.tumor_weight.errors }}
+                            {{ form.tumor_weight }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <p><br/><input type="submit" value="Next"></p>
+        </form>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+{% endblock %}

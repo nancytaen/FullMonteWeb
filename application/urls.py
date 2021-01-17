@@ -67,6 +67,27 @@ urlpatterns = [
     path('simulation_history', views.simulation_history, name='simulation_history'),
     url(r'download/(?P<filename>[-\w_\\-\\.]+)$', views.fileDownloadView.as_view(), name='file_download'),
 
+    ####################### PDT-SPACE #######################
+    path('pdt_space', views.pdt_space, name='pdt_space'),
+    
+    # /application/pdt_spcae_wait
+    path('pdt_spcae_wait', views.pdt_spcae_wait, name='pdt_spcae_wait'),
+
+    # /application/pdt_space_license
+    path('pdt_space_license', views.pdt_space_license, name='pdt_space_license'),
+
+    # /application/pdt_space_material
+    path('pdt_space_material', views.pdt_space_material, name='pdt_space_material'),
+
+    # /application/pdt_space_lightsource
+    path('pdt_space_lightsource', views.pdt_space_lightsource, name='pdt_space_lightsource'),
+
+    # /application/pdt_space_running
+    path('pdt_space_running', views.pdt_space_running, name='pdt_space_running'),
+
+    # /application/pdt_space_finish
+    path('pdt_space_finish', views.pdt_space_finish, name='pdt_space_finish'),
+
     ####################### presets #######################
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),
@@ -99,7 +120,6 @@ urlpatterns = [
     # /application/about
     path('about', views.about, name='about'),
 
-    # /application/download_output
     path('download_output', views.downloadOutput, name='download_output'),
 
     # /application/download_preset

@@ -1,0 +1,26 @@
+RUN_TESTS = false
+
+TOTAL_ENERGY = 4e11
+
+NUM_PACKETS = 1e6
+
+WAVELENGTH = 630
+
+DATA_DIR = /usr/local/pdt-space/data/Colin27_tagged_tumor_4
+
+DATA_NAME = Colin27_tagged_tumor_4
+
+READ_VTK = false
+
+source_type = point
+
+tumor_weight = 15000000
+
+PLACEMENT_TYPE = fixed
+
+TAILORED = false
+
+OPTICAL_FILE = /usr/local/pdt-space/data/630nm.opt
+
+INIT_PLACEMENT_FILE = /sims/custom_source1_7jaGlMA.csv
+

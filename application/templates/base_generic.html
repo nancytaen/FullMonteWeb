@@ -106,6 +106,12 @@
                         {% else %}
                             <li><a class="btn btn-primary btn-block" href="{% url 'simulation_history' %}">History</a></li><br/>
                         {% endif %}
+                        <!-- PDT-SPACE button -->
+                        {% if request.path == '/application/pdt_space' or request.path == '/application/pdt_spcae_wait' or request.path == '/application/pdt_space_license' or request.path == '/application/pdt_space_material' or request.path == '/application/pdt_space_lightsource' or request.path == '/application/pdt_space_running' or request.path == '/application/pdt_space_finish' %}
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'pdt_space' %}">PDT-SPACE</a></li><br/>
+                        {% else %}
+                            <li><a class="btn btn-primary btn-block" href="{% url 'pdt_space' %}">PDT-SPACE</a></li><br/>
+                        {% endif %}
                     </ul>
                     {% endblock %}
                 </div>

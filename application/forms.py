@@ -48,6 +48,40 @@ class materialForm(forms.ModelForm):
         model = Material
         fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
 
+class pdtForm(forms.Form):
+    opt = forms.ChoiceField(label="Optical File")
+    mesh = forms.ChoiceField(label="Mesh File")
+    total_energy = forms.CharField(label='Total Energy', required = True, max_length=255)
+    num_packets = forms.CharField(label='Num Packets', required = True, max_length=255)
+    wave_length = forms.CharField(label='Wave Length', required = True, max_length=255)
+    tumor_weight = forms.CharField(label='Tumor Weight', required = True, max_length=255)
+    
+    # light_placement_file = forms.FileField(label='light_placement_file')
+
+    def __init__(self, opt_list=None, mesh_list=None, *args, **kwargs):
+        super(pdtForm, self).__init__(*args, **kwargs)
+        choice_opt = [(opt_name, opt_name) for opt_name in opt_list]
+        if opt_list:
+            self.fields['opt'].choices = choice_opt
+        choice_mesh = [(mesh_name, mesh_name) for mesh_name in mesh_list]
+        if mesh_list:
+            self.fields['mesh'].choices = choice_mesh
+        
+class pdtPlaceFile(forms.Form):
+    placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed','fixed'),
+                                                                        ('virtual', 'virtual'),))
+    source_type = forms.ChoiceField(label='Source Type', choices=(('point','point'),
+                                                                        ('line', 'line'),))
+    light_placement_file = forms.FileField(
+        label='Placement File'
+    )
+
+class mosekLicense(forms.Form):
+    mosek_license = forms.FileField(
+        label='Mosek license'
+    )
+        
+
 class lightSource(forms.Form):
     sourceType = forms.ChoiceField(label='Type', choices=(('Point','Point'),
                                                           ('PencilBeam','PencilBeam'),
