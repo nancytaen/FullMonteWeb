@@ -1,0 +1,23 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<head>
+<h1>PDT-SPACE</h1> 
+<p>Please upload Mosek license.</p>
+<p><a href="https://www.mosek.com/products/academic-licenses/">How to acquire a Mosek license</a></p>
+<form action="" method="post" enctype="multipart/form-data">
+    <div class='table'>
+        <table class='no_error'>
+            {% csrf_token %}
+            <tr>
+                <th>{{ form.mosek_license.label_tag }}</th>
+                <td>
+                    {{ form.mosek_license.errors }}
+                    {{ form.mosek_license }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <p><input type="submit" value="Upload" /></p>
+</form>
+{% endblock %}

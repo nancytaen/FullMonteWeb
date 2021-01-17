@@ -802,7 +802,7 @@ def run_aws_setup(request):
     sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
     sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
     sftp.put(source_pdt_space, 'docker_pdt/pdt_space_setup.sh')
-    sftp.put(source_license, 'docker_pdt/mosek.lic')
+    # sftp.put(source_license, 'docker_pdt/mosek.lic')
     sftp.chmod('docker_sims/setup_aws.sh', 700)
     sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
     sftp.chmod('docker_sims/ParaView_setup.sh', 700)
@@ -1173,7 +1173,7 @@ def pdt_spcae_wait(request):
         # client.close()
         print("progress done")
         sys.stdout.flush()
-        return HttpResponseRedirect('/application/pdt_space_material')
+        return HttpResponseRedirect('/application/pdt_space_license')
 
 
 def search_pdt_space(request):
@@ -1248,6 +1248,54 @@ def search_pdt_space(request):
 
 
 
+def pdt_space_license(request):
+    if request.method == 'POST':
+        form = mosekLicense(request.POST, request.FILES)
+        if form.is_valid():
+            print("valid")
+            # conn = create_connection()
+            # conn.ensure_connection()
+            # _license = mosekLicense()
+            # _license.user = request.user
+            # _license.mosek_license = request.FILES['mosek_license']
+            # _license.save()
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            text_obj = request.session['text_obj']
+            private_key_file = io.StringIO(text_obj)
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            sftp = client.open_sftp()
+            sftp.putfo(request.FILES['mosek_license'], 'docker_pdt/mosek.lic')
+            sftp.close()
+            client.close()
+
+
+
+        else:
+            print("not valid")
+        return HttpResponseRedirect('/application/pdt_space_material') 
+    else:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        sftp = client.open_sftp()
+        try:
+            sftp.stat('docker_pdt/mosek.lic')
+        except IOError:
+            form = mosekLicense()
+            context = {
+                'form': form,
+            }
+            sftp.close()
+            client.close()
+            return render(request, "pdt_space_license.html", context)
+        sftp.close()
+        client.close()
+        return HttpResponseRedirect('/application/pdt_space_material') 
 
 
 def pdt_space_material(request):
@@ -1322,8 +1370,8 @@ def pdt_space_material(request):
             print("not valid")
             print(form.errors)
         sys.stdout.flush()
-        # return render(request, "pdt_lightsource.html")
-        return HttpResponseRedirect('/application/pdt_lightsource')
+        # return render(request, "pdt_space_lightsource.html")
+        return HttpResponseRedirect('/application/pdt_space_lightsource')
     else:
         
         form = pdtForm(opt_list=_opt_list, mesh_list=_mesh_list)
@@ -1333,8 +1381,8 @@ def pdt_space_material(request):
     return render(request, "pdt_space_material.html", context)
 
 
-def pdt_lightsource(request):
-    print("in pdt_lightsource")
+def pdt_space_lightsource(request):
+    print("in pdt_space_lightsource")
 
     if request.method == 'POST':
         form = pdtPlaceFile(request.POST, request.FILES)
@@ -1427,7 +1475,7 @@ def pdt_lightsource(request):
         }
 
 
-    return render(request, "pdt_lightsource.html", context)
+    return render(request, "pdt_space_lightsource.html", context)
 
 def pdt_space_running(request):
     client = paramiko.SSHClient()

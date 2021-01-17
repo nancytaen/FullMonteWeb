@@ -79,9 +79,11 @@ urlpatterns = [
 
     path('pdt_spcae_wait', views.pdt_spcae_wait, name='pdt_spcae_wait'),
 
+    path('pdt_space_license', views.pdt_space_license, name='pdt_space_license'),
+
     path('pdt_space_material', views.pdt_space_material, name='pdt_space_material'),
 
-    path('pdt_lightsource', views.pdt_lightsource, name='pdt_lightsource'),
+    path('pdt_space_lightsource', views.pdt_space_lightsource, name='pdt_space_lightsource'),
 
     path('pdt_space_running', views.pdt_space_running, name='pdt_space_running'),
 

@@ -76,6 +76,12 @@ class pdtPlaceFile(forms.Form):
         label='light_placement_file',
         help_text='max. 42 megabytes'
     )
+
+class mosekLicense(forms.Form):
+    mosek_license = forms.FileField(
+        label='Mosek license',
+        help_text='max. 42 megabytes'
+    )
         
 
 class lightSource(forms.Form):
