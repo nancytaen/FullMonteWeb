@@ -109,14 +109,9 @@ def fmSimulator(request):
         # check whether it's valid:
         if form.is_valid():
             # process cleaned data from formsets
-            #print(form.cleaned_data)
-
             obj = form.save(commit = False)
-            obj.user = request.user;
+            obj.user = request.user
             obj.save()
-
-            # proc = Process(target=obj.save())
-            # proc.start()
 
 
             request.session['kernelType'] = form.cleaned_data['kernelType']
@@ -327,8 +322,6 @@ def simulation_confirmation(request):
         channel.exec_command(command)
         request.session['start_time'] = str(datetime.now(timezone.utc))
         request.session['started'] = "false"
-        # time.sleep(3)   # wait tclsh start  # todo: improve this for performance
-        #                 # the method in comment below is faster but hard coded for output, may lead to unexpected behaviour
         return HttpResponseRedirect('/application/running')
     
     class Material_Class:
@@ -383,73 +376,6 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
     backend = load_backend(db['ENGINE'])
     return backend.DatabaseWrapper(db, alias)
 
-# run fullMonte on EC2 instance specified by the user
-def run_fullmonte_remotely(request, finished_event):
-    time.sleep(3)
-    conn = create_connection()
-    conn.ensure_connection()
-    #print(conn)
-    print("inside:",request)
-    mesh = tclInput.objects.filter(user = request.user).latest('id')
-
-    script_path = tclGenerator(request.session, mesh, request.user)
-    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
-
-    #mesh file
-    mesh_file = default_storage.open(mesh.meshFile.name)
-    tcl_file = default_storage.open(generated_tcl.script.name)
-    meshFileName = mesh.meshFile.name
-
-    print("DNS is", request.session['DNS'])
-    uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
-    pemfile = uploadedAWSPemFile.pemfile
-
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    print('SSH into the instance: {}'.format(request.session['DNS']))
-    
-    private_key_file = io.BytesIO()
-    for line in pemfile:
-        private_key_file.write(line)
-    private_key_file.seek(0)
-
-    byte_str = private_key_file.read()
-    text_obj = byte_str.decode('UTF-8')
-    private_key_file = io.StringIO(text_obj)
-    
-    privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    #request.session['text_obj'] = text_obj
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
-    ftp = client.open_sftp()
-
-    ftp.chdir('docker_sims/')
-    file=ftp.file('docker.sh', "w")
-    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
-    file.flush()
-    ftp.chmod('docker.sh', 700)
-
-    ftp.putfo(mesh_file, './'+mesh.meshFile.name)
-    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
-    ftp.close()
-
-    #command = "sudo ~/docker_sims/FullMonteSW_setup.sh > sim_run.log"
-    command = "sudo ~/docker_sims/FullMonteSW_setup.sh"
-    stdin, stdout, stderr = client.exec_command(command)
-    #print(stdout.readlines())
-    #print(stderr.readlines())
-    stdout_line = stdout.readlines()
-    stderr_line = stderr.readlines()
-    for line in stdout_line:
-        print (line)
-    for line in stderr_line:
-        print (line)
-    sys.stdout.flush()
-    client.close()
-    finished_event.set()
-    print("finished executing")
-    sys.stdout.flush()
-    conn.close()
-
 # Output mesh upload page
 def visualization_mesh_upload(request):
     if request.method == 'POST':
@@ -459,7 +385,7 @@ def visualization_mesh_upload(request):
             print(form.cleaned_data)
             # get mesh file from form
             obj = form.save(commit = False)
-            obj.user = request.user;
+            obj.user = request.user
             obj.save()
             uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
             outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
@@ -610,8 +536,6 @@ def displayVisualization(request):
     # pass message, DVH figure, and 3D visualizer link to the HTML
     context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
     return render(request, "visualization.html", context)
-
-
 
 # page for viewing and downloading files
 def downloadOutput(request):
@@ -812,11 +736,11 @@ def aws(request):
         print(request.POST.get("DNS"))
         if form.is_valid():
             info = meshFileInfo() # prepare new mesh entry
-            info.user = request.user;
+            info.user = request.user
             info.save()
             print(form.cleaned_data)
             obj = form.save(commit = False)
-            obj.user = request.user;
+            obj.user = request.user
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
             request.session['tcpPort'] = str(form.cleaned_data['TCP_port'])
@@ -1117,39 +1041,6 @@ def running(request):
         sys.stdout.flush()
         return render(request, "running.html", {'time':running_time, 'progress':progress})
 
-    # stdin, stdout, stderr = client.exec_command('ps -ef | grep tclsh |awk \'{print $2}\' | head -n1')
-    # stdout_line = stdout.readlines()
-    # pid = ''
-    # pid = stdout_line[0]
-    # # for line in stdout_line:
-    # #     print (line)
-    # #     pid = line
-    # print("pid of tclsh is " + pid)
-    # sys.stdout.flush()
-    # if not pid:
-    #     return render(request, "simulation_fail.html")
-    # # request.session['pid'] = pid
-    # stdin, stdout, stderr = client.exec_command('ps -p '+ pid)
-    # stdout_line = stdout.readlines()
-    # count =0
-    # client.close()
-    # for line in stdout_line:
-    #     print (line)
-    #     count+= 1
-    #     sys.stdout.flush()
-    
-    # if count == 1:
-    #     print("tclsh finish")
-    #     sys.stdout.flush()
-    #     return HttpResponseRedirect('/application/simulation_finish')
-    
-    # else:
-    #     time = stdout_line[1].split()[2]
-    #     print("tclsh not finished")
-    #     sys.stdout.flush()
-    #     return render(request, "running.html", {'time':time, 'progress':progress})
-
-
 # page for failed simulation
 def simulation_fail(request):
     return render(request, "simulation_fail.html")
@@ -1229,13 +1120,6 @@ def populate_simulation_history(request):
     
     ftp.close()
     client.close()
-
-    '''
-    history.tcl_script_path = tcl_name
-    history.mesh_file_path = mesh_vtk_name
-    history.output_vtk_path = output_vtk_name
-    history.output_txt_path = output_txt_name
-    '''
     # TODO: populate dvh path
     # history.output_dvh_path = ''
     history.save()
