@@ -120,8 +120,6 @@ urlpatterns = [
     # /application/about
     path('about', views.about, name='about'),
 
-    path('download_output', views.downloadOutput, name='download_output'),
-
     # /application/download_preset
     path('download_preset', views.downloadPreset, name='download_preset'),
 
