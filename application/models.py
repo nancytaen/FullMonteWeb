@@ -69,15 +69,6 @@ class tclScript(models.Model):
                              on_delete=models.CASCADE
                              )
 
-class fullmonteOutput(models.Model):
-    outputVtk = models.FileField(storage=PublicMediaStorage())
-    outputFluence = models.FileField(storage=PublicMediaStorage())
-    user = models.ForeignKey(user_model,
-                             default = 0,
-                             null = True,
-                             on_delete=models.CASCADE
-                             )
-
 class preset(models.Model):
     presetMesh = models.FileField(storage=PublicMediaStorage())
     layerDesc = models.TextField(blank=True, null=True)
