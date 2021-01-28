@@ -139,8 +139,8 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
 
 # plot using matplotlib and convert to html string
 def plot_DVH(data, noBins, materials):
-    FIG_WIDTH = 10
-    FIG_HEIGHT = 7
+    FIG_WIDTH = 11
+    FIG_HEIGHT = 6
     LINE_WIDTH = 4
 
     # Plot graph
@@ -185,9 +185,9 @@ def plot_DVH(data, noBins, materials):
                                     voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip)
 
-    # ax.legend(legendList, loc='upper right', title='Region ID')
+    # Adjest chart margins
     fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
-    plt.subplots_adjust(right=0.77) # avoid chart elements going off screen
+    plt.subplots_adjust(left=0.07, bottom=0.1, right=0.77, top=0.99) # avoid legend going off screen
 
     return mpld3.fig_to_html(fig)
 
