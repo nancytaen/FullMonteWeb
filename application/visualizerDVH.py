@@ -1,4 +1,5 @@
 import mpld3
+from mpld3 import plugins
 import numpy as np
 import sys, os, paramiko
 import io
@@ -10,6 +11,16 @@ from math import floor
 from matplotlib import pyplot as plt
 from django.db import models, connections
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
+
+# Define CSS for custom labels
+css = """
+table, td
+{
+  border: 1px solid black;
+  text-align: right;
+  background-color: #cccccc;
+}
+"""
 
 # read vtk file
 def import_data(filePath):
@@ -127,31 +138,56 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
     return cumulativeDVH
 
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins):
-    FIG_WIDTH = 10
-    FIG_HEIGHT = 7
-    LINE_WIDTH = 3
+def plot_DVH(data, noBins, materials):
+    FIG_WIDTH = 11
+    FIG_HEIGHT = 6
+    LINE_WIDTH = 4
 
+    # Plot graph
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
     fig.suptitle('Figure 1', fontsize=50)
     ax = fig.add_subplot(111)
-    fig.subplots_adjust(top=0.80)
-    ax.set_title('Cumulative Dose-Volume Histogram',fontsize= 30) # title of plot
     ax.set_xlabel("Relative Dose (% of max fluence)",fontsize = 20) #xlabel
     ax.set_ylabel("Relative Volume (% of region volume)", fontsize = 20)#ylabel
     ax.grid(True)
 
-    legendList = []
+    legendList = [] # legend items (region ID and material) for the interactive legend
+    lines = []      # matplotlib object; a line for each region for the interactive legend
+    labelsList = [] # x,y labels for the interactive tooltip
 
     xVals = (np.array(range(noBins)) / noBins * 100)
 
     for key in data:
         yVals = np.array(data[key]) * 100
-        ax.plot(xVals[1:-1],yVals[1:-1],'-o',linewidth=LINE_WIDTH)
-        legendList.append(str(key))
+        line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
+        lines.append(line)
+        if(len(materials) > 0):
+            legendList.append(str(key) + " (" + materials[key] + ")")
+        else:
+            legendList.append(str(key) + " (No material info)")
+        labels = []
+        for i in range(1, len(xVals)):
+            label = "<table><td>Dose: "+"{:.2f}".format(xVals[i])+"%, Volume: "+"{:.2f}".format(yVals[i])+"%</td></table>"
+            labels.append(label)
+        labelsList.append(labels)
 
-    ax.legend(legendList, loc='upper right', title='Region ID')
+    # Interactive legend
+    interactive_legend = plugins.InteractiveLegendPlugin(lines,
+                                                     legendList,
+                                                     alpha_unsel=0,
+                                                     alpha_over=2, 
+                                                     start_visible=True)
+    plugins.connect(fig, interactive_legend)
+
+    # Interactive tooltip
+    for line, labels in zip(lines, labelsList):
+        tooltip = plugins.PointHTMLTooltip(line[0], labels=labels,
+                                    voffset=10, hoffset=10, css=css)
+        plugins.connect(fig, tooltip)
+
+    # Adjust chart margins
     fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
+    plt.subplots_adjust(left=0.07, bottom=0.1, right=0.77, top=0.99) # avoid legend going off screen
 
     return mpld3.fig_to_html(fig)
 
@@ -174,7 +210,7 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
     return backend.DatabaseWrapper(db, alias)
 
 
-def dose_volume_histogram(user, dns, tcpPort, text_obj):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     info = meshFileInfo.objects.filter(user = user).latest('id')
     outputMeshFileName = info.fileName
     remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
@@ -246,7 +282,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj):
     # save the figure's html string to session
     conn = create_connection()
     conn.ensure_connection()
-    info.dvhFig = plot_DVH(cumulativeDVH,noBins)
+    info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials)
     info.save()
     running_process = processRunning.objects.filter(user = user).latest('id')
     running_process.running = False
