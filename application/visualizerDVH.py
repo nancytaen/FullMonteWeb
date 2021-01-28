@@ -185,7 +185,7 @@ def plot_DVH(data, noBins, materials):
                                     voffset=10, hoffset=10, css=css)
         plugins.connect(fig, tooltip)
 
-    # Adjest chart margins
+    # Adjust chart margins
     fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
     plt.subplots_adjust(left=0.07, bottom=0.1, right=0.77, top=0.99) # avoid legend going off screen
 
