@@ -291,7 +291,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
         print("Exporting DVH data to CSV")
         with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
             for region in export_data:
-                title = ['', '', 'Region ' + str(region)]
+                title = ['', '', 'Region ' + str(region) + ' (' + materials[region] + ')']
                 df = pd.DataFrame(title).T
                 df.columns = ['', '', '']
                 f.write(df.to_csv(index=False))
@@ -299,7 +299,6 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
                 df = pd.DataFrame(export_data[region]).T
                 df.columns = ['Fluence Dose', 'Region Volume', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
                 f.write(df.to_csv(index=False, float_format='%.3f'))
-                print(export_data[region])
         print("DVH data export complete")
     # update process status
     running_process = processRunning.objects.filter(user = user).latest('id')
