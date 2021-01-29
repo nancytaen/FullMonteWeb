@@ -29,7 +29,7 @@
         {% for item in history %}
         <tr> 
             <td>{{ item.simulation_type }}</a></td>
-            <td><a href="download/{{item.mesh_file_path.name}}">{{ item.mesh_file_path.name }}</a></td>
+            <td><a href="download/{{item.mesh_file_path.name}}&output_name={{item.originalMeshFileName}}">{{ item.originalMeshFileName }}</a></td>
             <td><a href="download/{{item.tcl_script_path.name}}">{{ item.tcl_script_path.name }}</a></td>
             <td><a href="download/{{item.output_vtk_path.name}}">{{ item.output_vtk_path.name }}</a></td>
             <td><a href="download/{{item.output_txt_path.name}}">{{ item.output_txt_path.name }}</a></td>
