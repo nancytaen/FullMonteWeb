@@ -1128,12 +1128,13 @@ def populate_simulation_history(request):
     conn.close()
 
 def simulation_history(request):
-    history = simulationHistory.objects.filter(user=request.user)
-    if history.count() > 0:
-        return render(request, "simulation_history.html", {'history':history})
+    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time')
+    historySize = history.count()
+    if historySize > 0:
+        return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
     else:
         return render(request, "simulation_history_empty.html")
-    return render(request, "simulation_history.html", {'history':history})
+    return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
 
 def pdt_space(request):
     print("in pdt_space")
