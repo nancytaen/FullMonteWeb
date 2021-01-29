@@ -132,52 +132,26 @@ def plot_DVH(data, noBins):
     FIG_HEIGHT = 7
     LINE_WIDTH = 3
 
-    print(1)
-    sys.stdout.flush()
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
-    print(2)
-    sys.stdout.flush()
     fig.suptitle('Figure 1', fontsize=50)
-    print(3)
-    sys.stdout.flush()
     ax = fig.add_subplot(111)
-    print(4)
-    sys.stdout.flush()
     fig.subplots_adjust(top=0.80)
-    print(5)
-    sys.stdout.flush()
     ax.set_title('Cumulative Dose-Volume Histogram',fontsize= 30) # title of plot
-    print(6)
-    sys.stdout.flush()
     ax.set_xlabel("Relative Dose (% of max fluence)",fontsize = 20) #xlabel
-    print(7)
-    sys.stdout.flush()
     ax.set_ylabel("Relative Volume (% of region volume)", fontsize = 20)#ylabel
-    print(8)
-    sys.stdout.flush()
     ax.grid(True)
-    print(9)
-    sys.stdout.flush()
 
     legendList = []
 
     xVals = (np.array(range(noBins)) / noBins * 100)
-    print(10)
-    sys.stdout.flush()
 
     for key in data:
         yVals = np.array(data[key]) * 100
         ax.plot(xVals[1:-1],yVals[1:-1],'-o',linewidth=LINE_WIDTH)
         legendList.append(str(key))
 
-    print(11)
-    sys.stdout.flush()
     ax.legend(legendList, loc='upper right', title='Region ID')
-    print(12)
-    sys.stdout.flush()
     fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
-    print(13)
-    sys.stdout.flush()
 
     return mpld3.fig_to_html(fig)
 
@@ -272,23 +246,12 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj):
     doseData = populate_dictionary(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    print("finished here")
-    sys.stdout.flush()
     # save the figure's html string to session
-    string = plot_DVH(cumulativeDVH,noBins)
-    print(string)
-    print("finished here2")
-    sys.stdout.flush()
-    info.dvhFig = string
-    print(info.id, info.dvhFig)
+    info.dvhFig = plot_DVH(cumulativeDVH,noBins)
     info.save()
-    print("finished here1")
-    sys.stdout.flush()
     running_process = processRunning.objects.filter(user = user).latest('id')
-    print(running_process.id)
     running_process.running = False
     running_process.save()
     conn.close()
     print("done generating DVH")
     sys.stdout.flush()
-

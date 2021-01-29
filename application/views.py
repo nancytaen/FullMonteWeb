@@ -1048,8 +1048,8 @@ def simulation_finish(request):
     client.close()
 
     connections.close_all()
-    # p = Process(target=populate_simulation_history, args=(request, ))
-    # p.start()
+    p = Process(target=populate_simulation_history, args=(request, ))
+    p.start()
     # populate_simulation_history(request)
 
     return render(request, "simulation_finish.html", {'output':html_string})
