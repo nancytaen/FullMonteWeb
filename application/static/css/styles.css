@@ -274,3 +274,13 @@ footer .copyright span {
     width: 1000px;
     height: auto;
 }
+
+.option-select {
+    display: inline;
+}
+  
+.option-select:before {
+    content: 'Select an uploaded mesh file from databse: ';
+    color: black;
+    font-weight: bold;
+}

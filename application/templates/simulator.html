@@ -13,12 +13,21 @@
                     Click here to download a preset mesh.
                 </a></b>
             </d>
-
+            <br></br>
             <div class='table'>
-                <table class='no_error'>
+                <div class="option-select">
+                <!-- <p><b>Select an uploaded mesh file from databse:</b></p> -->
+                <select name="selected_existing_meshes" id='select_existing'>
+                    <option value="" selected>No mesh file chosen</option>
+                    {% for entry in uploaded_meshes %}
+                        <option value="{{ entry.id }}">{{ entry.originalMeshFileName }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+                <table class='no_error' id='mesh_upload'>
                     {% csrf_token %}
                     <tr>
-                        <th>{{ form.meshFile.label_tag }}</th>
+                        <th>Or upload a new {{ form.meshFile.label_tag }}</th>
                         <td>
                             {{ form.meshFile.errors }}
                             {{ form.meshFile }}
@@ -27,7 +36,7 @@
                 </table>
             </div>
 
-            <button id='advanced'>Advanced Options</button>
+            <button id='advanced' type='button'>Advanced Options</button>
             
             <div id='advancedOption' class='table'>
                 {% csrf_token %}
@@ -54,6 +63,10 @@
 <script>
     var _validFileExtensions = [".vtk"];
     function Validate(oForm) {
+        if(document.getElementById("id_meshFile").files.length == 0 && $("#select_existing")[0].selectedIndex == 0){
+            alert("Please select one mesh file from your uploaded mesh, or upload a new mesh!");
+            return false;
+        }
         var arrInputs = oForm.getElementsByTagName("input");
         for (var i = 0; i < arrInputs.length; i++) {
             var oInput = arrInputs[i];
@@ -90,7 +103,15 @@
                     $("#advanced").click(function(){
                                         $("#advancedOption").toggle();
                                         });
+                    $("#mesh_upload").click(function(){
+                        $("#select_existing")[0].selectedIndex = 0;
+                                        });
+                    $("#select_existing").change(function(){
+                        document.getElementById("id_meshFile").value=null;
+                                        });
                     });
+                    
+                    
 </script>
 
 

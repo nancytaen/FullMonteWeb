@@ -65,7 +65,7 @@ urlpatterns = [
     ####################### history #######################
     # /application/simulation_history
     path('simulation_history', views.simulation_history, name='simulation_history'),
-    url(r'download/(?P<filename>[-\w_\\-\\.]+)$', views.fileDownloadView.as_view(), name='file_download'),
+    url(r'download/(?P<filename>[-\w_\\-\\.]+)(&output_name=(?P<originalfilename>[-\w_\\-\\.]+))?$', views.fileDownloadView.as_view(), name='file_download'),
 
     ####################### PDT-SPACE #######################
     path('pdt_space', views.pdt_space, name='pdt_space'),

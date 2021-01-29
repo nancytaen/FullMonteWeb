@@ -3,10 +3,18 @@ import os
 from datetime import datetime
 from django.conf import settings
 from application.storage_backends import *
+from django.core.files.storage import default_storage
 from .models import *
 from django.core.files.base import ContentFile
 
 def tclGenerator(session, mesh, current_user):
+    script_name = mesh.originalMeshFileName[:-4] + '.tcl'
+    new_script = tclScript()
+    _temp = ""
+    new_script.user = current_user
+    new_script.script.save(script_name, ContentFile(_temp))
+    script_name = new_script.script.name
+
     #initialize session inputs
     indent = '     '
     kernelType = session['kernelType']
@@ -145,7 +153,7 @@ def tclGenerator(session, mesh, current_user):
     #initialize path for results
     #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
     #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
-    name = mesh.meshFile.name[:-4]
+    name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     
@@ -169,12 +177,11 @@ def tclGenerator(session, mesh, current_user):
     for line in lines:
         _temp += line.encode()
 
-    script_name = name + '.tcl'
-    new_script = tclScript()
     new_script.user = current_user
-    new_script.script.save(script_name, ContentFile(_temp))
+    with default_storage.open(script_name, 'wb') as tcl_script:
+        tcl_script.write(_temp)
     new_script.save()
 
     f.close()
     
-    return script_name
+    return new_script.script.name
