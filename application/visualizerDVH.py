@@ -3,6 +3,7 @@ from mpld3 import plugins
 import numpy as np
 import sys, os, paramiko
 import io
+import pandas as pd
 from .models import *
 from multiprocessing import Process
 from vtk import vtkUnstructuredGridReader, vtkUnstructuredGrid, vtkMeshQuality, vtkExtractUnstructuredGrid
@@ -22,6 +23,10 @@ table, td
 }
 """
 
+# Max Fluence
+maxFluence = 0
+regionVolume = {}
+
 # read vtk file
 def import_data(filePath):
 
@@ -35,46 +40,50 @@ def import_data(filePath):
     return output
 
 # map each region to its volumes
-def calculate_volumes(fullMonteOutputData, regionData, noCells):
+def calculate_volumes(fullMonteOutputData, regionData):
 
     volumeData = {}
+    regionVolume.clear()
+    numCells = regionData.size
 
-    for n in range(noCells):
-        key = regionData[n]
-        if (key == 0): continue
+    # get array of volumes for each region
+    for n in range(numCells):
+        region = regionData[n]
+        if (region == 0): continue # region 0 is air, ignore this
 
         else:
-            if key not in volumeData:
-                volumeData[key] = []
+            if region not in volumeData:
+                volumeData[region] = []
 
             curCell = fullMonteOutputData.GetCell(n)
             volume = vtkMeshQuality.TetVolume(curCell)
-            volumeData[key].append(volume)
+            volumeData[region].append(volume)
+
+    # compute and save total volume in each region
+    for region, volumes in volumeData.items():
+        regionVolume[region] = sum(volumes)
 
     return volumeData
 
 # map each region to its doses (fluence)
 def populate_dictionary(fluenceData, regionData):
 
-    maxFluence = fluenceData.max()
-    loopEnd = fluenceData.size
-    doseVolumeData = {}
+    doseData = {}
+    maxFluence = 0
 
-    for n in range(loopEnd):
-        val = fluenceData[n]
-        key = regionData[n]
-        if (key == 0): continue
+    # get array of doses for each region, also save the maximum fluence across all regions
+    for region, dose in zip(regionData, fluenceData):
+        if (region == 0): continue # region 0 is air, ignore this
 
         else:
-            if key not in doseVolumeData:
-                doseVolumeData[key] = []
+            if region not in doseData:
+                doseData[region] = []
 
-            doseVolumeData[key].append(val)
+            doseData[region].append(dose)
+            if(dose > maxFluence):
+                maxFluence = dose
 
-    # for key in doseVolumeData:
-    #     print(key)
-
-    return doseVolumeData
+    return doseData
 
 # compute relative dose to relative volume mapping
 # with doseData and volumeData, each region can be associated with its volume
@@ -84,59 +93,41 @@ def populate_dictionary(fluenceData, regionData):
 # Finally, compute the relative volume (fraction of volume against total volume).
 def calculate_DVH(doseData, volumeData, noBins):
 
-    maxFluence = 0
-
-    for key in doseData:
-        regionMax = max(doseData[key])
-        if regionMax > maxFluence:
-            maxFluence = regionMax
-
-    # print("Max fluence: " + str(maxFluence))
-    binSize = maxFluence / noBins
     doseVolumeData = {}
 
-    # for each region
-    for key in doseData:
-        totalVolume = 0
-        doseVolumeData[key] = [0] * noBins
-        # for each point n on the region, cumulate volume_n to the volume at dose_n
-        for n in range(len(doseData[key])):
-            # 500 (noBins) data points, so the dose on the x-axis is dose_n/max_dose * nBins
-            idx = floor(doseData[key][n] / maxFluence * (noBins-1))
-            doseVolumeData[key][idx] += volumeData[key][n]
-            totalVolume += volumeData[key][n]
-
-        # compute relative
-        for n in range (len(doseVolumeData[key])):
-            doseVolumeData[key][n] /= totalVolume
-
-    # for key in doseVolumeData:
-    #     print("Values for region " + str(key))
-    #
-    #     for val in doseVolumeData[key]:
-    #         print(val)
+    # map region volume to its corresponding dose bin for all regions
+    for region, doses in doseData.items():
+        doseVolumeData[region] = [0] * noBins
+        # for each point n on the region, cumulate volume to the total volume at dose_n
+        for n in range(len(doses)):
+            # 500 (noBins) bins, so the dose bin ID on the x-axis is dose/max_dose * noBins
+            bin_id = floor(doses[n] / maxFluence * (noBins-1))
+            doseVolumeData[region][bin_id] += volumeData[region][n]
 
     return doseVolumeData
 
-# compute relative dose to cumulative relative volume mapping
+# For each region, compute the total volume of region that is greater than or qual to each bin
 def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     cumulativeDVH = {}
 
     # for each dose interval
-    for key in doseVolumeData:
+    for region, doseVolume in doseVolumeData.items():
 
-        if key not in cumulativeDVH:
-            cumulativeDVH[key] = [0] * noBins;
+        if region not in cumulativeDVH:
+            cumulativeDVH[region] = [0] * noBins
 
-        cumulativeTotal = 0;
+        cumulativeTotal = 0
 
         for n in range(noBins-1, -1, -1):
-            cumulativeTotal += doseVolumeData[key][n]
-            cumulativeDVH[key][n] = cumulativeTotal
+            cumulativeTotal += doseVolume[n]
+            cumulativeDVH[region][n] = cumulativeTotal
 
     return cumulativeDVH
 
+# The cumulative DVH is plotted with bin doses (% maximum dose) along the horizontal
+# axis. The column height of each bin represents the %volume of structure receiving a
+# dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
 def plot_DVH(data, noBins, materials):
     FIG_WIDTH = 11
@@ -192,15 +183,6 @@ def plot_DVH(data, noBins, materials):
     return mpld3.fig_to_html(fig)
 
 
-# regionBoundaries is a 6-entry vector of floating point values
-# This defines the boundaries of the subregion in the order xmin, xmax, ymin, ymax, zmin, zmax
-# def extract_mesh_subregion(mesh,regionBoundaries):
-#     subregionAlgorithm = vtkExtractUnstructuredGrid()
-#     subregionAlgorithm.SetInputData(mesh)
-#     subregionAlgorithm.SetExtent(regionBoundaries)
-#     subregionAlgorithm.Update()
-#     return subregionAlgorithm.GetOutput()
-
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
     connections.ensure_defaults(alias)
@@ -209,7 +191,14 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
     backend = load_backend(db['ENGINE'])
     return backend.DatabaseWrapper(db, alias)
 
-
+# regionBoundaries is a 6-entry vector of floating point values
+# This defines the boundaries of the subregion in the order xmin, xmax, ymin, ymax, zmin, zmax
+# def extract_mesh_subregion(mesh,regionBoundaries):
+#     subregionAlgorithm = vtkExtractUnstructuredGrid()
+#     subregionAlgorithm.SetInputData(mesh)
+#     subregionAlgorithm.SetExtent(regionBoundaries)
+#     subregionAlgorithm.Update()
+#     return subregionAlgorithm.GetOutput()
 def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     info = meshFileInfo.objects.filter(user = user).latest('id')
     outputMeshFileName = info.fileName
@@ -272,10 +261,9 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
             return(-2)
 
 
-    noBins = 500
-    noCells = fluenceData.size
+    noBins = 500    # max fluence is divided into
 
-    volumeData = calculate_volumes(output,regionData,noCells)
+    volumeData = calculate_volumes(output,regionData)
     doseData = populate_dictionary(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
@@ -283,6 +271,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     conn = create_connection()
     conn.ensure_connection()
     info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials)
+    info.maxFluence = maxFluence
     info.save()
     running_process = processRunning.objects.filter(user = user).latest('id')
     running_process.running = False
