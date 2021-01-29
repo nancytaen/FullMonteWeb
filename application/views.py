@@ -830,7 +830,7 @@ def run_aws_setup(request):
     file.write('echo dockertest')
     file.flush()
     sftp.chmod('../docker_pdt/docker.sh', 700)
-    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"ls /usr/local/pdt-space/data\""
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"ls /usr/local/pdt-space/data\" 0"
     stdin, stdout, stderr = client.exec_command(command)
     stdout_line = stdout.readlines()
     stderr_line = stderr.readlines()
@@ -1063,6 +1063,14 @@ def simulation_history(request):
         return render(request, "simulation_history_empty.html")
     return render(request, "simulation_history.html", {'history':history})
 
+#               Current unsolved problem in PDT-SPACE
+#       1.  When running the docker image for pdt-space, sometimes the image needs to be downloaded and reinstall again.
+#           Sometimes it doesn't need to. As a result, the docker image will occupy more disk space.
+#  
+#       2.  When the the pdt-space run actually finished (the function launch_pdt_space() printed "finished"),
+#           the program is stuck in function  pdt_space_running() and the web page is keep loading when auto refreshing the page(freezed).
+#           This only happens once and is not able to reproduce.
+#       
 def pdt_space(request):
     print("in pdt_space")
     sys.stdout.flush()
@@ -1136,7 +1144,7 @@ def search_pdt_space(request):
 
     foo_list = []
     addr_list = []
-    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.opt\""
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.opt\" 0"
     stdin, stdout, stderr = client.exec_command(command)
     stdout_line = stdout.readlines()
     stderr_line = stderr.readlines()
@@ -1156,7 +1164,7 @@ def search_pdt_space(request):
     
     foo_list = []
     addr_list = []
-    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.mesh\""
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.mesh\" 0"
     stdin, stdout, stderr = client.exec_command(command)
     stdout_line = stdout.readlines()
     stderr_line = stderr.readlines()
@@ -1201,13 +1209,6 @@ def pdt_space_license(request):
     if request.method == 'POST':
         form = mosekLicense(request.POST, request.FILES)
         if form.is_valid():
-            print("valid")
-            # conn = create_connection()
-            # conn.ensure_connection()
-            # _license = mosekLicense()
-            # _license.user = request.user
-            # _license.mosek_license = request.FILES['mosek_license']
-            # _license.save()
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             text_obj = request.session['text_obj']
@@ -1218,11 +1219,8 @@ def pdt_space_license(request):
             sftp.putfo(request.FILES['mosek_license'], 'docker_pdt/mosek.lic')
             sftp.close()
             client.close()
-
-
-
         else:
-            print("not valid")
+            print("pdt_space_license not valid")
         return HttpResponseRedirect('/application/pdt_space_material') 
     else:
         client = paramiko.SSHClient()
@@ -1253,9 +1251,7 @@ def pdt_space_material(request):
 
     conn = create_connection()
     conn.ensure_connection()
-    print("1")
     pdt_info = pdtPresetData.objects.filter(user = request.user).latest('id')
-    print("2")
     opt_str = pdt_info.opt_list
     mesh_str = pdt_info.mesh_list
 
@@ -1308,18 +1304,14 @@ def pdt_space_material(request):
                 if sub.split('/')[-1] == opt_name:
                     op_file.opt_file = sub
 
-
-
             conn = create_connection()
             conn.ensure_connection()
             op_file.save()
             conn.close()
-            
         else:
-            print("not valid")
+            print(" pdt_space_material form not valid")
             print(form.errors)
         sys.stdout.flush()
-        # return render(request, "pdt_space_lightsource.html")
         return HttpResponseRedirect('/application/pdt_space_lightsource')
     else:
         
@@ -1359,7 +1351,6 @@ def pdt_space_lightsource(request):
             print(opfile.light_source_file)
             print(opfile.placement_file.name)
             sys.stdout.flush()
-
 
             #generate .op file
             dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -1407,10 +1398,42 @@ def pdt_space_lightsource(request):
             ftp.close()
             conn.close()
             f.close()
-            channel = client.get_transport().open_session()
-            command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" > pdt_run.log"
-            channel.exec_command(command)
-            time.sleep(3)
+
+            # lanuch pdt-space with a use process
+            print('before')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+            for child in children:
+                print('Child pid is {}'.format(child.pid))
+            connections.close_all()
+            p = Process(target=launch_pdt_space, args=(request, ))
+            p.start()
+            print('after')
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+            form = processRunning()
+            form.user=request.user
+            for child in children:
+                form.pid = child.pid
+                form.running = True
+                print('Child pid is {}'.format(child.pid))
+            conn = create_connection()
+            conn.ensure_connection()
+            form.save()
+            conn.close()
+            sys.stdout.flush()
+            # channel = client.get_transport().open_session()
+            # command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
+            # stdin, stdout, stderr = client.exec_command(command)
+            # client.exec_command(command)
+            # stdout_line = stdout.readlines()
+            # stderr_line = stderr.readlines()
+            # for line in stdout_line:
+            #     print (line)
+            # for line in stderr_line:
+            #     print (line)
+            # sys.stdout.flush()  
+            # time.sleep(3)
             client.close()
             return HttpResponseRedirect('/application/pdt_space_running')
         else:
@@ -1427,36 +1450,54 @@ def pdt_space_lightsource(request):
     return render(request, "pdt_space_lightsource.html", context)
 
 def pdt_space_running(request):
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    text_obj = request.session['text_obj']
-    private_key_file = io.StringIO(text_obj)
-    privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
-
-    # stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/pdt_run.log > ~/cleaned_pdt_run.log')
-    stdin, stdout, stderr = client.exec_command('tail -1 ~/pdt_run.log')
-    stdout_line = stdout.readlines()
-    status = ""
-
-    if len(stdout_line) > 0:
-        status = stdout_line[0]
-        status = "".join(status.split())
-    
-    print("status:",status)
+    # print("checking the pdt-space status")
     sys.stdout.flush()
-    client.close()
-    
-    if status == "[info]PDT-SPACErunfinished":
-        print("pdt space finish")
-        sys.stdout.flush()
-        return HttpResponseRedirect('/application/pdt_space_finish')
-    else:
-        print("pdt space not finished")
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    pid = running_process.pid
+    # print("got running process")
+    sys.stdout.flush()
+    if running_process.running:
+        print("pdt-space running")
         sys.stdout.flush()
         return render(request, "pdt_space_running.html")
 
-def pdt_space_finish(request):
+    else:
+        # client.close()
+        print("pdt-space done")
+        sys.stdout.flush()
+        return HttpResponseRedirect('/application/pdt_space_finish')
+    # client = paramiko.SSHClient()
+    # client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # text_obj = request.session['text_obj']
+    # private_key_file = io.StringIO(text_obj)
+    # privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    # client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+    # # stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/pdt_run.log > ~/cleaned_pdt_run.log')
+    # stdin, stdout, stderr = client.exec_command('tail -1 ~/eval_result.log')
+    # stdout_line = stdout.readlines()
+    # status = ""
+
+    # if len(stdout_line) > 0:
+    #     status = stdout_line[0]
+    #     status = "".join(status.split())
+    
+    # print("status:",status)
+    # sys.stdout.flush()
+    # client.close()
+    
+    # # if status == "[info]PDT-SPACErunfinished":
+    # if status == "===========================================================================":
+    #     print("pdt space finish")
+    #     sys.stdout.flush()
+    #     return HttpResponseRedirect('/application/pdt_space_finish')
+    # else:
+    #     print("pdt space not finished")
+    #     sys.stdout.flush()
+    #     return render(request, "pdt_space_running.html")
+
+def launch_pdt_space(request):
+    time.sleep(3)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
@@ -1464,8 +1505,81 @@ def pdt_space_finish(request):
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
 
-    stdin, stdout, stderr = client.exec_command('sudo cp ~/pdt_run.log ~/pdt_backup.log')
-    stdin, stdout, stderr = client.exec_command('sudo rm -f ~/pdt_run.log')
-    client.close()
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    for line in stdout_line:
+        print (line)
+    for line in stderr_line:
+        print (line)
+    sys.stdout.flush() 
 
-    return render(request, "pdt_space_finish.html")
+    conn = create_connection()
+    conn.ensure_connection()
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    running_process.running = False
+    running_process.save()
+    conn.close()
+    client.close()
+    print('finished')
+    sys.stdout.flush()
+
+def pdt_space_finish(request):
+    # print("in fihish")
+    sys.stdout.flush()
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    
+    # pdt-space output in ~/eval_result.log
+    ftp = client.open_sftp()
+    file=ftp.file('eval_result.log', "r")
+    output = file.read().decode()
+    output_lines = output.splitlines()
+    # get num_material and num_source by reading the log file
+    # num_material: number of materials in input mesh
+    # num_source: number of light source placement
+    num_material = 0
+    num_source = 0
+    index = 0
+    for line in output_lines:
+        if output_lines[index].split()[0] == "Directory":
+            num_material = output_lines[index + 1].split()[-1]
+            break
+        index += 1
+    print(num_material)
+
+    index = -1
+    for line in output_lines:
+        if len(output_lines[index].split()) == 5:
+            if output_lines[index].split()[0] == "Number" and output_lines[index].split()[3] == "sources:":
+                num_source = output_lines[index].split()[-1]
+                break
+        index -= 1
+    print(num_source)    
+
+    html_fluence_dist=''
+    html_pow_alloc=''
+    num_material = int(num_material)
+    num_source = int(num_source)
+
+    output_info = output_lines[-7:-5]
+    time_simu = output_info[0].split()[8]
+    time_opt = output_info[1].split()[3]
+
+    output_info = output_lines[-12 - num_source :-12]
+    for e in output_info:
+        html_pow_alloc += e + '<br />'
+
+    output_info = output_lines[-12 - num_source - 2 - num_material :-12 - num_source - 2]
+    for e in output_info:
+        html_fluence_dist += e + '<br />'
+
+    sys.stdout.flush()
+    ftp.close()
+    client.close()
+    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt})
