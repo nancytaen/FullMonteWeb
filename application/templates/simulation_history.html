@@ -24,6 +24,7 @@
                 <th>TCL script</th>
                 <th>Output VTK file</th>
                 <th>Output TXT file</th>
+                <th>Output DVH file</th>
                 <th>Time Finished</th>
             </tr>
         {% for item in history %}
@@ -33,6 +34,7 @@
             <td><a href="download/{{item.tcl_script_path.name}}">{{ item.tcl_script_path.name }}</a></td>
             <td><a href="download/{{item.output_vtk_path.name}}">{{ item.output_vtk_path.name }}</a></td>
             <td><a href="download/{{item.output_txt_path.name}}">{{ item.output_txt_path.name }}</a></td>
+            <td><a href="download/{{item.output_dvh_path.name}}">{{ item.output_dvh_path.name }}</a></td>
             <td>{{ item.simulation_time }}</td>
         </tr>
         {% endfor %}

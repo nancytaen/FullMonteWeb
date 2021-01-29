@@ -561,6 +561,7 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
+    maxDose = info.maxFluence
 
     # generate ParaView Visualization URL
     dns = request.session['DNS']
@@ -574,7 +575,7 @@ def displayVisualization(request):
 
     # save history for dvh data if output mesh comes from simulation
     if (len(request.session['region_name']) > 0):
-        history = simulationHistory.objects.filter(user=request.user)
+        history = simulationHistory.objects.filter(user=request.user).latest('id')
         conn = create_connection()
         conn.ensure_connection()
 
@@ -602,7 +603,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type

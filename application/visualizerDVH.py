@@ -98,7 +98,7 @@ def calculate_DVH(doseData, volumeData, noBins):
     # map region volume to its corresponding dose bin for all regions
     for region, doses in doseData.items():
         doseVolumeData[region] = [0] * noBins
-        export_data[region] = [[0] * noBins] * 5
+        export_data[region] = np.zeros((5, noBins))
         # for each point n on the region, cumulate volume to the total volume at dose_n
         for n in range(len(doses)):
             # 500 (noBins) bins, so the dose bin ID on the x-axis is dose/max_dose * noBins
@@ -140,6 +140,9 @@ def plot_DVH(data, noBins, materials):
     FIG_WIDTH = 11
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
+
+    # Plot style
+    plt.style.use("bmh")
 
     # Set up figure and plot
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
@@ -283,10 +286,21 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials)
     info.maxFluence = maxFluence
     info.save()
-    # export the data to csv
-    df = pd.DataFrame(export_data).T
-    with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
-        f.write(df.to_csv(index=False))
+    # export the data to csv if mesh file comes from simulation
+    if(len(materials) > 0): # only mesh files from simulation has material info
+        print("Exporting DVH data to CSV")
+        with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
+            for region in export_data:
+                title = ['', '', 'Region ' + str(region)]
+                df = pd.DataFrame(title).T
+                df.columns = ['', '', '']
+                f.write(df.to_csv(index=False))
+
+                df = pd.DataFrame(export_data[region]).T
+                df.columns = ['Fluence Dose', 'Region Volume', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
+                f.write(df.to_csv(index=False, float_format='%.3f'))
+                print(export_data[region])
+        print("DVH data export complete")
     # update process status
     running_process = processRunning.objects.filter(user = user).latest('id')
     running_process.running = False
