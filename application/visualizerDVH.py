@@ -23,10 +23,6 @@ table, td
 }
 """
 
-# Max Fluence
-maxFluence = 0
-regionVolume = {}
-
 # read vtk file
 def import_data(filePath):
 
@@ -43,7 +39,8 @@ def import_data(filePath):
 def calculate_volumes(fullMonteOutputData, regionData):
 
     volumeData = {}
-    regionVolume.clear()
+    global regionVolume
+    regionVolume = {}
     numCells = regionData.size
 
     # get array of volumes for each region
@@ -66,9 +63,10 @@ def calculate_volumes(fullMonteOutputData, regionData):
     return volumeData
 
 # map each region to its doses (fluence)
-def populate_dictionary(fluenceData, regionData):
+def get_doses(fluenceData, regionData):
 
     doseData = {}
+    global maxFluence
     maxFluence = 0
 
     # get array of doses for each region, also save the maximum fluence across all regions
@@ -82,7 +80,7 @@ def populate_dictionary(fluenceData, regionData):
             doseData[region].append(dose)
             if(dose > maxFluence):
                 maxFluence = dose
-
+    print("maxFluence: ", maxFluence)
     return doseData
 
 # compute relative dose to relative volume mapping
@@ -94,19 +92,25 @@ def populate_dictionary(fluenceData, regionData):
 def calculate_DVH(doseData, volumeData, noBins):
 
     doseVolumeData = {}
+    global export_data # for exporting to excel
+    export_data = {}
 
     # map region volume to its corresponding dose bin for all regions
     for region, doses in doseData.items():
         doseVolumeData[region] = [0] * noBins
+        export_data[region] = [[0] * noBins] * 5
         # for each point n on the region, cumulate volume to the total volume at dose_n
         for n in range(len(doses)):
             # 500 (noBins) bins, so the dose bin ID on the x-axis is dose/max_dose * noBins
             bin_id = floor(doses[n] / maxFluence * (noBins-1))
             doseVolumeData[region][bin_id] += volumeData[region][n]
+            # save data to be exported (save fluence dose values in order)
+            export_data[region][0][bin_id] = doses[n]
 
     return doseVolumeData
 
-# For each region, compute the total volume of region that is greater than or qual to each bin
+# For each region, compute the total volume of region that received fluence greater than or
+# qual to the fluence values in that bin
 def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     cumulativeDVH = {}
@@ -122,6 +126,9 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
         for n in range(noBins-1, -1, -1):
             cumulativeTotal += doseVolume[n]
             cumulativeDVH[region][n] = cumulativeTotal
+            # save data to be exported (save region volume and cumulative volume in order)
+            export_data[region][1][n] = doseVolume[n]
+            export_data[region][2][n] = cumulativeTotal
 
     return cumulativeDVH
 
@@ -134,33 +141,37 @@ def plot_DVH(data, noBins, materials):
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
 
-    # Plot graph
+    # Set up figure and plot
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
     fig.suptitle('Figure 1', fontsize=50)
     ax = fig.add_subplot(111)
-    ax.set_xlabel("Relative Dose (% of max fluence)",fontsize = 20) #xlabel
-    ax.set_ylabel("Relative Volume (% of region volume)", fontsize = 20)#ylabel
+    ax.set_xlabel("% max fluence dose",fontsize = 20) # xlabel
+    ax.set_ylabel("% region volume coverage", fontsize = 20)# ylabel
     ax.grid(True)
 
     legendList = [] # legend items (region ID and material) for the interactive legend
-    lines = []      # matplotlib object; a line for each region for the interactive legend
+    lines = []      # array of matplotlib objects; a line for each region for the interactive legend
     labelsList = [] # x,y labels for the interactive tooltip
 
-    xVals = (np.array(range(noBins)) / noBins * 100)
+    xVals = (np.array(range(noBins)) / noBins * 100) # % max dose
 
-    for key in data:
-        yVals = np.array(data[key]) * 100
+    # Plot for each region
+    for region, cumulativeDoseVolume in data.items():
+        yVals = np.array(cumulativeDoseVolume) / regionVolume[region] * 100 # % region volume
         line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
         lines.append(line)
-        if(len(materials) > 0):
-            legendList.append(str(key) + " (" + materials[key] + ")")
-        else:
-            legendList.append(str(key) + " (No material info)")
+        if(len(materials) > 0): # mesh file from simulation can use material info from simulation
+            legendList.append(str(region) + " (" + materials[region] + ")")
+        else: # uploaded mesh files cannot be associated with material info
+            legendList.append(str(region) + " (No material info)")
         labels = []
         for i in range(1, len(xVals)):
             label = "<table><td>Dose: "+"{:.2f}".format(xVals[i])+"%, Volume: "+"{:.2f}".format(yVals[i])+"%</td></table>"
             labels.append(label)
         labelsList.append(labels)
+        # save data to be exported (save % max fluence dose and % cumulative region volume in order)
+        export_data[region][3] = xVals
+        export_data[region][4] = yVals
 
     # Interactive legend
     interactive_legend = plugins.InteractiveLegendPlugin(lines,
@@ -200,6 +211,8 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
 def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
+    conn = create_connection()
+    conn.ensure_connection()
     info = meshFileInfo.objects.filter(user = user).latest('id')
     outputMeshFileName = info.fileName
     remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
@@ -218,8 +231,6 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     print ('connected to remote server in visualizerDVH')
     sftp = client.open_sftp()
     sftp.get(remoteFilePath, localFilePath)
-    sftp.close()
-    client.close()
 
     output = import_data(localFilePath)
 
@@ -264,18 +275,23 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     noBins = 500    # max fluence is divided into
 
     volumeData = calculate_volumes(output,regionData)
-    doseData = populate_dictionary(fluenceData,regionData)
+    doseData = get_doses(fluenceData,regionData)
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
     # save the figure's html string to session
-    conn = create_connection()
-    conn.ensure_connection()
     info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials)
     info.maxFluence = maxFluence
     info.save()
+    # export the data to csv
+    df = pd.DataFrame(export_data).T
+    with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
+        f.write(df.to_csv(index=False))
+    # update process status
     running_process = processRunning.objects.filter(user = user).latest('id')
     running_process.running = False
     running_process.save()
+    sftp.close()
+    client.close()
     conn.close()
     print("done generating DVH")
 
