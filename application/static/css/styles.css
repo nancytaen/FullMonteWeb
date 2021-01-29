@@ -32,6 +32,19 @@ body {
     margin-bottom: 30px;
 }
 
+.custom_table_scrollbar{
+    display: block;
+    position: relative;
+    overflow: auto;
+    height: calc(100vh - 210px);
+}
+
+.custom_table_scrollbar thead th {
+    position: sticky;
+    top: 0;
+    background:rgb(255, 255, 255);
+}
+
 form h3,
 form p,
 form a {

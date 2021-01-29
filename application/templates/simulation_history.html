@@ -2,41 +2,42 @@
 
 {% extends 'base_generic.html' %}
 {% block content %}
-<div class="txt_container" style="padding: 2rem 1rem 1rem 1rem;">
+<div class="txt_container" style="padding: 1rem 0rem 0rem 0rem;">
     <h1>Simulation History</h1>
-    <style type="text/css">
-        table { width: 100%; }
-        td {
-            border: 1px solid #000;
-            text-align: center; 
-            vertical-align: middle;
-        }
-        th {
-            border: 1px solid #000;
-            text-align: center; 
-            vertical-align: middle;
-        }
-    </style>
-    <table class="sortable">
+    <div class="toolbar">
+        Total rows: <span id="total"></span>
+    </div>
+</div>
+<div class="custom_table_scrollbar">
+    <table class="table table-bordered table-striped table-sm" cellspacing="0">
+        <thead>
             <tr>
-                <th>Simulation Type</th>
-                <th>Mesh file</th>
-                <th>TCL script</th>
-                <th>Output VTK file</th>
-                <th>Output TXT file</th>
-                <th>Time Finished</th>
+                <th class="th-sm">Simulation Type</th>
+                <th class="th-sm">Mesh file</th>
+                <th class="th-sm">TCL script</th>
+                <th class="th-sm">Output VTK file</th>
+                <th class="th-sm">Output TXT file</th>
+                <th class="th-sm">Output DVH file</th>
+                <th class="th-sm">Time Finished</th>
             </tr>
-        {% for item in history %}
-        <tr> 
-            <td>{{ item.simulation_type }}</a></td>
-            <td><a href="download/{{item.mesh_file_path.name}}&output_name={{item.originalMeshFileName}}">{{ item.originalMeshFileName }}</a></td>
-            <td><a href="download/{{item.tcl_script_path.name}}">{{ item.tcl_script_path.name }}</a></td>
-            <td><a href="download/{{item.output_vtk_path.name}}">{{ item.output_vtk_path.name }}</a></td>
-            <td><a href="download/{{item.output_txt_path.name}}">{{ item.output_txt_path.name }}</a></td>
-            <td>{{ item.simulation_time }}</td>
-        </tr>
-        {% endfor %}
+        </thead>
+        <tbody>
+            {% for item in history %}
+            <tr> 
+                <td>{{ item.simulation_type }}</a></td>
+                <td><a href="download/{{item.mesh_file_path.name}}&output_name={{item.originalMeshFileName}}">{{ item.originalMeshFileName }}</a></td>
+                <td><a href="download/{{item.tcl_script_path.name}}">{{ item.tcl_script_path.name }}</a></td>
+                <td><a href="download/{{item.output_vtk_path.name}}">{{ item.output_vtk_path.name }}</a></td>
+                <td><a href="download/{{item.output_txt_path.name}}">{{ item.output_txt_path.name }}</a></td>
+                <td><a href="download/{{item.output_dvh_path.name}}">{{ item.output_dvh_path.name }}</a></td>
+                <td nowrap>{{ item.simulation_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
+    <script>
+        $('#total').text(history.length)
+    </script>
 </div>
 
 

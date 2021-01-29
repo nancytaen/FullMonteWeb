@@ -561,6 +561,7 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
+    maxDose = info.maxFluence
 
     # generate ParaView Visualization URL
     dns = request.session['DNS']
@@ -572,6 +573,29 @@ def displayVisualization(request):
     p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
     p.start()
 
+    # save history for dvh data if output mesh comes from simulation
+    if (len(request.session['region_name']) > 0):
+        history = simulationHistory.objects.filter(user=request.user).latest('id')
+        conn = create_connection()
+        conn.ensure_connection()
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+        ftp = client.open_sftp()
+        mesh_name = outputMeshFileName[:-8]
+        output_csv_name = mesh_name + '.dvh.csv'
+        output_csv_file = ftp.file('docker_sims/' + output_csv_name)
+        history.output_dvh_path.save(output_csv_name, output_csv_file)
+        ftp.close()
+        client.close()
+        history.save()
+        conn.close()
+
     # get message
     if(fileExists):
         msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
@@ -579,7 +603,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
