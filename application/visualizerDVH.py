@@ -227,6 +227,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     print ('connecting to remote server in visualizerDVH')
     client.connect(dns, username='ubuntu', pkey=privkey)
     print ('connected to remote server in visualizerDVH')
+    sys.stdout.flush()
     sftp = client.open_sftp()
     sftp.get(remoteFilePath, localFilePath)
     sftp.close()
@@ -289,4 +290,4 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     running_process.save()
     conn.close()
     print("done generating DVH")
-
+    sys.stdout.flush()

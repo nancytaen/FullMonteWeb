@@ -7,8 +7,23 @@ user_model = settings.AUTH_USER_MODEL
 
 # Create your models here.
 
+class meshFiles(models.Model):
+    meshFile = models.FileField(storage=PublicMediaStorage())
+    originalMeshFileName = models.CharField(max_length=255, blank=True)
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+
 class tclInput(models.Model):
     meshFile = models.FileField(storage=PublicMediaStorage())
+    originalMeshFileName = models.CharField(max_length=255, blank=True)
+    meshFileID = models.ForeignKey(meshFiles,
+                             blank = True,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
     kernelType = models.CharField(max_length=255)
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     user = models.ForeignKey(user_model,
@@ -56,6 +71,12 @@ class simulationHistory(models.Model):
                              )
     tcl_script_path = models.FileField(storage=PublicMediaStorage())
     mesh_file_path = models.FileField(storage=PublicMediaStorage())
+    originalMeshFileName = models.CharField(max_length=255, blank=True)
+    meshFileID = models.ForeignKey(meshFiles,
+                             blank = True,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
     output_vtk_path = models.FileField(storage=PublicMediaStorage())
     output_txt_path = models.FileField(storage=PublicMediaStorage())
     output_dvh_path = models.FileField(storage=PublicMediaStorage())
