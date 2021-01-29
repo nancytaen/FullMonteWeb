@@ -183,6 +183,7 @@ def fmSimulatorMaterial(request):
             # process cleaned data from formsets
 
             request.session['material'] = []
+            request.session['region_name'] = [] # for visualization legend
             request.session['scatteringCoeff'] = []
             request.session['absorptionCoeff'] = []
             request.session['refractiveIndex'] = []
@@ -191,6 +192,7 @@ def fmSimulatorMaterial(request):
             for form in formset1:
                 #print(form.cleaned_data)
                 request.session['material'].append(form.cleaned_data['material'])
+                request.session['region_name'].append(form.cleaned_data['material'])  # for visualization legend
                 request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
                 request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
                 request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
@@ -447,6 +449,10 @@ def visualization_mesh_upload(request):
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
             sftp.close()
             client.close()
+
+            # set material list to empty because the list is only used for mesh visualizaition from simulation.
+            # uploaded mesh files do not have material information provided, so they will not have material names in legend
+            request.session['region_name'] = []
             return HttpResponseRedirect('/application/visualization')
     else:
         form = visualizeMeshForm(request.GET or None)
@@ -503,7 +509,7 @@ def fmVisualization(request):
             for child in children:
                 print('Child pid is {}'.format(child.pid))
             connections.close_all()
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, request.session['region_name'], ))
             p.start()
             print('after')
             current_process = psutil.Process()

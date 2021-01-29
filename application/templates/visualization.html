@@ -5,21 +5,22 @@
 <div class="txt_container">
     <h1>Visualization</h1>
 
-    <!-- message indicting the mesh being used -->
-    <h4> {{ message|safe }} </h4>
+    <div class="center_container">
+        <!-- message indicting the mesh being used -->
+        <h4> {{ message|safe }} </h4>
 
-    <!-- allow user to upload a different mesh -->
-    <p>To visualize a different output mesh, please <a href=mesh_upload>click here to upload the mesh file.</a></p>
-    </br>
+        <!-- allow user to upload a different mesh -->
+        <p>To visualize a different output mesh, please <a href=mesh_upload>click here to upload the mesh file.</a></p>
+        </br>
 
-    <h2>3D Visualization</h2>
-    <a class="btn btn-info" href="{{visURL}}" target="_blank" style="margin-left: 15px;">Open 3D Interactive Visualizer</a>
-    </br>
-    </br>
-
-    <h2>Dose-Volume Histogram</h2>
+        <h2>3D Visualization</h2>
+        <a class="btn btn-info" href="{{visURL}}" target="_blank" style="margin-left: 15px;">Open 3D Interactive Visualizer</a>
+    </div>
+</div>
+<div class="graph_container">
+    <h2>Cumulative Dose-Volume Histogram</h2>
+    <p>Click on the legend to toggle the data on and off.</p>
     <p> {{ dvhFig|safe }} </p>
-
 </div>
 
 {% endblock %}

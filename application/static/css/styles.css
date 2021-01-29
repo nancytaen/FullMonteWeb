@@ -13,6 +13,12 @@ body {
     padding: .5rem 0rem 1rem 0rem;
 }
 
+.graph_container {
+    text-align: center;
+    padding: 1rem 0rem 0rem 0rem;
+    margin: 0 0 0 0;
+}
+
 .txt_container {
     margin: 0 auto;
     padding: 2rem 8rem 1rem 8rem;
