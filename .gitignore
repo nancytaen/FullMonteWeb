@@ -7,3 +7,4 @@ fullMonteWeb/migrations/
 venv/
 fullMonteWeb/staticfiles/
 *DS_Store*
+application/pdtOp/pdt_space.op

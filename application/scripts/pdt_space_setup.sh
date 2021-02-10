@@ -35,6 +35,15 @@ DOCKER_COMMAND="docker run --rm  \
         -e DISPLAY=:0 \
         $IMAGE $1"
 
-eval $DOCKER_COMMAND
+#eval $DOCKER_COMMAND > ~/eval_result.log
+#$2 = 0 for write output to stdout
+#$2 = 1 for write output tp log file
+if [ "$2" -ne 1 ]; then
+        $DOCKER_COMMAND
+
+else
+        $DOCKER_COMMAND > ~/eval_result.log
+fi
+
 echo [info] PDT-SPACE run finished
 

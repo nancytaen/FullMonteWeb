@@ -2,7 +2,17 @@
 {% block content %}
 <div class="txt_container">
     <h1>PDT-SPACE</h1> 
-    <p>The PDT-SPACE run finished.</p> 
+    <p><b>The PDT-SPACE run finished. Output from PDT-SPACE run:</b></p> 
+    <br/>
+   
+    <p><b>Fluence distribution:</b></p> 
+    <p>{% autoescape off %}{{html_fluence_dist}}{% endautoescape %}</p>
+    <p><b>Power allocation:</b></p> 
+    <p>{% autoescape off %}{{html_pow_alloc}}{% endautoescape %}</p>
+    <p><b>Time usage:</b></p> 
+    <p>{% autoescape off %}Running FM simulation for all sources: {{time_simu}} minutes. {% endautoescape %}</p>
+    <p>{% autoescape off %}Running optimization: {{time_opt}} minutes. {% endautoescape %}</p>
+    <br/>
 </div>
 
 {% endblock %}
