@@ -62,12 +62,20 @@ import select
 class BaseFileDownloadView(DetailView):
     def get(self, request, *args, **kwargs):
         filename=self.kwargs.get('filename', None)
+        originalfilename=self.kwargs.get('originalfilename', None)
         if filename is None:
             raise ValueError("Found empty filename")
-        some_file = default_storage.open(filename)
+        
+        try:
+            some_file = default_storage.open(filename)
+        except:
+            return HttpResponse("The file you are requesting does not exist on the server.")
         response = FileResponse(some_file)
         # https://docs.djangoproject.com/en/1.11/howto/outputting-csv/#streaming-large-csv-files
-        response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+        if originalfilename is not None:
+            response['Content-Disposition'] = 'attachment; filename="%s"'%originalfilename
+        else:
+            response['Content-Disposition'] = 'attachment; filename="%s"'%filename
         return response
 
 class fileDownloadView(BaseFileDownloadView):
@@ -104,15 +112,42 @@ def fmSimulator(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
+        # print(11111)
+        # print(request.POST)
+        # print(request.FILES)
+        # sys.stdout.flush()
         form = tclInputForm(request.POST, request.FILES)
 
         # check whether it's valid:
         if form.is_valid():
-            # process cleaned data from formsets
-            obj = form.save(commit = False)
-            obj.user = request.user
-            obj.save()
+            if request.POST['selected_existing_meshes'] != "":
+                # selected a mesh from database
+                mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
 
+                obj = form.save(commit = False)
+                obj.meshFile = mesh_from_database.meshFile
+                obj.originalMeshFileName = mesh_from_database.originalMeshFileName
+                obj.meshFileID = mesh_from_database
+                obj.user = request.user
+                obj.save()
+            else:
+                # uploaded a new mesh
+                # process cleaned data from formsets
+                obj = form.save(commit = False)
+                obj.user = request.user
+                obj.originalMeshFileName = obj.meshFile.name
+                obj.save()
+
+                # create entry for the newly uploaded meshfile
+                new_mesh_entry = meshFiles()
+                new_mesh_entry.meshFile = obj.meshFile
+                new_mesh_entry.originalMeshFileName = obj.originalMeshFileName
+                new_mesh_entry.user = request.user
+                new_mesh_entry.save()
+
+                # update meshfile id
+                obj.meshFileID = new_mesh_entry
+                obj.save()
 
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['packetCount'] = form.cleaned_data['packetCount']
@@ -123,10 +158,13 @@ def fmSimulator(request):
     else:
         form = tclInputForm(request.GET or None)
 
+    uploaded_meshes = meshFiles.objects.filter(user=request.user)
+
     context = {
         'form': form,
         'aws_path': request.session['DNS'],
         'port': request.session['tcpPort'],
+        'uploaded_meshes': uploaded_meshes,
     }
 
     return render(request, "simulator.html", context)
@@ -145,6 +183,7 @@ def fmSimulatorMaterial(request):
             # process cleaned data from formsets
 
             request.session['material'] = []
+            request.session['region_name'] = [] # for visualization legend
             request.session['scatteringCoeff'] = []
             request.session['absorptionCoeff'] = []
             request.session['refractiveIndex'] = []
@@ -153,6 +192,7 @@ def fmSimulatorMaterial(request):
             for form in formset1:
                 #print(form.cleaned_data)
                 request.session['material'].append(form.cleaned_data['material'])
+                request.session['region_name'].append(form.cleaned_data['material'])  # for visualization legend
                 request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
                 request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
                 request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
@@ -409,6 +449,10 @@ def visualization_mesh_upload(request):
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
             sftp.close()
             client.close()
+
+            # set material list to empty because the list is only used for mesh visualizaition from simulation.
+            # uploaded mesh files do not have material information provided, so they will not have material names in legend
+            request.session['region_name'] = []
             return HttpResponseRedirect('/application/visualization')
     else:
         form = visualizeMeshForm(request.GET or None)
@@ -465,7 +509,7 @@ def fmVisualization(request):
             for child in children:
                 print('Child pid is {}'.format(child.pid))
             connections.close_all()
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, ))
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, request.session['region_name'], ))
             p.start()
             print('after')
             current_process = psutil.Process()
@@ -483,6 +527,7 @@ def fmVisualization(request):
             conn.ensure_connection()
             form.save()
             conn.close()
+            sys.stdout.flush()
             return HttpResponseRedirect('/application/runningDVH')
         # load saved DVH
         else:
@@ -516,6 +561,7 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
+    maxDose = info.maxFluence
 
     # generate ParaView Visualization URL
     dns = request.session['DNS']
@@ -527,6 +573,29 @@ def displayVisualization(request):
     p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, ))
     p.start()
 
+    # save history for dvh data if output mesh comes from simulation
+    if (len(request.session['region_name']) > 0):
+        history = simulationHistory.objects.filter(user=request.user).latest('id')
+        conn = create_connection()
+        conn.ensure_connection()
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+
+        ftp = client.open_sftp()
+        mesh_name = outputMeshFileName[:-8]
+        output_csv_name = mesh_name + '.dvh.csv'
+        output_csv_file = ftp.file('docker_sims/' + output_csv_name)
+        history.output_dvh_path.save(output_csv_name, output_csv_file)
+        ftp.close()
+        client.close()
+        history.save()
+        conn.close()
+
     # get message
     if(fileExists):
         msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
@@ -534,7 +603,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -977,8 +1046,9 @@ def simulation_fail(request):
 # page for successfully finished simulation
 def simulation_finish(request):
     # save output mesh file info
-    outputMeshFile = tclInput.objects.filter(user = request.user).latest('id')
-    outputMeshFileName = outputMeshFile.meshFile.name
+    # using tcl script name to identify as meshes can be reused
+    outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = outputMeshFile.script.name
     info = meshFileInfo.objects.filter(user = request.user).latest('id')
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
@@ -1032,13 +1102,15 @@ def populate_simulation_history(request):
     history.user = request.user
     mesh = tclInput.objects.filter(user = request.user).latest('id')
     history.mesh_file_path = mesh.meshFile
+    history.originalMeshFileName = mesh.originalMeshFileName
+    history.meshFileID = mesh.meshFileID
     history.tcl_script_path = tclScript.objects.filter(user = request.user).latest('id').script
 
     mesh_vtk_name = mesh.meshFile.name
     mesh_name = mesh_vtk_name[:-4]
-    tcl_name = mesh_name + '.tcl'
-    output_vtk_name = mesh_name + '.out.vtk'
-    output_txt_name = mesh_name + '.phi_v.txt'
+    tcl_name = history.tcl_script_path.name
+    output_vtk_name = tcl_name[:-4] + '.out.vtk'
+    output_txt_name = tcl_name[:-4] + '.phi_v.txt'
 
     output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
     # default_storage.save(output_vtk_name, output_vtk_file)
@@ -1056,12 +1128,13 @@ def populate_simulation_history(request):
     conn.close()
 
 def simulation_history(request):
-    history = simulationHistory.objects.filter(user=request.user)
-    if history.count() > 0:
-        return render(request, "simulation_history.html", {'history':history})
+    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time')
+    historySize = history.count()
+    if historySize > 0:
+        return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
     else:
         return render(request, "simulation_history_empty.html")
-    return render(request, "simulation_history.html", {'history':history})
+    return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
 
 #               Current unsolved problem in PDT-SPACE
 #       1.  When running the docker image for pdt-space, sometimes the image needs to be downloaded and reinstall again.

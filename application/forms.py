@@ -23,6 +23,7 @@ class tclInputForm(forms.ModelForm):
         initial['packetCount'] = 1000000
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
+        self.fields['meshFile'].required = False
 
 class presetForm(forms.ModelForm):
     class Meta:

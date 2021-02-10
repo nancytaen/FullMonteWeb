@@ -13,6 +13,12 @@ body {
     padding: .5rem 0rem 1rem 0rem;
 }
 
+.graph_container {
+    text-align: center;
+    padding: 1rem 0rem 0rem 0rem;
+    margin: 0 0 0 0;
+}
+
 .txt_container {
     margin: 0 auto;
     padding: 2rem 8rem 1rem 8rem;
@@ -24,6 +30,19 @@ body {
     text-align: center;
     color: rgb(68, 67, 67);
     margin-bottom: 30px;
+}
+
+.custom_table_scrollbar{
+    display: block;
+    position: relative;
+    overflow: auto;
+    height: calc(100vh - 210px);
+}
+
+.custom_table_scrollbar thead th {
+    position: sticky;
+    top: 0;
+    background:rgb(255, 255, 255);
 }
 
 form h3,
@@ -273,4 +292,14 @@ footer .copyright span {
 .tutorial_vid {
     width: 1000px;
     height: auto;
+}
+
+.option-select {
+    display: inline;
+}
+  
+.option-select:before {
+    content: 'Select an uploaded mesh file from databse: ';
+    color: black;
+    font-weight: bold;
 }
