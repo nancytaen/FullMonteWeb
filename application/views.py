@@ -564,9 +564,10 @@ def displayVisualization(request):
     maxDose = info.maxFluence
 
     # generate ParaView Visualization URL
+    # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
     dns = request.session['DNS']
     tcpPort = request.session['tcpPort']
-    visURL = dns + ":" + tcpPort
+    visURL = "http://" + dns + ":" + tcpPort + "/"
 
     # render 3D visualizer
     text_obj = request.session['text_obj']
