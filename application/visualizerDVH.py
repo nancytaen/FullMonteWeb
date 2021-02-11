@@ -12,6 +12,7 @@ from math import floor
 from matplotlib import pyplot as plt
 from django.db import models, connections
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
+from .mpld3CustomPlugin import CustomizedInteractiveLegendPlugin
 
 # Define CSS for custom labels
 css = """
@@ -159,6 +160,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
     xVals = (np.array(range(noBins)) / noBins * 100) # % max dose
 
     # Plot for each region
+    # color=next(ax._get_lines.prop_cycler)['color']
     for region, cumulativeDoseVolume in data.items():
         yVals = np.array(cumulativeDoseVolume) / regionVolume[region] * 100 # % region volume
         line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
@@ -177,7 +179,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
         export_data[region][4] = yVals
 
     # Interactive legend
-    interactive_legend = plugins.InteractiveLegendPlugin(lines,
+    interactive_legend = CustomizedInteractiveLegendPlugin(lines,
                                                      legendList,
                                                      alpha_unsel=0,
                                                      alpha_over=2, 
