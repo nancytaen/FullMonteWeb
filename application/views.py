@@ -591,7 +591,10 @@ def displayVisualization(request):
         mesh_name = outputMeshFileName[:-8]
         output_csv_name = mesh_name + '.dvh.csv'
         output_csv_file = ftp.file('docker_sims/' + output_csv_name)
-        history.output_dvh_path.save(output_csv_name, output_csv_file)
+        output_png_name = mesh_name + '.dvh.png'
+        output_png_file = ftp.file('docker_sims/' + output_png_name)
+        history.output_dvh_csv_path.save(output_csv_name, output_csv_file)
+        history.output_dvh_fig_path.save(output_png_name, output_png_file)
         ftp.close()
         client.close()
         history.save()
@@ -1129,7 +1132,7 @@ def populate_simulation_history(request):
     conn.close()
 
 def simulation_history(request):
-    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time')
+    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time') # order by time (most present at top)
     historySize = history.count()
     if historySize > 0:
         return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})

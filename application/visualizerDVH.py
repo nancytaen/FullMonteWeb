@@ -136,7 +136,7 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
 # axis. The column height of each bin represents the %volume of structure receiving a
 # dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins, materials):
+def plot_DVH(data, noBins, materials, outputMeshFileName):
     FIG_WIDTH = 11
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
@@ -146,7 +146,7 @@ def plot_DVH(data, noBins, materials):
 
     # Set up figure and plot
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
-    fig.suptitle('Figure 1', fontsize=50)
+    fig.suptitle("Cumulative Dose-Volume Histogram", fontsize=30, y = 1)
     ax = fig.add_subplot(111)
     ax.set_xlabel("% max fluence dose",fontsize = 20) # xlabel
     ax.set_ylabel("% region volume coverage", fontsize = 20)# ylabel
@@ -193,6 +193,10 @@ def plot_DVH(data, noBins, materials):
     # Adjust chart margins
     fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
     plt.subplots_adjust(left=0.07, bottom=0.1, right=0.77, top=0.99) # avoid legend going off screen
+
+    # Save temporory DVH figure locally in png format
+    localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
+    plt.savefig(localFilePath, orientation='portrait', format="png")
 
     return mpld3.fig_to_html(fig)
 
@@ -283,10 +287,11 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     DVHdata = calculate_DVH(doseData,volumeData,noBins)
     cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
     # save the figure's html string to session
-    info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials)
+    info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName)
     info.maxFluence = maxFluence
     info.save()
     # export the data to csv if mesh file comes from simulation
+    localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
     if(len(materials) > 0): # only mesh files from simulation has material info
         print("Exporting DVH data to CSV")
         with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
@@ -300,6 +305,12 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
                 df.columns = ['Fluence Dose', 'Region Volume', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
                 f.write(df.to_csv(index=False, float_format='%.3f'))
         print("DVH data export complete")
+        remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName[:-8] + '.dvh.png'
+        sftp.put(localFilePath, remoteFilePath) # transfer dvh figure from local to remote server
+
+    # delete temporory dvh plot
+    os.remove(localFilePath)
+        
     # update process status
     running_process = processRunning.objects.filter(user = user).latest('id')
     running_process.running = False

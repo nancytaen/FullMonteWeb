@@ -80,7 +80,8 @@ class simulationHistory(models.Model):
                              )
     output_vtk_path = models.FileField(storage=PublicMediaStorage())
     output_txt_path = models.FileField(storage=PublicMediaStorage())
-    output_dvh_path = models.FileField(storage=PublicMediaStorage())
+    output_dvh_csv_path = models.FileField(storage=PublicMediaStorage())
+    output_dvh_fig_path = models.FileField(storage=PublicMediaStorage())
     simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):

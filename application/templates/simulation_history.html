@@ -11,11 +11,12 @@
         <thead>
             <tr>
                 <th class="th-sm">Simulation Type</th>
-                <th class="th-sm">Mesh file</th>
-                <th class="th-sm">TCL script</th>
-                <th class="th-sm">Output VTK file</th>
-                <th class="th-sm">Output TXT file</th>
-                <th class="th-sm">Output DVH file</th>
+                <th class="th-sm">Mesh File</th>
+                <th class="th-sm">TCL Script</th>
+                <th class="th-sm">Output VTK File</th>
+                <th class="th-sm">Output TXT File</th>
+                <th class="th-sm">Output DVH Data</th>
+                <th class="th-sm">Output DVH Figure</th>
                 <th class="th-sm">Time Finished</th>
             </tr>
         </thead>
@@ -27,7 +28,8 @@
                 <td><a href="download/{{item.tcl_script_path.name}}">{{ item.tcl_script_path.name }}</a></td>
                 <td><a href="download/{{item.output_vtk_path.name}}">{{ item.output_vtk_path.name }}</a></td>
                 <td><a href="download/{{item.output_txt_path.name}}">{{ item.output_txt_path.name }}</a></td>
-                <td><a href="download/{{item.output_dvh_path.name}}">{{ item.output_dvh_path.name }}</a></td>
+                <td><a href="download/{{item.output_dvh_csv_path.name}}">{{ item.output_dvh_csv_path.name }}</a></td>
+                <td><a href="download/{{item.output_dvh_fig_path.name}}">{{ item.output_dvh_fig_path.name }}</a></td>
                 <td nowrap>{{ item.simulation_time }}</td>
             </tr>
             {% endfor %}
