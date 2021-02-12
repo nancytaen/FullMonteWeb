@@ -1,6 +1,21 @@
 {% extends 'base_generic.html' %}
 {% block content %}
 <div class="txt_container">
-    <h1>Simulation failed.</h1>
+    <h1>The Simulation Failed with Errors.</h1> 
+    <p><b>Output from simulation run:</b></p>
+    <p>{% autoescape off %}{{output}}{% endautoescape %}</p>
+    <br/>
+    <p><b>Possible reasons of failure:</b></p>
+    <ul class="suggestion-list">
+        <li>Something is wrong with the VTK file</li>
+        <li>Invalid material optical properties</li>
+        <li>Invalid light source positions</li>
+    </ul>
+    <p><b>Suggestions for next steps:</b></p>
+    <ul class="suggestion-list">
+        <li><a href=simulator>Run another simulation</a></li>
+    </ul>
 </div>
+
+
 {% endblock %}

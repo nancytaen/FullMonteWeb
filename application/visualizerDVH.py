@@ -182,7 +182,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
     interactive_legend = CustomizedInteractiveLegendPlugin(lines,
                                                      legendList,
                                                      alpha_unsel=0,
-                                                     alpha_over=2, 
+                                                     alpha_over=1.5, 
                                                      start_visible=True)
     plugins.connect(fig, interactive_legend)
 
