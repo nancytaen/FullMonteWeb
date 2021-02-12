@@ -350,7 +350,13 @@ def simulation_confirmation(request):
         
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         request.session['text_obj'] = text_obj
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
+
         ftp = client.open_sftp()
 
         ftp.chdir('docker_sims/')
@@ -435,10 +441,6 @@ def visualization_mesh_upload(request):
             obj.save()
             uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
             outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
-            info = meshFileInfo.objects.filter(user = request.user).latest('id')
-            info.fileName = outputMeshFileName
-            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
-            info.save()
             outputMeshFile = default_storage.open(outputMeshFileName)
             print(outputMeshFileName)
 
@@ -448,13 +450,24 @@ def visualization_mesh_upload(request):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
 
             sftp = client.open_sftp()
             sftp.chdir('docker_sims/')
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
             sftp.close()
             client.close()
+            
+            # save mesh file info for visualization
+            info = meshFileInfo.objects.filter(user = request.user).latest('id')
+            info.fileName = outputMeshFileName
+            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.save()
 
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
@@ -487,13 +500,19 @@ def fmVisualization(request):
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # check if file exists in the remote server
+    # first, try to connect to remote server
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(dns, username='ubuntu', pkey=privkey)
+    try:
+        client.connect(dns, username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
+    # check if file exists in the remote server
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
@@ -592,7 +611,12 @@ def displayVisualization(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
 
         ftp = client.open_sftp()
         mesh_name = outputMeshFileName[:-8]
@@ -783,7 +807,13 @@ def aws(request):
             
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             request.session['text_obj'] = text_obj
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
+            
             sftp = client.open_sftp()
             need_setup = "false"
 
@@ -850,7 +880,12 @@ def run_aws_setup(request):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     dir_path = os.path.dirname(os.path.abspath(__file__))
     #tc file
@@ -953,7 +988,13 @@ def AWSsetup(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+
     if running_process.running:
         
         print("get current progress")
@@ -1011,7 +1052,12 @@ def running(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/sim_run.log > ~/cleaned.log')
     stdin, stdout, stderr = client.exec_command('sudo tail -1 ~/cleaned.log')
@@ -1075,7 +1121,12 @@ def simulation_finish(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     ftp = client.open_sftp()
     # ftp.chdir('docker_sims/')
@@ -1129,7 +1180,12 @@ def populate_simulation_history(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     ftp = client.open_sftp()
     # store output files to S3, and populate simulation history
@@ -1255,7 +1311,12 @@ def search_pdt_space(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     foo_list = []
     addr_list = []
@@ -1329,7 +1390,12 @@ def pdt_space_license(request):
             text_obj = request.session['text_obj']
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
             sftp = client.open_sftp()
             sftp.putfo(request.FILES['mosek_license'], 'docker_pdt/mosek.lic')
             sftp.close()
@@ -1343,7 +1409,12 @@ def pdt_space_license(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
         sftp = client.open_sftp()
         try:
             sftp.stat('docker_pdt/mosek.lic')
@@ -1501,7 +1572,12 @@ def pdt_space_lightsource(request):
             text_obj = request.session['text_obj']
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
             ftp = client.open_sftp()
             ftp.chdir('docker_pdt/')
             file=ftp.file('docker.sh', "w")
@@ -1618,7 +1694,12 @@ def launch_pdt_space(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
     stdin, stdout, stderr = client.exec_command(command)
@@ -1648,7 +1729,12 @@ def pdt_space_finish(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
     
     # pdt-space output in ~/eval_result.log
     ftp = client.open_sftp()
