@@ -1096,8 +1096,6 @@ def simulation_finish(request):
     ftp.close()
     client.close()
 
-    connections.close_all()
-
     # save output mesh file info
     # using tcl script name to identify as meshes can be reused
     info = meshFileInfo.objects.filter(user = request.user).latest('id')
@@ -1110,15 +1108,16 @@ def simulation_finish(request):
         return render(request, "simulation_fail.html", {'output':html_string})
     
     # otherwise, simulation completed
-    # populate history
-    p = Process(target=populate_simulation_history, args=(request, ))
-    p.start()
     # save output mesh info
     outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
     outputMeshFileName = outputMeshFile.script.name
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
     info.save()
+    # populate history
+    connections.close_all()
+    p = Process(target=populate_simulation_history, args=(request, ))
+    p.start()
     return render(request, "simulation_finish.html", {'output':html_string})
 
 def populate_simulation_history(request):
