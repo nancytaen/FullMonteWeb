@@ -99,9 +99,11 @@ def please_login(request):
 
 # FullMonte Simulator start page
 def fmSimulator(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    # Check if EC2 instance is set up in the current session
     try:
         dns = request.session['DNS']
         text_obj = request.session['text_obj']
@@ -171,6 +173,7 @@ def fmSimulator(request):
 
 # FullMonte Simulator material page
 def fmSimulatorMaterial(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
@@ -259,8 +262,10 @@ def createPresetMaterial(request):
 
 # FullMonte Simulator light source page
 def fmSimulatorSource(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
@@ -308,6 +313,7 @@ def fmSimulatorSource(request):
 
     return render(request, "simulator_source.html", context)
 
+# FullMonte Simulator input confirmation page
 def simulation_confirmation(request):
     class Optional_Tcl(forms.Form):
         tcl_file = forms.FileField(required=False)
@@ -463,6 +469,7 @@ def visualization_mesh_upload(request):
 
 # FullMonte output Visualization - generate DVH
 def fmVisualization(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
@@ -590,11 +597,16 @@ def displayVisualization(request):
         ftp = client.open_sftp()
         mesh_name = outputMeshFileName[:-8]
         output_csv_name = mesh_name + '.dvh.csv'
-        output_csv_file = ftp.file('docker_sims/' + output_csv_name)
         output_png_name = mesh_name + '.dvh.png'
-        output_png_file = ftp.file('docker_sims/' + output_png_name)
-        history.output_dvh_csv_path.save(output_csv_name, output_csv_file)
-        history.output_dvh_fig_path.save(output_png_name, output_png_file)
+        
+        try:
+            output_csv_file = ftp.file('docker_sims/' + output_csv_name)
+            output_png_file = ftp.file('docker_sims/' + output_png_name)
+            history.output_dvh_csv_path.save(output_csv_name, output_csv_file)
+            history.output_dvh_fig_path.save(output_png_name, output_png_file)
+        except:
+            print("Cannot save history for DVH data because file does not exist")
+
         ftp.close()
         client.close()
         history.save()
@@ -616,8 +628,10 @@ def kernelInfo(request):
 
 # page for downloading preset values
 def downloadPreset(request):    
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
     presetObjects = preset.objects.all()
 
     # if this is a POST request we need to process the form data
@@ -697,14 +711,18 @@ def activate(request, uidb64, token):
 
 # user acount info page
 def account(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
     return render(request, "account.html")
 
 # user account changing passwords page
 def change_password(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
+    # if this is a POST request we need to process the form data
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -729,9 +747,11 @@ def heroku_timeout(request):
 
 # AWS EC2 instance setup page
 def aws(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
     
+    # if this is a POST request we need to process the form data
     if request.method == 'POST':
         print(request)
         form = awsFiles(request.POST, request.FILES)
@@ -968,21 +988,21 @@ def handle_uploaded_file(f):
         print (line)
 
 # execute FullMonte simulation
-def exec_simulate(request, channel, command):
+# def exec_simulate(request, channel, command):
     
-    print("start running " + command)
-    sys.stdout.flush()
-    channel.exec_command(command)
-    while True:
-        if channel.exit_status_ready():
-            break
-        rl, wl, xl = select.select([channel],[],[],0.0)
-        if len(rl) > 0:
-            print(channel.recv(1024))
-            sys.stdout.flush()
-    print("finish running")
-    sys.stdout.flush()
-    return  HttpResponseRedirect('/application/simulation_fail')
+#     print("start running " + command)
+#     sys.stdout.flush()
+#     channel.exec_command(command)
+#     while True:
+#         if channel.exit_status_ready():
+#             break
+#         rl, wl, xl = select.select([channel],[],[],0.0)
+#         if len(rl) > 0:
+#             print(channel.recv(1024))
+#             sys.stdout.flush()
+#     print("finish running")
+#     sys.stdout.flush()
+#     return  HttpResponseRedirect('/application/simulation_fail')
 
 # simulation progress page
 def running(request):
@@ -1044,20 +1064,11 @@ def running(request):
         return render(request, "running.html", {'time':running_time, 'progress':progress})
 
 # page for failed simulation
-def simulation_fail(request):
-    return render(request, "simulation_fail.html")
+# def simulation_fail(request):
+#     return render(request, "simulation_fail.html")
 
-# page for successfully finished simulation
+# Response for finished simulation
 def simulation_finish(request):
-    # save output mesh file info
-    # using tcl script name to identify as meshes can be reused
-    outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
-    outputMeshFileName = outputMeshFile.script.name
-    info = meshFileInfo.objects.filter(user = request.user).latest('id')
-    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
-    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
-    info.save()
-
     # display simulation outputs
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -1070,6 +1081,10 @@ def simulation_finish(request):
     # ftp.chdir('docker_sims/')
     file=ftp.file('sim_run.log', "r")
     output = file.read().decode()
+    if '[error]' in output:
+        simulation_failed = True
+    else:
+        simulation_failed = False
     html_string=''
     # add <p> to output string since html does not support '\n'
     for e in output.splitlines():
@@ -1081,11 +1096,28 @@ def simulation_finish(request):
     ftp.close()
     client.close()
 
+    # save output mesh file info
+    # using tcl script name to identify as meshes can be reused
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+
+    # if there is error, clear output mesh file info so user cannot use visualizer; go simulation failed page
+    if(simulation_failed):
+        info.fileName = ""
+        info.dvhFig = ""
+        info.save()
+        return render(request, "simulation_fail.html", {'output':html_string})
+    
+    # otherwise, simulation completed
+    # save output mesh info
+    outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = outputMeshFile.script.name
+    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
+    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.save()
+    # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))
     p.start()
-    # populate_simulation_history(request)
-
     return render(request, "simulation_finish.html", {'output':html_string})
 
 def populate_simulation_history(request):
@@ -1116,22 +1148,27 @@ def populate_simulation_history(request):
     output_vtk_name = tcl_name[:-4] + '.out.vtk'
     output_txt_name = tcl_name[:-4] + '.phi_v.txt'
 
-    output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
-    # default_storage.save(output_vtk_name, output_vtk_file)
-    output_txt_file = ftp.file('docker_sims/' + output_txt_name)
-    history.output_vtk_path.save(output_vtk_name, output_vtk_file)
-    history.output_txt_path.save(output_txt_name, output_txt_file)
-    # default_storage.save(output_txt_name, output_txt_file)
+    try:
+        output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
+        # default_storage.save(output_vtk_name, output_vtk_file)
+        output_txt_file = ftp.file('docker_sims/' + output_txt_name)
+        history.output_vtk_path.save(output_vtk_name, output_vtk_file)
+        history.output_txt_path.save(output_txt_name, output_txt_file)
+        # default_storage.save(output_txt_name, output_txt_file)
+    except:
+        print("Cannot save history for simulation output because file does not exist")
     
     ftp.close()
     client.close()
-    # TODO: populate dvh path
-    # history.output_dvh_path = ''
     history.save()
 
     conn.close()
 
 def simulation_history(request):
+    # First check if user is logged-in
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
     history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time') # order by time (most present at top)
     historySize = history.count()
     if historySize > 0:
@@ -1152,6 +1189,7 @@ def pdt_space(request):
     print("in pdt_space")
     sys.stdout.flush()
 
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 

@@ -37,9 +37,6 @@ urlpatterns = [
     # /application/running
     path('running', views.running, name='running'),
 
-    # /application/simulation_fail
-    path('simulation_fail', views.simulation_fail, name='simulation_fail'),
-
     # /application/simulation_finish
     path('simulation_finish', views.simulation_finish, name='simulation_finish'),
 

@@ -191,7 +191,7 @@ class CustomizedInteractiveLegendPlugin(plugins.PluginBase):
                 if(type =="mpld3_Line"){
                     var current_alpha = d.mpld3_elements[i].props.alpha;
                     var current_alpha_unsel = current_alpha * alpha_unsel;
-                    var current_alpha_over = current_alpha * alpha_over;
+                    var current_alpha_over = 1;
                     d3.select(d.mpld3_elements[i].path[0][0])
                         .style("stroke-opacity", is_over ? current_alpha_over :
                                                 (d.visible ? current_alpha : current_alpha_unsel))
@@ -201,7 +201,7 @@ class CustomizedInteractiveLegendPlugin(plugins.PluginBase):
                          (type=="mpld3_Markers")){
                     var current_alpha = d.mpld3_elements[i].props.alphas[0];
                     var current_alpha_unsel = current_alpha * alpha_unsel;
-                    var current_alpha_over = current_alpha * alpha_over;
+                    var current_alpha_over = 1;
                     if(type=="mpld3_Markers" && is_marker_activated) {
                         d3.selectAll(d.mpld3_elements[i].pathsobj[0])
                             .style("stroke-opacity", is_over ? current_alpha_over :
