@@ -1471,7 +1471,7 @@ def pdt_space_lightsource(request):
             ftp.close()
             conn.close()
             f.close()
-
+            request.session['source_type'] = "fixed"
             # lanuch pdt-space with a use process
             print('before')
             current_process = psutil.Process()
@@ -1508,6 +1508,7 @@ def pdt_space_lightsource(request):
             # sys.stdout.flush()  
             # time.sleep(3)
             client.close()
+            request.session['started'] = "false"
             return HttpResponseRedirect('/application/pdt_space_running')
         else:
             print(form.errors)
@@ -1532,7 +1533,62 @@ def pdt_space_running(request):
     if running_process.running:
         print("pdt-space running")
         sys.stdout.flush()
-        return render(request, "pdt_space_running.html")
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        ftp = client.open_sftp()
+
+        stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/eval_result.log > ~/copy_eval_result.log')
+        file=ftp.file('copy_eval_result.log', "r")
+        output = file.read().decode()
+        output_lines = output.splitlines()
+
+        progress = ''
+        status = ''
+        index = -1
+        
+        for line in output_lines:
+            if len(output_lines[index]) > 0:
+                if output_lines[index] == "Solving for objective":
+                    progress = '99.00%'
+                    status = 'Running optimization'
+                    break
+
+                if len(output_lines[index].split()) == 5 and output_lines[index].split()[0] == "Currently":
+                    request.session['started'] = "true"
+                    if progress == '':
+                        progress = '0.00%'
+                    else:
+                        progress = progress
+                    status = "Running simulation for light source number: " + output_lines[index].split()[-1]
+                    break
+
+                if output_lines[index].split()[0] == "Progress:" and progress == '':
+                    progress = output_lines[index].split()[-1]
+
+            index -= 1
+
+        if status == '' or request.session['started'] == "false":
+            status = "Preparing PDT-SPACE"
+            progress ="0.00%"
+        progress = progress[:-2]
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        print(status)
+        print(progress)
+        print(running_time)
+        print(request.session['source_type'])
+        sys.stdout.flush()
+        ftp.close()
+        client.close()
+        return render(request, "pdt_space_running.html", {'status':status, 'progress':progress, 'time':running_time})
 
     else:
         # client.close()
