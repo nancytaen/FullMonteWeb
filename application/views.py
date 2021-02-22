@@ -693,11 +693,14 @@ def signup(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False
+            user.is_active = True
             user.save()
             #username = form.cleaned_data.get('username')
             #raw_password = form.cleaned_data.get('password1')
             #user = authenticate(username=username, password=raw_password)
+
+            # disable activation email for now, until we find a better email server 
+            """
             current_site = get_current_site(request)
             mail_subject = 'Activate your FullMonte account.'
             message = render_to_string('acc_active_email.html', {
@@ -711,7 +714,9 @@ def signup(request):
                         mail_subject, message, to=[to_email]
             )
             email.send()
-            return render(request, "account_registration.html")
+            """
+            login(request, user)
+            return render(request, "activation_complete.html")
 
     else:
         form = SignUpForm()
