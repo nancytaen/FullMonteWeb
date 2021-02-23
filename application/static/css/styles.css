@@ -299,7 +299,7 @@ footer .copyright span {
 }
   
 .option-select:before {
-    content: 'Select an uploaded mesh file from databse: ';
+    content: 'Select an uploaded mesh file from database: ';
     color: black;
     font-weight: bold;
 }
