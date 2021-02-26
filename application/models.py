@@ -25,6 +25,7 @@ class tclInput(models.Model):
                              on_delete=models.CASCADE
                              )
     kernelType = models.CharField(max_length=255)
+    scoredVolumeRegionID = models.IntegerField(null=True, blank=True) # for region in VolumeCellInRegionPredicate
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     user = models.ForeignKey(user_model,
                              default = 0,

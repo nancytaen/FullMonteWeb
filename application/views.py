@@ -111,18 +111,21 @@ def fmSimulator(request):
     except:
         messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
         return HttpResponseRedirect('/application/aws')
-
+    #print(22222)
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        # print(11111)
-        # print(request.POST)
-        # print(request.FILES)
-        # sys.stdout.flush()
-        form = tclInputForm(request.POST, request.FILES)
+        #print(11111)
+        #print(request.POST)
+        #print(request.FILES)
+        sys.stdout.flush()
+        form = tclInputForm(data=request.POST, files=request.FILES)
 
         # check whether it's valid:
         if form.is_valid():
+            print(form.cleaned_data)
+            sys.stdout.flush()
             if request.POST['selected_existing_meshes'] != "":
+                print("This is 1")
                 # selected a mesh from database
                 mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
 
@@ -133,12 +136,15 @@ def fmSimulator(request):
                 obj.user = request.user
                 obj.save()
             else:
+                print("This is 2")
                 # uploaded a new mesh
                 # process cleaned data from formsets
                 obj = form.save(commit = False)
                 obj.user = request.user
                 obj.originalMeshFileName = obj.meshFile.name
                 obj.save()
+                print(obj)
+                sys.stdout.flush()
 
                 # create entry for the newly uploaded meshfile
                 new_mesh_entry = meshFiles()
@@ -152,13 +158,14 @@ def fmSimulator(request):
                 obj.save()
 
             request.session['kernelType'] = form.cleaned_data['kernelType']
+            request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
             return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
     else:
-        form = tclInputForm(request.GET or None)
+        form = tclInputForm(CUDA=request.session['GPU_instance'])
 
     uploaded_meshes = meshFiles.objects.filter(user=request.user)
 
@@ -369,7 +376,11 @@ def simulation_confirmation(request):
         ftp.putfo(tcl_file, './'+generated_tcl.script.name)
         ftp.close()
 
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
+        if request.session['GPU_instance']:
+            # add an argument to add nvidia runtime for gpu
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 | tee ~/sim_run.log" 
+        else:
+            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
         channel = client.get_transport().open_session()
         channel.exec_command(command)
         request.session['start_time'] = str(datetime.now(timezone.utc))
@@ -780,6 +791,8 @@ def aws(request):
         print(request)
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
+        print(request.POST.get("GPU_instance"))
+        sys.stdout.flush()
         if form.is_valid():
             info = meshFileInfo() # prepare new mesh entry
             info.user = request.user
@@ -790,6 +803,12 @@ def aws(request):
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
             request.session['tcpPort'] = str(form.cleaned_data['TCP_port'])
+            if request.POST.get("GPU_instance") == "True":
+                request.session['GPU_instance'] = True
+            else:
+                request.session['GPU_instance'] = False
+            print(request.session['GPU_instance'])
+            sys.stdout.flush()
             # handle_uploaded_file(request.FILES['pemfile'])
             uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
             pemfile = uploadedAWSPemFile.pemfile
@@ -821,6 +840,12 @@ def aws(request):
                 sftp.stat('docker_sims/FullMonteSW_setup.sh')
             except IOError:
                 need_setup = "true"
+
+            if request.session['GPU_instance']:
+                try:
+                    sftp.stat('docker_sims/CUDA_setup.sh')
+                except IOError:
+                    need_setup = "true"
             
             try:
                 sftp.stat('docker_pdt/pdt_space_setup.sh')
@@ -837,7 +862,7 @@ def aws(request):
                 for child in children:
                     print('Child pid is {}'.format(child.pid))
                 connections.close_all()
-                p = Process(target=run_aws_setup, args=(request, ))
+                p = Process(target=run_aws_setup, args=(request, request.session['GPU_instance'], ))
                 # print(p)
                 p.start()
                 print('after')
@@ -872,7 +897,7 @@ def aws(request):
     return render(request, "aws.html", context)
 
 # run AWS setup on the EC2 instance specified by user
-def run_aws_setup(request):
+def run_aws_setup(request, GPU_instance):
     time.sleep(3)
     text_obj = request.session['text_obj']
     # uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
@@ -901,6 +926,9 @@ def run_aws_setup(request):
     source_pdt_space = dir_path + '/scripts/pdt_space_setup.sh'
     source_pdt_space = str(source_pdt_space)
 
+    source_CUDA = dir_path + '/scripts/CUDA_setup.sh'
+    source_CUDA = str(source_CUDA)
+
     source_license = dir_path + '/license/mosek.lic'
     source_license = str(source_license)
 
@@ -911,11 +939,15 @@ def run_aws_setup(request):
     sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
     sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
     sftp.put(source_pdt_space, 'docker_pdt/pdt_space_setup.sh')
+    if GPU_instance:
+        sftp.put(source_CUDA, 'docker_sims/CUDA_setup.sh')
     # sftp.put(source_license, 'docker_pdt/mosek.lic')
     sftp.chmod('docker_sims/setup_aws.sh', 700)
     sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
     sftp.chmod('docker_sims/ParaView_setup.sh', 700)
     sftp.chmod('docker_pdt/pdt_space_setup.sh', 700)
+    if GPU_instance:
+        sftp.chmod('docker_sims/CUDA_setup.sh', 700)
 
     # create dummy script to run
     sftp.chdir('docker_sims/')
@@ -967,6 +999,16 @@ def run_aws_setup(request):
     for line in stderr_line:
         print (line)
     print('end setup pdt-space')
+
+    if GPU_instance:
+        command = "sudo ~/docker_sims/CUDA_setup.sh > ~/CUDA_setup.log"
+        stdin, stdout, stderr = client.exec_command(command)
+        stdout_line = stdout.readlines()
+        stderr_line = stderr.readlines()
+        for line in stdout_line:
+            print (line)
+        for line in stderr_line:
+            print (line)
 
     # alias = 'manual'
     conn = create_connection()
