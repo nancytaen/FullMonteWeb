@@ -55,13 +55,13 @@ class pdtForm(forms.Form):
     mesh = forms.ChoiceField(label="Mesh File", 
                             help_text="Available mesh files.")
     total_energy = forms.CharField( label='Total Energy', required = True, max_length=255, 
-                                    help_text="Unitless number used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 1e11.")
+                                    help_text="Used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 1e11.")
     num_packets = forms.CharField(label='Num Packets', required = True, max_length=255, 
                                     help_text="The number of photon packets to launch in the light simulator FullMonte. Typically it is around 1e5 to 1e6.")
     wave_length = forms.CharField(label='Wave Length', required = True, max_length=255, 
                                     help_text="Activation wavelength of the Photosensitizer.")
     tumor_weight = forms.CharField(label='Tumor Weight', required = True, max_length=255, 
-                                    help_text="An importance weight given to the tumor tissue to give it priority in the optimization.")
+                                    help_text="Weight of the tumor tissue.")
     
     # light_placement_file = forms.FileField(label='light_placement_file')
 
@@ -77,7 +77,7 @@ class pdtForm(forms.Form):
 class pdtPlaceFile(forms.Form):
     placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed','fixed'),
                                                                         ('virtual', 'virtual'),),
-                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed, please palce sources at fixed position in INIT_PLACEMENT_FILE. <br />If it is virtual and SOURCE_TYPE is point, the tool will fill the mesh with candidate point sources.")
+                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed, please palce sources at fixed position in placement file(below). <br />If it is virtual and source type is point, the tool will fill the mesh with candidate point sources.")
     source_type = forms.ChoiceField(label='Source Type', choices=(('point','point'),
                                                                         ('line', 'line'),),help_text="The type of light sources used. ")
     light_placement_file = forms.FileField(

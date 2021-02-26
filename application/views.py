@@ -1657,6 +1657,13 @@ def launch_pdt_space(request):
 def pdt_space_finish(request):
     # print("in fihish")
     sys.stdout.flush()
+    conn = create_connection()
+    conn.ensure_connection()
+    opfile = opFileInput.objects.filter(user = request.user).latest('id')
+    total_energy = opfile.total_energy
+    total_pack = opfile.num_packets
+    conn.close()
+    
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
@@ -1711,4 +1718,4 @@ def pdt_space_finish(request):
     sys.stdout.flush()
     ftp.close()
     client.close()
-    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt})
+    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt, 'total_energy':total_energy, 'total_pack':total_pack, 'num_source':num_source})
