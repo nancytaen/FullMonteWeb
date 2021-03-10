@@ -324,7 +324,7 @@ def fmSimulatorSource(request):
 def simulation_confirmation(request):
     class Optional_Tcl(forms.Form):
         tcl_file = forms.FileField(required=False)
-    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
     generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
     if request.method == 'POST':
         form = Optional_Tcl(request.POST, request.FILES)
@@ -332,31 +332,14 @@ def simulation_confirmation(request):
             # there is a file uploaded
             default_storage.delete(request.FILES['tcl_file'].name)
             default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file'])
-        
-        #mesh file
-        mesh_file = default_storage.open(mesh.meshFile.name)
-        tcl_file = default_storage.open(generated_tcl.script.name)
-        meshFilePath = mesh.meshFile.name
-
-        print("DNS is", request.session['DNS'])
-        uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
-        pemfile = uploadedAWSPemFile.pemfile
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        print('SSH into the instance: {}'.format(request.session['DNS']))
         
-        private_key_file = io.BytesIO()
-        for line in pemfile:
-            private_key_file.write(line)
-        private_key_file.seek(0)
-
-        byte_str = private_key_file.read()
-        text_obj = byte_str.decode('UTF-8')
+        text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        request.session['text_obj'] = text_obj
         try:
             client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
         except:
@@ -364,25 +347,12 @@ def simulation_confirmation(request):
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
             return HttpResponseRedirect('/application/aws')
 
-        ftp = client.open_sftp()
-
-        ftp.chdir('docker_sims/')
-        file=ftp.file('docker.sh', "w")
-        file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
-        file.flush()
-        ftp.chmod('docker.sh', 700)
-
-        ftp.putfo(mesh_file, './'+mesh.meshFile.name)
-        ftp.putfo(tcl_file, './'+generated_tcl.script.name)
-        ftp.close()
-
-        if request.session['GPU_instance']:
-            # add an argument to add nvidia runtime for gpu
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 | tee ~/sim_run.log" 
-        else:
-            command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
-        channel = client.get_transport().open_session()
-        channel.exec_command(command)
+        client.exec_command('> ~/sim_run.log')
+        client.close()
+        connections.close_all()
+        p = Process(target=transfer_files_and_run_simulation, args=(request, ))
+        p.start()
+        
         request.session['start_time'] = str(datetime.now(timezone.utc))
         request.session['started'] = "false"
         return HttpResponseRedirect('/application/running')
@@ -422,7 +392,7 @@ def simulation_confirmation(request):
     tcl_form = Optional_Tcl()
 
     context = {
-        'mesh_name': mesh.meshFile.name, 
+        'mesh_name': meshFilePath, 
         'materials': materials,
         'light_sources': light_sources,
         'tcl_script_name': generated_tcl.script.name,
@@ -430,6 +400,46 @@ def simulation_confirmation(request):
     }
 
     return render(request, 'simulation_confirmation.html', context)
+
+def transfer_files_and_run_simulation(request):
+    conn = create_connection()
+    conn.ensure_connection()
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    tcl_file = default_storage.open(generated_tcl.script.name)
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    ftp = client.open_sftp()
+
+    ftp.chdir('docker_sims/')
+    file=ftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+    file.flush()
+    ftp.chmod('docker.sh', 700)
+
+    # transfer mesh in chunks to save memory
+    with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+        with default_storage.open(meshFilePath) as mesh_file:
+            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                ftp_file.write(piece)
+
+    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+    ftp.close()
+
+    if request.session['GPU_instance']:
+        # add an argument to add nvidia runtime for gpu
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log" 
+    else:
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log"
+    client.exec_command(command)
+    client.close()
+    conn.close()
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
