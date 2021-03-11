@@ -24,9 +24,12 @@ class tclInput(models.Model):
                              null = True,
                              on_delete=models.CASCADE
                              )
+    meshUnit = models.CharField(max_length=255)
     kernelType = models.CharField(max_length=255)
     scoredVolumeRegionID = models.IntegerField(null=True, blank=True) # for region in VolumeCellInRegionPredicate
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
+    totalEnergy = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
+    energyUnit = models.CharField(max_length=255)
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,

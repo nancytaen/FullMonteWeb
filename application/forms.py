@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'kernelType', 'scoredVolumeRegionID', 'packetCount')
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'scoredVolumeRegionID', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -25,6 +25,7 @@ class tclInputForm(forms.ModelForm):
         initial = kwargs.get('initial', {})
         initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
+        initial['totalEnergy'] = 1000000
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
         if CUDA == True:
@@ -40,6 +41,12 @@ class tclInputForm(forms.ModelForm):
                          ('TetraInternalKernel','TetraInternalKernel'))
             self.fields['kernelType'].widget = forms.Select(choices=kernel_choices)
         self.fields['meshFile'].required = False
+        mesh_unit_choices = (('mm','milimeters (mm)'),
+                         ('cm','centimeters (cm)'))
+        self.fields['meshUnit'].widget = forms.RadioSelect(choices=mesh_unit_choices)
+        energy_unit_choices = (('J','Joules (J)'),
+                         ('W','Watts (W)'))
+        self.fields['energyUnit'].widget = forms.RadioSelect(choices=energy_unit_choices)
 
 class presetForm(forms.ModelForm):
     class Meta:

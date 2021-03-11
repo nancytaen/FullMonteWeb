@@ -157,9 +157,12 @@ def fmSimulator(request):
                 obj.meshFileID = new_mesh_entry
                 obj.save()
 
+            request.session['meshUnit'] = form.cleaned_data['meshUnit']
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
+            request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
+            request.session['energyUnit'] = form.cleaned_data['energyUnit']
 
             return HttpResponseRedirect('/application/simulator_material')
 
@@ -216,6 +219,7 @@ def fmSimulatorMaterial(request):
 
     context = {
         'formset1': formset1,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_material.html", context)
@@ -316,6 +320,7 @@ def fmSimulatorSource(request):
 
     context = {
         'formset2': formset2,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_source.html", context)
