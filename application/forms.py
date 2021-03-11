@@ -104,10 +104,7 @@ class lightSource(forms.Form):
                                                           ('PencilBeam','PencilBeam'),
                                                           ('Volume','Volume'),
                                                           ('Ball','Ball'),
-                                                          #('Line','Line'),
-                                                          #('Fiber','Fiber'),
-                                                          #('Tetraface','Tetraface'),
-                                                          #('Composite','Composite')
+                                                          ('SurfaceSourceBuilder','SurfaceSourceBuilder'),
                                                           ))
     # for Point
     xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
@@ -125,7 +122,15 @@ class lightSource(forms.Form):
     # for Ball (center uses xyz from point)
     rad = forms.FloatField(label='Radius', required=False)
 
-    # for Line
+    # for SurfaceSourceBuilder
+    volumeRegion = forms.IntegerField(label='volumeRegion', required=False, initial=1)
+    emitHemiSphere = forms.ChoiceField(label='emitHemiSphere', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='false')
+    hemiSphereEmitDistribution = forms.ChoiceField(label='hemiSphereEmitDistribution', required=False,
+        choices=(('UNIFORM', 'UNIFORM'), ('CUSTOM', 'CUSTOM'), ('LAMBERT', 'LAMBERT')), initial='LAMBERT')
+    numericalAperture = forms.FloatField(label='numericalAperture', required=False)
+    checkDirection = forms.ChoiceField(label='checkDirection', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='false')
 
 
     power = forms.IntegerField(label='Power', required=False, initial=1)

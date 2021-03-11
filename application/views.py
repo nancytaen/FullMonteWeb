@@ -291,6 +291,11 @@ def fmSimulatorSource(request):
             request.session['vElement'] = []
             request.session['rad'] = []
             request.session['power'] = []
+            request.session['volumeRegion'] = []
+            request.session['emitHemiSphere'] = []
+            request.session['hemiSphereEmitDistribution'] = []
+            request.session['numericalAperture'] = []
+            request.session['checkDirection'] = []
 
             for form in formset2:
                 print(form.cleaned_data)
@@ -304,6 +309,11 @@ def fmSimulatorSource(request):
                 request.session['vElement'].append(form.cleaned_data['vElement'])
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
+                request.session['volumeRegion'].append(form.cleaned_data['volumeRegion'])
+                request.session['emitHemiSphere'].append(form.cleaned_data['emitHemiSphere'])
+                request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
+                request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
+                request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
             
             mesh = tclInput.objects.filter(user = request.user).latest('id')
 
@@ -387,6 +397,11 @@ def simulation_confirmation(request):
         temp.vElement = request.session['vElement'][i]
         temp.rad = request.session['rad'][i]
         temp.power = request.session['power'][i]
+        temp.volumeRegion = request.session['volumeRegion'][i]
+        temp.emitHemiSphere = request.session['emitHemiSphere'][i]
+        temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
+        temp.numericalAperture = request.session['numericalAperture'][i]
+        temp.checkDirection = request.session['checkDirection'][i]
         light_sources.append(temp)
     
     tcl_form = Optional_Tcl()

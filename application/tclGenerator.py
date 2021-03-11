@@ -16,7 +16,7 @@ def tclGenerator(session, mesh, current_user):
     script_name = new_script.script.name
 
     #initialize session inputs
-    indent = '     '
+    indent = '    '
     kernelType = session['kernelType']
     scoredVolumeRegionID = session['scoredVolumeRegionID']
     packetCount = session['packetCount']
@@ -35,6 +35,11 @@ def tclGenerator(session, mesh, current_user):
     vElement = session['vElement']
     rad = session['rad']
     power = session['power']
+    volumeRegion = session['volumeRegion']
+    emitHemiSphere = session['emitHemiSphere']
+    hemiSphereEmitDistribution = session['hemiSphereEmitDistribution']
+    numericalAperture = session['numericalAperture']
+    checkDirection = session['checkDirection']
     
     #initialize path for copying tcl template
     dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -100,7 +105,7 @@ def tclGenerator(session, mesh, current_user):
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z, xD, yD, zD, vE, ra, po in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power):
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
         if st == 'Point':
             f.write(st + ' P' + str(index) + '\n')
             line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
@@ -128,18 +133,62 @@ def tclGenerator(session, mesh, current_user):
             line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
+        if st == 'SurfaceSourceBuilder':
+            f.write('VolumeCellInRegionPredicate SSBvol' + str(index) + '\n')
+            f.write('SSBvol' + str(index) +' setRegion ' + str(vr) +'\n\n')
+
+            f.write(st + ' SSB' + str(index) + '\n')
+            line = 'SSB' + str(index) + ' mesh $M\n'
+            line2 = 'SSB' + str(index) + ' setRegion SSBvol' + str(index) + '\n'
+            line3 = 'SSB' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+
+            line4 = 'SSB' + str(index) + ' emitHemiSphere ' + str(ehs) + '\n'
+            f.write(indent + line4)
+            if ehs == "true":
+                line5 = 'SSB' + str(index) + ' hemiSphereEmitDistribution \"' + str(hsed) + '\"\n'
+                f.write(indent + line5)
+                if hsed == "CUSTOM":
+                    line6 = 'SSB' + str(index) + ' numericalAperture ' + str(na) + '\n'
+                    f.write(indent + line6)
+            if cd == "true":
+                line7 = 'SSB' + str(index) + ' checkDirection 1\n'
+                line8 = 'SSB' + str(index) + ' emitDirection \"' + str(xD)+ ' ' + str(yD) + ' ' + str(zD) + '\"\n'
+                f.write(indent + line7)
+                f.write(indent + line8)
+            else:
+                line7 = 'SSB' + str(index) + ' checkDirection 0\n'
+                f.write(indent + line7)
+            f.write(indent + 'SSB' + str(index) + ' update\n')
+            f.write(indent + 'set C' + str(index) + ' [SSB' + str(index) + ' output]\n\n')
         index += 1
 
     #append kernel to tcl script
     f.write(kernelType + ' k\n')
     f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
-    f.write(indent + 'k source P1\n')
+    # f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
     f.write(indent + 'k materials MS\n')
     if kernelType == "TetraInternalKernel":
-        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n\n')
+        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n')
     elif kernelType == "TetraCUDAInternalKernel":
-        f.write(indent + 'k addScoringRegionBoundary vol\n\n')
+        f.write(indent + 'k addScoringRegionBoundary vol\n')
+
+    index = 1
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
+        if st == 'Point':
+            f.write(indent + 'k source P' + str(index) + '\n\n')
+        if st == 'PencilBeam':
+            f.write(indent + 'k source PB' + str(index) + '\n\n')
+        if st == 'Volume':
+            f.write(indent + 'k source V' + str(index) + '\n\n')
+        if st == 'Ball':
+            f.write(indent + 'k source B' + str(index) + '\n\n')
+        if st == 'SurfaceSourceBuilder':
+            f.write(indent + 'k source $C' + str(index) + '\n\n')
+        index += 1
 
     #run and wait
     f.write(indent + 'k startAsync\n')

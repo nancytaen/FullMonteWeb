@@ -41,6 +41,21 @@
             <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
             <h6>Radius: {{ item.rad }}</h6>
             <h6>Power: {{ item.power }}</h6>
+        {% elif item.sourceType == "SurfaceSourceBuilder" %}
+            <h6>Source Type: {{ item.sourceType }}</h6>
+            <h6>Volume Region ID: {{ item.volumeRegion }}</h6>
+            <h6>Emit in HemiSphere: {{ item.emitHemiSphere }}</h6>
+            {% if item.emitHemiSphere == "true" %}
+                <h6>HemiSphere Emit Distribution: {{ item.hemiSphereEmitDistribution }}</h6>
+                {% if item.hemiSphereEmitDistribution == "CUSTOM" %}
+                    <h6>Numerical Aperture: {{ item.numericalAperture }}</h6>
+                {% endif %}
+            {% endif %}
+            <h6>Check Direction: {{ item.checkDirection }}</h6>
+            {% if item.checkDirection == "true" %}
+                <h6>Emit Direction: x={{ item.xDir }}, y={{ item.yDir }}, z={{ item.zDir }}</h6>
+            {% endif %}
+            <h6>Power: {{ item.power }}</h6>
         {% endif %}
     {% endfor %}
     <br/>
@@ -102,7 +117,7 @@
                 }
             }
         
-            return true;
+            return confirm('This will run the Full Monte Simulator and will take some time. Please wait.'); 
     }
 </script>
 
