@@ -5,11 +5,13 @@ from .models import *
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
+import sys
 
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'kernelType', 'packetCount')
+        fields = ('meshFile', 'kernelType', 'scoredVolumeRegionID', 'packetCount')
+        """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
                          ('TetraVolumeKernel','TetraVolumeKernel'),
@@ -17,12 +19,26 @@ class tclInputForm(forms.ModelForm):
         widgets = {
             'kernelType': forms.Select(choices=kernel_choices),
         }
+        """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, CUDA=False, *args, **kwargs):
         initial = kwargs.get('initial', {})
+        initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
+        if CUDA == True:
+            CUDA_kernel_choices = (('TetraCUDASVKernel','TetraCUDASVKernel'),
+                         ('TetraCUDASurfaceKernel','TetraCUDASurfaceKernel'),
+                         ('TetraCUDAVolumeKernel','TetraCUDAVolumeKernel'),
+                         ('TetraCUDAInternalKernel','TetraCUDAInternalKernel'))
+            self.fields['kernelType'].widget = forms.Select(choices=CUDA_kernel_choices)
+        else:
+            kernel_choices = (('TetraSVKernel','TetraSVKernel'),
+                         ('TetraSurfaceKernel','TetraSurfaceKernel'),
+                         ('TetraVolumeKernel','TetraVolumeKernel'),
+                         ('TetraInternalKernel','TetraInternalKernel'))
+            self.fields['kernelType'].widget = forms.Select(choices=kernel_choices)
         self.fields['meshFile'].required = False
 
 class presetForm(forms.ModelForm):

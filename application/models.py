@@ -25,6 +25,7 @@ class tclInput(models.Model):
                              on_delete=models.CASCADE
                              )
     kernelType = models.CharField(max_length=255)
+    scoredVolumeRegionID = models.IntegerField(null=True, blank=True) # for region in VolumeCellInRegionPredicate
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     user = models.ForeignKey(user_model,
                              default = 0,
@@ -80,7 +81,8 @@ class simulationHistory(models.Model):
                              )
     output_vtk_path = models.FileField(storage=PublicMediaStorage())
     output_txt_path = models.FileField(storage=PublicMediaStorage())
-    output_dvh_path = models.FileField(storage=PublicMediaStorage())
+    output_dvh_csv_path = models.FileField(storage=PublicMediaStorage())
+    output_dvh_fig_path = models.FileField(storage=PublicMediaStorage())
     simulation_time = models.DateTimeField(auto_now=True)
 
 class tclScript(models.Model):

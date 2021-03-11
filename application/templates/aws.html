@@ -34,6 +34,16 @@
                     </tr>
                 </table>
             </div>
+            <div class="d-flex justify-content-center">
+                <input name="GPU_instance" id='GPU_instance' type="checkbox" value="True" checked>
+                <label for="GPU_instance">This is a GPU instance&nbsp</label>
+                <!-- https://stackoverflow.com/questions/32153973/how-to-display-popup-on-mouse-over-in-html-using-js-and-css -->
+                <p id="p1" class="ppup"><a class="keyword" id="k1" href="glossary.xhtml#g1" onclick="return false;">What is this?</a>
+                    <span>Please only check this checkbox if the above AWS computing instance contains an Nvidia GPU. 
+                    When checked, FullMonte will use GPU to accelerate its computation.
+                    For more information regarding instance types, please refer to 
+                    <a href="https://aws.amazon.com/ec2/instance-types/" target="_blank">https://aws.amazon.com/ec2/instance-types/</a>.</span></p>
+            </div>
             
             <p><br/><input type="submit" value="Next"></p>
 
@@ -75,6 +85,18 @@
         
             return true;
     }
+</script>
+
+<script>
+    $(document).ready(function(){
+        var checkboxes = document.getElementsByTagName('input');
+
+        for (var i=0; i<checkboxes.length; i++)  {
+            if (checkboxes[i].type == 'checkbox')   {
+                checkboxes[i].checked = false;
+            }
+        }
+                    });
 </script>
 
 

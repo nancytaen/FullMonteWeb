@@ -5,6 +5,8 @@
     <h1>FullMonte Simulator</h1>
 
     <div class="center_container">
+        <p>The material properties must be specified in the same order as they occur in the mesh.</p>
+        <p>Please remember that the optical properties must be in unites matching that of the mesh.</p>
         <button id='advanced'>Developer Options</button>
         <br>
 
@@ -45,7 +47,7 @@
                             <td>
                                 {{ form.scatteringCoeff.errors }}
                                 {{ form.scatteringCoeff }}
-                                &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                                &nbsp; µ<sub>s</sub>
                             </td>
                         </tr>
                         <tr>
@@ -53,7 +55,7 @@
                             <td>
                                 {{ form.absorptionCoeff.errors }}
                                 {{ form.absorptionCoeff }}
-                                &nbsp; µ<sub>a</sub> (cm<sup>-1</sup>)
+                                &nbsp; µ<sub>a</sub>
                             </td>
                         </tr>
                         <tr>
@@ -102,7 +104,7 @@
                             <td>
                                 {{ formset1.empty_form.scatteringCoeff.errors }}
                                 {{ formset1.empty_form.scatteringCoeff }}
-                                &nbsp; µ<sub>s</sub> (cm<sup>-1</sup>)
+                                &nbsp; µ<sub>s</sub>
                             </td>
                         </tr>
                         <tr>
@@ -110,7 +112,7 @@
                             <td>
                                 {{ formset1.empty_form.absorptionCoeff.errors }}
                                 {{ formset1.empty_form.absorptionCoeff }}
-                                &nbsp; µ<sub>a</sub> (cm<sup>-1</sup>)
+                                &nbsp; µ<sub>a</sub>
                             </td>
                         </tr>
                         <tr>

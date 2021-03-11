@@ -99,9 +99,11 @@ def please_login(request):
 
 # FullMonte Simulator start page
 def fmSimulator(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    # Check if EC2 instance is set up in the current session
     try:
         dns = request.session['DNS']
         text_obj = request.session['text_obj']
@@ -109,18 +111,21 @@ def fmSimulator(request):
     except:
         messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
         return HttpResponseRedirect('/application/aws')
-
+    #print(22222)
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        # print(11111)
-        # print(request.POST)
-        # print(request.FILES)
-        # sys.stdout.flush()
-        form = tclInputForm(request.POST, request.FILES)
+        #print(11111)
+        #print(request.POST)
+        #print(request.FILES)
+        sys.stdout.flush()
+        form = tclInputForm(data=request.POST, files=request.FILES)
 
         # check whether it's valid:
         if form.is_valid():
+            print(form.cleaned_data)
+            sys.stdout.flush()
             if request.POST['selected_existing_meshes'] != "":
+                print("This is 1")
                 # selected a mesh from database
                 mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
 
@@ -131,12 +136,15 @@ def fmSimulator(request):
                 obj.user = request.user
                 obj.save()
             else:
+                print("This is 2")
                 # uploaded a new mesh
                 # process cleaned data from formsets
                 obj = form.save(commit = False)
                 obj.user = request.user
                 obj.originalMeshFileName = obj.meshFile.name
                 obj.save()
+                print(obj)
+                sys.stdout.flush()
 
                 # create entry for the newly uploaded meshfile
                 new_mesh_entry = meshFiles()
@@ -150,13 +158,14 @@ def fmSimulator(request):
                 obj.save()
 
             request.session['kernelType'] = form.cleaned_data['kernelType']
+            request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
 
             return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
     else:
-        form = tclInputForm(request.GET or None)
+        form = tclInputForm(CUDA=request.session['GPU_instance'])
 
     uploaded_meshes = meshFiles.objects.filter(user=request.user)
 
@@ -171,6 +180,7 @@ def fmSimulator(request):
 
 # FullMonte Simulator material page
 def fmSimulatorMaterial(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
@@ -259,8 +269,10 @@ def createPresetMaterial(request):
 
 # FullMonte Simulator light source page
 def fmSimulatorSource(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
@@ -308,10 +320,11 @@ def fmSimulatorSource(request):
 
     return render(request, "simulator_source.html", context)
 
+# FullMonte Simulator input confirmation page
 def simulation_confirmation(request):
     class Optional_Tcl(forms.Form):
         tcl_file = forms.FileField(required=False)
-    mesh = tclInput.objects.filter(user = request.user).latest('id')
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
     generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
     if request.method == 'POST':
         form = Optional_Tcl(request.POST, request.FILES)
@@ -319,47 +332,27 @@ def simulation_confirmation(request):
             # there is a file uploaded
             default_storage.delete(request.FILES['tcl_file'].name)
             default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file'])
-        
-        #mesh file
-        mesh_file = default_storage.open(mesh.meshFile.name)
-        tcl_file = default_storage.open(generated_tcl.script.name)
-        meshFilePath = mesh.meshFile.name
-
-        print("DNS is", request.session['DNS'])
-        uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
-        pemfile = uploadedAWSPemFile.pemfile
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        print('SSH into the instance: {}'.format(request.session['DNS']))
         
-        private_key_file = io.BytesIO()
-        for line in pemfile:
-            private_key_file.write(line)
-        private_key_file.seek(0)
-
-        byte_str = private_key_file.read()
-        text_obj = byte_str.decode('UTF-8')
+        text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        request.session['text_obj'] = text_obj
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
-        ftp = client.open_sftp()
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
 
-        ftp.chdir('docker_sims/')
-        file=ftp.file('docker.sh', "w")
-        file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
-        file.flush()
-        ftp.chmod('docker.sh', 700)
-
-        ftp.putfo(mesh_file, './'+mesh.meshFile.name)
-        ftp.putfo(tcl_file, './'+generated_tcl.script.name)
-        ftp.close()
-
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh | tee ~/sim_run.log"
-        channel = client.get_transport().open_session()
-        channel.exec_command(command)
+        client.exec_command('> ~/sim_run.log')
+        client.close()
+        connections.close_all()
+        p = Process(target=transfer_files_and_run_simulation, args=(request, ))
+        p.start()
+        
         request.session['start_time'] = str(datetime.now(timezone.utc))
         request.session['started'] = "false"
         return HttpResponseRedirect('/application/running')
@@ -399,7 +392,7 @@ def simulation_confirmation(request):
     tcl_form = Optional_Tcl()
 
     context = {
-        'mesh_name': mesh.meshFile.name, 
+        'mesh_name': meshFilePath, 
         'materials': materials,
         'light_sources': light_sources,
         'tcl_script_name': generated_tcl.script.name,
@@ -407,6 +400,46 @@ def simulation_confirmation(request):
     }
 
     return render(request, 'simulation_confirmation.html', context)
+
+def transfer_files_and_run_simulation(request):
+    conn = create_connection()
+    conn.ensure_connection()
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    tcl_file = default_storage.open(generated_tcl.script.name)
+
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    ftp = client.open_sftp()
+
+    ftp.chdir('docker_sims/')
+    file=ftp.file('docker.sh', "w")
+    file.write('#!/bin/bash\ncd sims/\ntclmonte.sh ./'+generated_tcl.script.name)
+    file.flush()
+    ftp.chmod('docker.sh', 700)
+
+    # transfer mesh in chunks to save memory
+    with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+        with default_storage.open(meshFilePath) as mesh_file:
+            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                ftp_file.write(piece)
+
+    ftp.putfo(tcl_file, './'+generated_tcl.script.name)
+    ftp.close()
+
+    if request.session['GPU_instance']:
+        # add an argument to add nvidia runtime for gpu
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log" 
+    else:
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log"
+    client.exec_command(command)
+    client.close()
+    conn.close()
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
@@ -429,10 +462,6 @@ def visualization_mesh_upload(request):
             obj.save()
             uploadedOutputMeshFile = visualizeMesh.objects.filter(user = request.user).latest('id')
             outputMeshFileName = uploadedOutputMeshFile.outputMeshFile.name
-            info = meshFileInfo.objects.filter(user = request.user).latest('id')
-            info.fileName = outputMeshFileName
-            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
-            info.save()
             outputMeshFile = default_storage.open(outputMeshFileName)
             print(outputMeshFileName)
 
@@ -442,13 +471,24 @@ def visualization_mesh_upload(request):
             client = paramiko.SSHClient()
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
 
             sftp = client.open_sftp()
             sftp.chdir('docker_sims/')
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
             sftp.close()
             client.close()
+            
+            # save mesh file info for visualization
+            info = meshFileInfo.objects.filter(user = request.user).latest('id')
+            info.fileName = outputMeshFileName
+            info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.save()
 
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
@@ -463,6 +503,7 @@ def visualization_mesh_upload(request):
 
 # FullMonte output Visualization - generate DVH
 def fmVisualization(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
@@ -480,13 +521,19 @@ def fmVisualization(request):
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # check if file exists in the remote server
+    # first, try to connect to remote server
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(dns, username='ubuntu', pkey=privkey)
+    try:
+        client.connect(dns, username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
+    # check if file exists in the remote server
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
@@ -564,9 +611,10 @@ def displayVisualization(request):
     maxDose = info.maxFluence
 
     # generate ParaView Visualization URL
+    # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
     dns = request.session['DNS']
     tcpPort = request.session['tcpPort']
-    visURL = dns + ":" + tcpPort
+    visURL = "http://" + dns + ":" + tcpPort + "/"
 
     # render 3D visualizer
     text_obj = request.session['text_obj']
@@ -584,13 +632,26 @@ def displayVisualization(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
 
         ftp = client.open_sftp()
         mesh_name = outputMeshFileName[:-8]
         output_csv_name = mesh_name + '.dvh.csv'
-        output_csv_file = ftp.file('docker_sims/' + output_csv_name)
-        history.output_dvh_path.save(output_csv_name, output_csv_file)
+        output_png_name = mesh_name + '.dvh.png'
+        
+        try:
+            output_csv_file = ftp.file('docker_sims/' + output_csv_name)
+            output_png_file = ftp.file('docker_sims/' + output_png_name)
+            history.output_dvh_csv_path.save(output_csv_name, output_csv_file)
+            history.output_dvh_fig_path.save(output_png_name, output_png_file)
+        except:
+            print("Cannot save history for DVH data because file does not exist")
+
         ftp.close()
         client.close()
         history.save()
@@ -612,8 +673,10 @@ def kernelInfo(request):
 
 # page for downloading preset values
 def downloadPreset(request):    
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
     presetObjects = preset.objects.all()
 
     # if this is a POST request we need to process the form data
@@ -651,11 +714,14 @@ def signup(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False
+            user.is_active = True
             user.save()
             #username = form.cleaned_data.get('username')
             #raw_password = form.cleaned_data.get('password1')
             #user = authenticate(username=username, password=raw_password)
+
+            # disable activation email for now, until we find a better email server 
+            """
             current_site = get_current_site(request)
             mail_subject = 'Activate your FullMonte account.'
             message = render_to_string('acc_active_email.html', {
@@ -669,7 +735,9 @@ def signup(request):
                         mail_subject, message, to=[to_email]
             )
             email.send()
-            return render(request, "account_registration.html")
+            """
+            login(request, user)
+            return render(request, "activation_complete.html")
 
     else:
         form = SignUpForm()
@@ -693,14 +761,18 @@ def activate(request, uidb64, token):
 
 # user acount info page
 def account(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
     return render(request, "account.html")
 
 # user account changing passwords page
 def change_password(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+
+    # if this is a POST request we need to process the form data
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -725,13 +797,17 @@ def heroku_timeout(request):
 
 # AWS EC2 instance setup page
 def aws(request):
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
     
+    # if this is a POST request we need to process the form data
     if request.method == 'POST':
         print(request)
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
+        print(request.POST.get("GPU_instance"))
+        sys.stdout.flush()
         if form.is_valid():
             info = meshFileInfo() # prepare new mesh entry
             info.user = request.user
@@ -742,6 +818,12 @@ def aws(request):
             obj.save()
             request.session['DNS'] = form.cleaned_data['DNS']
             request.session['tcpPort'] = str(form.cleaned_data['TCP_port'])
+            if request.POST.get("GPU_instance") == "True":
+                request.session['GPU_instance'] = True
+            else:
+                request.session['GPU_instance'] = False
+            print(request.session['GPU_instance'])
+            sys.stdout.flush()
             # handle_uploaded_file(request.FILES['pemfile'])
             uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
             pemfile = uploadedAWSPemFile.pemfile
@@ -759,7 +841,13 @@ def aws(request):
             
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             request.session['text_obj'] = text_obj
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
+            
             sftp = client.open_sftp()
             need_setup = "false"
 
@@ -767,6 +855,12 @@ def aws(request):
                 sftp.stat('docker_sims/FullMonteSW_setup.sh')
             except IOError:
                 need_setup = "true"
+
+            if request.session['GPU_instance']:
+                try:
+                    sftp.stat('docker_sims/CUDA_setup.sh')
+                except IOError:
+                    need_setup = "true"
             
             try:
                 sftp.stat('docker_pdt/pdt_space_setup.sh')
@@ -783,7 +877,7 @@ def aws(request):
                 for child in children:
                     print('Child pid is {}'.format(child.pid))
                 connections.close_all()
-                p = Process(target=run_aws_setup, args=(request, ))
+                p = Process(target=run_aws_setup, args=(request, request.session['GPU_instance'], ))
                 # print(p)
                 p.start()
                 print('after')
@@ -818,7 +912,7 @@ def aws(request):
     return render(request, "aws.html", context)
 
 # run AWS setup on the EC2 instance specified by user
-def run_aws_setup(request):
+def run_aws_setup(request, GPU_instance):
     time.sleep(3)
     text_obj = request.session['text_obj']
     # uploadedAWSPemFile = awsFile.objects.filter(user = request.user).latest('id')
@@ -826,7 +920,12 @@ def run_aws_setup(request):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     dir_path = os.path.dirname(os.path.abspath(__file__))
     #tc file
@@ -842,6 +941,9 @@ def run_aws_setup(request):
     source_pdt_space = dir_path + '/scripts/pdt_space_setup.sh'
     source_pdt_space = str(source_pdt_space)
 
+    source_CUDA = dir_path + '/scripts/CUDA_setup.sh'
+    source_CUDA = str(source_CUDA)
+
     source_license = dir_path + '/license/mosek.lic'
     source_license = str(source_license)
 
@@ -852,11 +954,15 @@ def run_aws_setup(request):
     sftp.put(source_fullmonte, 'docker_sims/FullMonteSW_setup.sh')
     sftp.put(source_paraview, 'docker_sims/ParaView_setup.sh')
     sftp.put(source_pdt_space, 'docker_pdt/pdt_space_setup.sh')
+    if GPU_instance:
+        sftp.put(source_CUDA, 'docker_sims/CUDA_setup.sh')
     # sftp.put(source_license, 'docker_pdt/mosek.lic')
     sftp.chmod('docker_sims/setup_aws.sh', 700)
     sftp.chmod('docker_sims/FullMonteSW_setup.sh', 700)
     sftp.chmod('docker_sims/ParaView_setup.sh', 700)
     sftp.chmod('docker_pdt/pdt_space_setup.sh', 700)
+    if GPU_instance:
+        sftp.chmod('docker_sims/CUDA_setup.sh', 700)
 
     # create dummy script to run
     sftp.chdir('docker_sims/')
@@ -909,6 +1015,16 @@ def run_aws_setup(request):
         print (line)
     print('end setup pdt-space')
 
+    if GPU_instance:
+        command = "sudo ~/docker_sims/CUDA_setup.sh > ~/CUDA_setup.log"
+        stdin, stdout, stderr = client.exec_command(command)
+        stdout_line = stdout.readlines()
+        stderr_line = stderr.readlines()
+        for line in stdout_line:
+            print (line)
+        for line in stderr_line:
+            print (line)
+
     # alias = 'manual'
     conn = create_connection()
     conn.ensure_connection()
@@ -929,7 +1045,13 @@ def AWSsetup(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+
     if running_process.running:
         
         print("get current progress")
@@ -964,21 +1086,21 @@ def handle_uploaded_file(f):
         print (line)
 
 # execute FullMonte simulation
-def exec_simulate(request, channel, command):
+# def exec_simulate(request, channel, command):
     
-    print("start running " + command)
-    sys.stdout.flush()
-    channel.exec_command(command)
-    while True:
-        if channel.exit_status_ready():
-            break
-        rl, wl, xl = select.select([channel],[],[],0.0)
-        if len(rl) > 0:
-            print(channel.recv(1024))
-            sys.stdout.flush()
-    print("finish running")
-    sys.stdout.flush()
-    return  HttpResponseRedirect('/application/simulation_fail')
+#     print("start running " + command)
+#     sys.stdout.flush()
+#     channel.exec_command(command)
+#     while True:
+#         if channel.exit_status_ready():
+#             break
+#         rl, wl, xl = select.select([channel],[],[],0.0)
+#         if len(rl) > 0:
+#             print(channel.recv(1024))
+#             sys.stdout.flush()
+#     print("finish running")
+#     sys.stdout.flush()
+#     return  HttpResponseRedirect('/application/simulation_fail')
 
 # simulation progress page
 def running(request):
@@ -987,7 +1109,12 @@ def running(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/sim_run.log > ~/cleaned.log')
     stdin, stdout, stderr = client.exec_command('sudo tail -1 ~/cleaned.log')
@@ -1040,32 +1167,32 @@ def running(request):
         return render(request, "running.html", {'time':running_time, 'progress':progress})
 
 # page for failed simulation
-def simulation_fail(request):
-    return render(request, "simulation_fail.html")
+# def simulation_fail(request):
+#     return render(request, "simulation_fail.html")
 
-# page for successfully finished simulation
+# Response for finished simulation
 def simulation_finish(request):
-    # save output mesh file info
-    # using tcl script name to identify as meshes can be reused
-    outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
-    outputMeshFileName = outputMeshFile.script.name
-    info = meshFileInfo.objects.filter(user = request.user).latest('id')
-    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
-    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
-    info.save()
-
     # display simulation outputs
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     ftp = client.open_sftp()
     # ftp.chdir('docker_sims/')
     file=ftp.file('sim_run.log', "r")
     output = file.read().decode()
+    if '[error]' in output:
+        simulation_failed = True
+    else:
+        simulation_failed = False
     html_string=''
     # add <p> to output string since html does not support '\n'
     for e in output.splitlines():
@@ -1077,11 +1204,28 @@ def simulation_finish(request):
     ftp.close()
     client.close()
 
+    # save output mesh file info
+    # using tcl script name to identify as meshes can be reused
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+
+    # if there is error, clear output mesh file info so user cannot use visualizer; go simulation failed page
+    if(simulation_failed):
+        info.fileName = ""
+        info.dvhFig = ""
+        info.save()
+        return render(request, "simulation_fail.html", {'output':html_string})
+    
+    # otherwise, simulation completed
+    # save output mesh info
+    outputMeshFile = tclScript.objects.filter(user = request.user).latest('id')
+    outputMeshFileName = outputMeshFile.script.name
+    info.fileName = outputMeshFileName[:-4] + ".out.vtk"
+    info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.save()
+    # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))
     p.start()
-    # populate_simulation_history(request)
-
     return render(request, "simulation_finish.html", {'output':html_string})
 
 def populate_simulation_history(request):
@@ -1093,7 +1237,12 @@ def populate_simulation_history(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     ftp = client.open_sftp()
     # store output files to S3, and populate simulation history
@@ -1112,23 +1261,28 @@ def populate_simulation_history(request):
     output_vtk_name = tcl_name[:-4] + '.out.vtk'
     output_txt_name = tcl_name[:-4] + '.phi_v.txt'
 
-    output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
-    # default_storage.save(output_vtk_name, output_vtk_file)
-    output_txt_file = ftp.file('docker_sims/' + output_txt_name)
-    history.output_vtk_path.save(output_vtk_name, output_vtk_file)
-    history.output_txt_path.save(output_txt_name, output_txt_file)
-    # default_storage.save(output_txt_name, output_txt_file)
+    try:
+        output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
+        # default_storage.save(output_vtk_name, output_vtk_file)
+        output_txt_file = ftp.file('docker_sims/' + output_txt_name)
+        history.output_vtk_path.save(output_vtk_name, output_vtk_file)
+        history.output_txt_path.save(output_txt_name, output_txt_file)
+        # default_storage.save(output_txt_name, output_txt_file)
+    except:
+        print("Cannot save history for simulation output because file does not exist")
     
     ftp.close()
     client.close()
-    # TODO: populate dvh path
-    # history.output_dvh_path = ''
     history.save()
 
     conn.close()
 
 def simulation_history(request):
-    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time')
+    # First check if user is logged-in
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
+    history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time') # order by time (most present at top)
     historySize = history.count()
     if historySize > 0:
         return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
@@ -1148,6 +1302,7 @@ def pdt_space(request):
     print("in pdt_space")
     sys.stdout.flush()
 
+    # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
 
@@ -1213,7 +1368,12 @@ def search_pdt_space(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     foo_list = []
     addr_list = []
@@ -1287,7 +1447,12 @@ def pdt_space_license(request):
             text_obj = request.session['text_obj']
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
             sftp = client.open_sftp()
             sftp.putfo(request.FILES['mosek_license'], 'docker_pdt/mosek.lic')
             sftp.close()
@@ -1301,7 +1466,12 @@ def pdt_space_license(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
         sftp = client.open_sftp()
         try:
             sftp.stat('docker_pdt/mosek.lic')
@@ -1459,7 +1629,12 @@ def pdt_space_lightsource(request):
             text_obj = request.session['text_obj']
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
             ftp = client.open_sftp()
             ftp.chdir('docker_pdt/')
             file=ftp.file('docker.sh', "w")
@@ -1632,7 +1807,12 @@ def launch_pdt_space(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
     stdin, stdout, stderr = client.exec_command(command)
@@ -1669,7 +1849,12 @@ def pdt_space_finish(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
     
     # pdt-space output in ~/eval_result.log
     ftp = client.open_sftp()

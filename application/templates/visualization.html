@@ -19,9 +19,15 @@
 </div>
 <div class="graph_container">
     <h2>Cumulative Dose-Volume Histogram</h2>
-    <p>The Maximum fluence received is {{maxDose|safe }}.</p>
-    <p>Click on the legend to toggle the data on and off.</p>
+    <p>The maximum fluence received is {{maxDose|safe }}.</p>
     <p> {{ dvhFig|safe }} </p>
+</div>
+<div class="txt_container">
+    <p>Click <img src="{% static 'images/home.png' %}" alt="" /> to reset the plot.</p>
+    <p>Check <img src="{% static 'images/move.png' %}" alt="" /> to move the plot (mouse drag) or zoom in/out (mouse scroll).</p>
+    <p>Check <img src="{% static 'images/zoom.png' %}" alt="" /> to box-zoom.</p>
+    <p>Check <img src="{% static 'images/brush.png' %}" alt="" /> to toggle markers on/off.</p>
+    <p>Click on the legend items to toggle each region's data on/off.</p>
 </div>
 
 {% endblock %}

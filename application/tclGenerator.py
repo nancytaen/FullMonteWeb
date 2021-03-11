@@ -18,6 +18,7 @@ def tclGenerator(session, mesh, current_user):
     #initialize session inputs
     indent = '     '
     kernelType = session['kernelType']
+    scoredVolumeRegionID = session['scoredVolumeRegionID']
     packetCount = session['packetCount']
     material = session['material']
     scatteringCoeff = session['scatteringCoeff']
@@ -93,6 +94,10 @@ def tclGenerator(session, mesh, current_user):
 
     f.write('\n')
 
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        f.write('VolumeCellInRegionPredicate vol\n')
+        f.write('vol setRegion '+ str(scoredVolumeRegionID) + '\n')
+
     #append sources to tcl script
     index = 1
     for st, x, y, z, xD, yD, zD, vE, ra, po in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power):
@@ -130,7 +135,11 @@ def tclGenerator(session, mesh, current_user):
     f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
     f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
-    f.write(indent + 'k materials MS\n\n')
+    f.write(indent + 'k materials MS\n')
+    if kernelType == "TetraInternalKernel":
+        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n\n')
+    elif kernelType == "TetraCUDAInternalKernel":
+        f.write(indent + 'k addScoringRegionBoundary vol\n\n')
 
     #run and wait
     f.write(indent + 'k startAsync\n')

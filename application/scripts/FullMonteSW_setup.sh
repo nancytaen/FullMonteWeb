@@ -31,9 +31,13 @@ docker pull $IMAGE
 # -v:   Mount host path into container <host-path>:<container path>
 # --privileged: Allow container access to system sockets (for X)
 # --runtime=nvidia: Uses the NVIDIA runtime to allow access to the hosts GPU
+NVIDIA_RUNTIME_STR=""
+if [ ! -z "$1" ]; then
+    NVIDIA_RUNTIME_STR="--runtime=nvidia"
+fi
 
 # build the docker command string
-DOCKER_COMMAND="docker run --rm  -v $HOME_DIR:/sims -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 --privileged -e DISPLAY=:0 --ipc=host $IMAGE /sims/docker.sh"
+DOCKER_COMMAND="docker run --rm  -v $HOME_DIR:/sims -v /tmp/.X11-unix/X0:/tmp/.X11-unix/X0 --privileged -e DISPLAY=:0 --ipc=host $NVIDIA_RUNTIME_STR $IMAGE /sims/docker.sh"
 
 
 # run the docker command
