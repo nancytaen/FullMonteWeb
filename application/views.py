@@ -402,6 +402,7 @@ def simulation_confirmation(request):
         'light_sources': light_sources,
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, 'simulation_confirmation.html', context)
@@ -669,7 +670,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'meshUnit': request.session['meshUnit'], 'energyUnit': request.session['energyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
