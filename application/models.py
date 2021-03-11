@@ -39,7 +39,7 @@ class tclInput(models.Model):
 class awsFile(models.Model):
     DNS = models.CharField(max_length=250)
     pemfile = models.FileField(storage=PublicMediaStorage())
-    TCP_port = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(8000), MaxValueValidator(8999)])
+    TCP_port = models.IntegerField(validators=[MinValueValidator(8000), MaxValueValidator(8999)])
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
@@ -102,10 +102,11 @@ class preset(models.Model):
 
 class Material(models.Model):
     material_name = models.CharField(max_length=50)
-    scattering_coeff = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
-    absorption_coeff = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
-    refractive_index = models.FloatField(null=True, blank=True, validators=[MinValueValidator(1)])
-    anisotropy = models.FloatField(null=True, blank=True, validators=[MinValueValidator(-1), MaxValueValidator(1)])
+    material_unit = models.CharField(max_length=50)
+    scattering_coeff = models.FloatField(validators=[MinValueValidator(0)])
+    absorption_coeff = models.FloatField(validators=[MinValueValidator(0)])
+    refractive_index = models.FloatField(validators=[MinValueValidator(1)])
+    anisotropy = models.FloatField(validators=[MinValueValidator(-1), MaxValueValidator(1)])
 
     objects = models.Manager()
 

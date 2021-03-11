@@ -70,7 +70,13 @@ class materialSet(forms.Form):
 class materialForm(forms.ModelForm):
     class Meta:
         model = Material
-        fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
+        fields = ('material_name', 'material_unit', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy' )
+    
+    def __init__(self, *args, **kwargs):
+        super(materialForm, self).__init__(*args, **kwargs)
+        unit_choices = (('mm','milimeters (mm)'),
+                         ('cm','centimeters (cm)'))
+        self.fields['material_unit'].widget = forms.RadioSelect(choices=unit_choices)
 
 class pdtForm(forms.Form):
     opt = forms.ChoiceField(label="Optical File")
