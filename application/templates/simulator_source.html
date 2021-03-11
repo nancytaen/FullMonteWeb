@@ -5,9 +5,8 @@
     <h1>FullMonte Simulator</h1>
 
     <div class="center_container">
-        <p>Please remember that the light source positions must be in unite matching that of the mesh.</p>
+        <p>Please make sure that light source positions are specified in units matching that of the mesh.</p>
     </div>
-
 
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post">
@@ -32,9 +31,9 @@
                                     {{ form.xPos.errors }}
                                     {{ form.yPos.errors }}
                                     {{ form.zPos.errors }}
-                                    {{ form.xPos }}
-                                    {{ form.yPos }}
-                                    {{ form.zPos }}
+                                    {{ form.xPos }} {{ unit }} &nbsp;
+                                    {{ form.yPos }} {{ unit }} &nbsp;
+                                    {{ form.zPos }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>
@@ -71,7 +70,7 @@
                                 <th>{{ form.rad.label_tag }}</th>
                                 <td>
                                     {{ form.rad.errors }}
-                                    {{ form.rad }}
+                                    {{ form.rad }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>

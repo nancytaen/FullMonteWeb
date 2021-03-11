@@ -6,7 +6,7 @@
 
     <div class="center_container">
         <p>The material properties must be specified in the same order as they occur in the mesh.</p>
-        <p>Please remember that the optical properties must be in unites matching that of the mesh.</p>
+        <p>Please make sure that optical properties are specified in units matching that of the mesh.</p>
         <button id='advanced'>Developer Options</button>
         <br>
 
@@ -47,7 +47,7 @@
                             <td>
                                 {{ form.scatteringCoeff.errors }}
                                 {{ form.scatteringCoeff }}
-                                &nbsp; µ<sub>s</sub>
+                                &nbsp; µ<sub>s</sub> ({{ unit }}<sup>-1</sup>)
                             </td>
                         </tr>
                         <tr>
@@ -55,7 +55,7 @@
                             <td>
                                 {{ form.absorptionCoeff.errors }}
                                 {{ form.absorptionCoeff }}
-                                &nbsp; µ<sub>a</sub>
+                                &nbsp; µ<sub>a</sub> ({{ unit }}<sup>-1</sup>)
                             </td>
                         </tr>
                         <tr>
@@ -104,7 +104,7 @@
                             <td>
                                 {{ formset1.empty_form.scatteringCoeff.errors }}
                                 {{ formset1.empty_form.scatteringCoeff }}
-                                &nbsp; µ<sub>s</sub>
+                                &nbsp; µ<sub>s</sub> ({{ unit }}<sup>-1</sup>)
                             </td>
                         </tr>
                         <tr>
@@ -112,7 +112,7 @@
                             <td>
                                 {{ formset1.empty_form.absorptionCoeff.errors }}
                                 {{ formset1.empty_form.absorptionCoeff }}
-                                &nbsp; µ<sub>a</sub>
+                                &nbsp; µ<sub>a</sub> ({{ unit }}<sup>-1</sup>)
                             </td>
                         </tr>
                         <tr>

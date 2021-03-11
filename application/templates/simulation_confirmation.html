@@ -12,8 +12,8 @@
     {% for item in materials %}
         <h5><b>Layer {{ item.layer }}:</b></h5>
         <h6>Material: {{ item.material }}</h6>
-        <h6>Scattering Coefficient: {{ item.scatteringCoeff }}</h6>
-        <h6>Absorption Coefficient: {{ item.absorptionCoeff }}</h6>
+        <h6>Scattering Coefficient: {{ item.scatteringCoeff }} {{ unit }}<sup>-1</sup></h6>
+        <h6>Absorption Coefficient: {{ item.absorptionCoeff }} {{ unit }}<sup>-1</sup></h6>
         <h6>Refractive Index: {{ item.refractiveIndex }}</h6>
         <h6>Anisotropy: {{ item.anisotropy }}</h6>
     {% endfor %}
@@ -25,11 +25,11 @@
         <h5><b>Source {{ item.source }}:</b></h5>
         {% if item.sourceType == "Point" %}
             <h6>Source Type: {{ item.sourceType }}</h6>
-            <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
+            <h6>Position: x={{ item.xPos }} {{ unit }}, y={{ item.yPos }} {{ unit }}, z={{ item.zPos }} {{ unit }}</h6>
             <h6>Power: {{ item.power }}</h6>
         {% elif item.sourceType == "PencilBeam" %}
             <h6>Source Type: {{ item.sourceType }}</h6>
-            <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
+            <h6>Position: x={{ item.xPos }} {{ unit }}, y={{ item.yPos }} {{ unit }}, z={{ item.zPos }} {{ unit }}</h6>
             <h6>Direction: x={{ item.xDir }}, y={{ item.yDir }}, z={{ item.zDir }}</h6>
             <h6>Power: {{ item.power }}</h6>
         {% elif item.sourceType == "Volume" %}
@@ -38,8 +38,8 @@
             <h6>Power: {{ item.power }}</h6>
         {% elif item.sourceType == "Ball" %}
             <h6>Source Type: {{ item.sourceType }}</h6>
-            <h6>Position: x={{ item.xPos }}, y={{ item.yPos }}, z={{ item.zPos }}</h6>
-            <h6>Radius: {{ item.rad }}</h6>
+            <h6>Position: x={{ item.xPos }} {{ unit }}, y={{ item.yPos }} {{ unit }}, z={{ item.zPos }} {{ unit }}</h6>
+            <h6>Radius: {{ item.rad }} {{ unit }}</h6>
             <h6>Power: {{ item.power }}</h6>
         {% elif item.sourceType == "SurfaceSourceBuilder" %}
             <h6>Source Type: {{ item.sourceType }}</h6>

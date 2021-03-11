@@ -17,6 +17,17 @@
                         </td>
                     </tr>
                     <tr>
+                        <th>{{ form.material_unit.label_tag }}</th>
+                        <td>
+                            {% for checkbox in form.material_unit %}
+                            <label>
+                                {{ checkbox.tag }} {{ checkbox.choice_label }}
+                            </label>
+                            &emsp;
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
                         <th>{{ form.scattering_coeff.label_tag }}</th>
                         <td>
                             {{ form.scattering_coeff }}
@@ -64,6 +75,7 @@
                     <thead>
                         <tr>
                             <th>Material Name</th>
+                            <th>Material Unit</th>
                             <th>Scattering Coefficient</th>
                             <th>Absorption Coefficient</th>
                             <th>Refractive Index</th>
@@ -74,6 +86,7 @@
                         {% for material in presetMaterials %}
                         <tr>
                             <td>{{ material.material_name }}</td>
+                            <td>{{ material.material_unit }}</td>
                             <td>{{ material.scattering_coeff }}</td>
                             <td>{{ material.absorption_coeff }}</td>
                             <td>{{ material.refractive_index }}</td>
