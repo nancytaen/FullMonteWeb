@@ -157,9 +157,12 @@ def fmSimulator(request):
                 obj.meshFileID = new_mesh_entry
                 obj.save()
 
+            request.session['meshUnit'] = form.cleaned_data['meshUnit']
             request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
+            request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
+            request.session['energyUnit'] = form.cleaned_data['energyUnit']
 
             return HttpResponseRedirect('/application/simulator_material')
 
@@ -216,6 +219,7 @@ def fmSimulatorMaterial(request):
 
     context = {
         'formset1': formset1,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_material.html", context)
@@ -316,6 +320,7 @@ def fmSimulatorSource(request):
 
     context = {
         'formset2': formset2,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_source.html", context)
@@ -397,6 +402,7 @@ def simulation_confirmation(request):
         'light_sources': light_sources,
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, 'simulation_confirmation.html', context)
@@ -664,7 +670,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'meshUnit': request.session['meshUnit'], 'energyUnit': request.session['energyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
