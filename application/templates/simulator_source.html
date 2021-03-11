@@ -164,9 +164,9 @@
                                     {{ formset2.empty_form.xPos.errors }}
                                     {{ formset2.empty_form.yPos.errors }}
                                     {{ formset2.empty_form.zPos.errors }}
-                                    {{ formset2.empty_form.xPos }}
-                                    {{ formset2.empty_form.yPos }}
-                                    {{ formset2.empty_form.zPos }}
+                                    {{ formset2.empty_form.xPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>
@@ -203,7 +203,7 @@
                                 <th><label>{{ formset2.empty_form.rad.label_tag }}</label></th>
                                 <td>
                                     {{ formset2.empty_form.rad.errors }}
-                                    {{ formset2.empty_form.rad }}
+                                    {{ formset2.empty_form.rad }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>
