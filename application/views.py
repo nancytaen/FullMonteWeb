@@ -280,6 +280,9 @@ def fmSimulatorSource(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
+        print(request.POST)
+        sys.stdout.flush()
+
 
         # check whether it's valid:
         if formset2.is_valid():
@@ -300,6 +303,9 @@ def fmSimulatorSource(request):
             request.session['hemiSphereEmitDistribution'] = []
             request.session['numericalAperture'] = []
             request.session['checkDirection'] = []
+            request.session['xPos0'] = []
+            request.session['yPos0'] = []
+            request.session['zPos0'] = []
             request.session['xPos1'] = []
             request.session['yPos1'] = []
             request.session['zPos1'] = []
@@ -322,6 +328,9 @@ def fmSimulatorSource(request):
                 request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
                 request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
                 request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
+                request.session['xPos0'].append(form.cleaned_data['xPos0'])
+                request.session['yPos0'].append(form.cleaned_data['yPos0'])
+                request.session['zPos0'].append(form.cleaned_data['zPos0'])
                 request.session['xPos1'].append(form.cleaned_data['xPos1'])
                 request.session['yPos1'].append(form.cleaned_data['yPos1'])
                 request.session['zPos1'].append(form.cleaned_data['zPos1'])
@@ -415,6 +424,9 @@ def simulation_confirmation(request):
         temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
         temp.numericalAperture = request.session['numericalAperture'][i]
         temp.checkDirection = request.session['checkDirection'][i]
+        temp.xPos0 = request.session['xPos0'][i]
+        temp.yPos0 = request.session['yPos0'][i]
+        temp.zPos0 = request.session['zPos0'][i]
         temp.xPos1 = request.session['xPos1'][i]
         temp.yPos1 = request.session['yPos1'][i]
         temp.zPos1 = request.session['zPos1'][i]

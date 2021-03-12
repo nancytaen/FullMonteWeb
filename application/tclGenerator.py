@@ -40,6 +40,9 @@ def tclGenerator(session, mesh, current_user):
     hemiSphereEmitDistribution = session['hemiSphereEmitDistribution']
     numericalAperture = session['numericalAperture']
     checkDirection = session['checkDirection']
+    xPos0 = session['xPos0']
+    yPos0 = session['yPos0']
+    zPos0 = session['zPos0']
     xPos1 = session['xPos1']
     yPos1 = session['yPos1']
     zPos1 = session['zPos1']
@@ -109,9 +112,9 @@ def tclGenerator(session, mesh, current_user):
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd, x1, y1, z1, ev in \
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd, x0, y0, z0, x1, y1, z1, ev in \
             zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, \
-            volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection, xPos1, yPos1, zPos1, emitVolume):
+            volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection, xPos0, yPos0, zPos0, xPos1, yPos1, zPos1, emitVolume):
         if st == 'Point':
             f.write(st + ' P' + str(index) + '\n')
             line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
@@ -141,7 +144,7 @@ def tclGenerator(session, mesh, current_user):
             f.write(indent + line2)
         if st == 'Cylinder':
             f.write(st + ' CY' + str(index) + '\n')
-            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x)+ ' ' + str(y) + ' ' + str(z) + '\"\n'
+            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x0)+ ' ' + str(y0) + ' ' + str(z0) + '\"\n'
             line2 = 'CY' + str(index) + ' endpoint 1 \"' + str(x1)+ ' ' + str(y1) + ' ' + str(z1) + '\"\n'
             line3 = 'CY' + str(index) + ' radius ' + str(ra) + '\n'
             line4 = 'CY' + str(index) + ' power ' + str(po) + '\n\n'

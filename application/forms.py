@@ -147,6 +147,9 @@ class lightSource(forms.Form):
                                                                          ('true','true')), initial='false')
 
     # for cylinder
+    xPos0 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos0 = forms.FloatField(label='Y Position1', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos0 = forms.FloatField(label='Z Position1', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
     xPos1 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
     yPos1 = forms.FloatField(label='Y Position1', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
     zPos1 = forms.FloatField(label='Z Position1', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
