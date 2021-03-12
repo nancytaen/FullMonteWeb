@@ -41,6 +41,22 @@
             <h6>Position: x={{ item.xPos }} {{ unit }}, y={{ item.yPos }} {{ unit }}, z={{ item.zPos }} {{ unit }}</h6>
             <h6>Radius: {{ item.rad }} {{ unit }}</h6>
             <h6>Power: {{ item.power }}</h6>
+        {% elif item.sourceType == "Cylinder" %}
+            <h6>Source Type: {{ item.sourceType }}</h6>
+            <h6>End Point 1: x={{ item.xPos }} {{ unit }}, y={{ item.yPos }} {{ unit }}, z={{ item.zPos }} {{ unit }}</h6>
+            <h6>End Point 2: x={{ item.xPos1 }} {{ unit }}, y={{ item.yPos1 }} {{ unit }}, z={{ item.zPos1 }} {{ unit }}</h6>
+            <h6>Radius: {{ item.rad }} {{ unit }}</h6>
+            <h6>Emit Volume: {{ item.emitVolume }}</h6>
+            {% if item.emitVolume == "false" %}
+                <h6>Emit in HemiSphere: {{ item.emitHemiSphere }}</h6>
+                {% if item.emitHemiSphere == "true" %}
+                    <h6>HemiSphere Emit Distribution: {{ item.hemiSphereEmitDistribution }}</h6>
+                    {% if item.hemiSphereEmitDistribution == "CUSTOM" %}
+                        <h6>Numerical Aperture: {{ item.numericalAperture }}</h6>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+            <h6>Power: {{ item.power }}</h6>
         {% elif item.sourceType == "SurfaceSourceBuilder" %}
             <h6>Source Type: {{ item.sourceType }}</h6>
             <h6>Volume Region ID: {{ item.volumeRegion }}</h6>

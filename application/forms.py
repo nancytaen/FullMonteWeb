@@ -121,6 +121,7 @@ class lightSource(forms.Form):
                                                           ('PencilBeam','PencilBeam'),
                                                           ('Volume','Volume'),
                                                           ('Ball','Ball'),
+                                                          ('Cylinder','Cylinder'),
                                                           ('SurfaceSourceBuilder','SurfaceSourceBuilder'),
                                                           ))
     # for Point
@@ -148,6 +149,13 @@ class lightSource(forms.Form):
     numericalAperture = forms.FloatField(label='numericalAperture', required=False)
     checkDirection = forms.ChoiceField(label='checkDirection', required=False, choices=(('false','false'),
                                                                          ('true','true')), initial='false')
+
+    # for cylinder
+    xPos1 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos1 = forms.FloatField(label='Y Position1', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos1 = forms.FloatField(label='Z Position1', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+    emitVolume = forms.ChoiceField(label='emitVolume', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='true')
 
 
     power = forms.IntegerField(label='Power', required=False, initial=1)
