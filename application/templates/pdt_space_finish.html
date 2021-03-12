@@ -13,6 +13,10 @@
     <p>{% autoescape off %}Running FM simulation for all sources: {{time_simu}} minutes. {% endautoescape %}</p>
     <p>{% autoescape off %}Running optimization: {{time_opt}} minutes. {% endautoescape %}</p>
     <br/>
+
+    <p><b>Visualize optimized result:</b></p>
+    <a class="btn btn-info" href="{% url 'pdt_space_visualize' %}">Visualizer Placeholder</a>
+    <br/>
 </div>
 
 {% endblock %}

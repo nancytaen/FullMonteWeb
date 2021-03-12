@@ -55,7 +55,7 @@ class presetForm(forms.ModelForm):
 
 class materialSet(forms.Form):
     layer = forms.CharField(label='Layer', required = False, max_length=255)
-    custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
+    custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.none(), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
@@ -66,6 +66,10 @@ class materialSet(forms.Form):
     absorptionCoeff = forms.FloatField(label='Absorption Coefficient', min_value=0)
     refractiveIndex = forms.FloatField(label='Refractive Index', min_value=1)
     anisotropy = forms.FloatField(label='Anisotropy', min_value=-1, max_value=1)
+    def __init__(self, *args, mesh_unit=None, **kwargs):
+        super(materialSet, self).__init__(*args, **kwargs)
+        if mesh_unit:
+            self.fields['custom'].queryset = Material.objects.filter(material_unit=mesh_unit)
 
 class materialForm(forms.ModelForm):
     class Meta:
