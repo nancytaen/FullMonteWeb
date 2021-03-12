@@ -85,6 +85,9 @@ urlpatterns = [
     # /application/pdt_space_finish
     path('pdt_space_finish', views.pdt_space_finish, name='pdt_space_finish'),
 
+    # /application/pdt_space_visualize
+    path('pdt_space_visualize', views.pdt_space_visualize, name='pdt_space_visualize'),
+
     ####################### presets #######################
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),

@@ -1869,3 +1869,29 @@ def pdt_space_finish(request):
     ftp.close()
     client.close()
     return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt})
+
+def pdt_space_visualize(request):
+    """
+    Todo:
+    In pdt_space_finish, save mesh file info
+        info = meshFileInfo.objects.filter(user = request.user).latest('id')
+        info.fileName = <output mesh name>
+        exists = <check if file actually exists on disk>
+        if exists:
+            info.remoteFileExists = true
+        else
+            info.remoteFileExists = false
+        info.dvhFig = <dose volume histogram html string generated>
+        info.maxFluence = <maximum fluence from simulation>
+    In displayVisualization
+        add a new parameter to check if visualization request comes from fullmonte or pdtspace.
+        p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, caller))
+            where caller = 'fullmonte' or 'pdtspace'
+    In visualizer3D.py
+        choose file path depending on caller
+        if caller == 'fullmonte':
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + tcpPort
+        else:
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_pdt/ --port " + tcpPort
+    """
+    return HttpResponseRedirect('/application/displayVisualization')
