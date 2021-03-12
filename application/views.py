@@ -189,7 +189,7 @@ def fmSimulatorMaterial(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        formset1 = materialSetSet(request.POST)
+        formset1 = materialSetSet(request.POST, form_kwargs={'mesh_unit': request.session['meshUnit']})
 
         # check whether it's valid:
         if formset1.is_valid():
@@ -215,7 +215,7 @@ def fmSimulatorMaterial(request):
 
     # If this is a GET (or any other method) create the default form.
     else:
-        formset1 = materialSetSet(request.GET or None)
+        formset1 = materialSetSet(request.GET or None, form_kwargs={'mesh_unit': request.session['meshUnit']})
 
     context = {
         'formset1': formset1,
