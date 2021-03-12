@@ -149,6 +149,9 @@ class lightSource(forms.Form):
     numericalAperture = forms.FloatField(label='numericalAperture', required=False)
     checkDirection = forms.ChoiceField(label='checkDirection', required=False, choices=(('false','false'),
                                                                          ('true','true')), initial='false')
+    xDir1 = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yDir1 = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zDir1 = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
 
     # for cylinder
     xPos0 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)

@@ -303,6 +303,9 @@ def fmSimulatorSource(request):
             request.session['hemiSphereEmitDistribution'] = []
             request.session['numericalAperture'] = []
             request.session['checkDirection'] = []
+            request.session['xDir1'] = []
+            request.session['yDir1'] = []
+            request.session['zDir1'] = []
             request.session['xPos0'] = []
             request.session['yPos0'] = []
             request.session['zPos0'] = []
@@ -328,6 +331,9 @@ def fmSimulatorSource(request):
                 request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
                 request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
                 request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
+                request.session['xDir1'].append(form.cleaned_data['xDir1'])
+                request.session['yDir1'].append(form.cleaned_data['yDir1'])
+                request.session['zDir1'].append(form.cleaned_data['zDir1'])
                 request.session['xPos0'].append(form.cleaned_data['xPos0'])
                 request.session['yPos0'].append(form.cleaned_data['yPos0'])
                 request.session['zPos0'].append(form.cleaned_data['zPos0'])
@@ -424,6 +430,9 @@ def simulation_confirmation(request):
         temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
         temp.numericalAperture = request.session['numericalAperture'][i]
         temp.checkDirection = request.session['checkDirection'][i]
+        temp.xDir1 = request.session['xDir1'][i]
+        temp.yDir1 = request.session['yDir1'][i]
+        temp.zDir1 = request.session['zDir1'][i]
         temp.xPos0 = request.session['xPos0'][i]
         temp.yPos0 = request.session['yPos0'][i]
         temp.zPos0 = request.session['zPos0'][i]
