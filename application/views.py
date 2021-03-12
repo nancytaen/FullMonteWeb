@@ -511,6 +511,9 @@ def visualization_mesh_upload(request):
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
             info.save()
 
+            # TODO: parse out fluence energy unit from mesh and save it
+            request.session['fluenceEnergyUnit'] = "(unit not provided in mesh file)"
+
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
             request.session['region_name'] = []
@@ -685,7 +688,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'meshUnit': request.session['meshUnit'], 'energyUnit': request.session['energyUnit']}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -1243,6 +1246,10 @@ def simulation_finish(request):
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
     info.save()
+    # save fluence energy unit
+    meshUnit = request.session['meshUnit']
+    energyUnit = request.session['energyUnit']
+    request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
     # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))

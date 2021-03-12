@@ -200,8 +200,7 @@ def tclGenerator(session, mesh, current_user):
 
     #convert energy absorbed per volume element to volume average fluence
     f.write('EnergyToFluence EF\n')
-    f.write(indent + 'EF geometry $M\n')
-    f.write(indent + 'EF materials MS\n')
+    f.write(indent + 'EF kernel k\n')
     f.write(indent + 'EF source [$ODC getByName "VolumeEnergy"]\n')
     f.write(indent + 'EF inputEnergy\n')
     f.write(indent + 'EF outputFluence\n')
