@@ -189,7 +189,7 @@ def fmSimulatorMaterial(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        formset1 = materialSetSet(request.POST)
+        formset1 = materialSetSet(request.POST, form_kwargs={'mesh_unit': request.session['meshUnit']})
 
         # check whether it's valid:
         if formset1.is_valid():
@@ -215,7 +215,7 @@ def fmSimulatorMaterial(request):
 
     # If this is a GET (or any other method) create the default form.
     else:
-        formset1 = materialSetSet(request.GET or None)
+        formset1 = materialSetSet(request.GET or None, form_kwargs={'mesh_unit': request.session['meshUnit']})
 
     context = {
         'formset1': formset1,
@@ -535,6 +535,9 @@ def visualization_mesh_upload(request):
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
             info.save()
 
+            # TODO: parse out fluence energy unit from mesh and save it
+            request.session['fluenceEnergyUnit'] = "(unit not provided in mesh file)"
+
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
             request.session['region_name'] = []
@@ -709,7 +712,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'meshUnit': request.session['meshUnit'], 'energyUnit': request.session['energyUnit']}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -1267,6 +1270,10 @@ def simulation_finish(request):
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
     info.save()
+    # save fluence energy unit
+    meshUnit = request.session['meshUnit']
+    energyUnit = request.session['energyUnit']
+    request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
     # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))
@@ -1886,3 +1893,29 @@ def pdt_space_finish(request):
     ftp.close()
     client.close()
     return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt})
+
+def pdt_space_visualize(request):
+    """
+    Todo:
+    In pdt_space_finish, save mesh file info
+        info = meshFileInfo.objects.filter(user = request.user).latest('id')
+        info.fileName = <output mesh name>
+        exists = <check if file actually exists on disk>
+        if exists:
+            info.remoteFileExists = true
+        else
+            info.remoteFileExists = false
+        info.dvhFig = <dose volume histogram html string generated>
+        info.maxFluence = <maximum fluence from simulation>
+    In displayVisualization
+        add a new parameter to check if visualization request comes from fullmonte or pdtspace.
+        p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, caller))
+            where caller = 'fullmonte' or 'pdtspace'
+    In visualizer3D.py
+        choose file path depending on caller
+        if caller == 'fullmonte':
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + tcpPort
+        else:
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_pdt/ --port " + tcpPort
+    """
+    return HttpResponseRedirect('/application/displayVisualization')
