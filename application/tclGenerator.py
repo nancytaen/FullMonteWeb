@@ -40,6 +40,10 @@ def tclGenerator(session, mesh, current_user):
     hemiSphereEmitDistribution = session['hemiSphereEmitDistribution']
     numericalAperture = session['numericalAperture']
     checkDirection = session['checkDirection']
+    xPos1 = session['xPos1']
+    yPos1 = session['yPos1']
+    zPos1 = session['zPos1']
+    emitVolume = session['emitVolume']
     
     #initialize path for copying tcl template
     dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -105,7 +109,9 @@ def tclGenerator(session, mesh, current_user):
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd, x1, y1, z1, ev in \
+            zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, \
+            volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection, xPos1, yPos1, zPos1, emitVolume):
         if st == 'Point':
             f.write(st + ' P' + str(index) + '\n')
             line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
@@ -133,6 +139,27 @@ def tclGenerator(session, mesh, current_user):
             line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
+        if st == 'Cylinder':
+            f.write(st + ' CY' + str(index) + '\n')
+            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x)+ ' ' + str(y) + ' ' + str(z) + '\"\n'
+            line2 = 'CY' + str(index) + ' endpoint 1 \"' + str(x1)+ ' ' + str(y1) + ' ' + str(z1) + '\"\n'
+            line3 = 'CY' + str(index) + ' radius ' + str(ra) + '\n'
+            line4 = 'CY' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+            f.write(indent + line4)
+            line5 = 'CY' + str(index) + ' emitVolume ' + str(ev) + '\n'
+            f.write(indent + line5)
+            if ev == "false":
+                line6 = 'CY' + str(index) + ' emitHemiSphere ' + str(ehs) + '\n'
+                f.write(indent + line6)
+                if ehs == "true":
+                    line7 = 'CY' + str(index) + ' hemiSphereEmitDistribution \"' + str(hsed) + '\"\n'
+                    f.write(indent + line7)
+                    if hsed == "CUSTOM":
+                        line8 = 'CY' + str(index) + ' numericalAperture ' + str(na) + '\n'
+                        f.write(indent + line8)
         if st == 'SurfaceSourceBuilder':
             f.write('VolumeCellInRegionPredicate SSBvol' + str(index) + '\n')
             f.write('SSBvol' + str(index) +' setRegion ' + str(vr) +'\n\n')
@@ -186,6 +213,8 @@ def tclGenerator(session, mesh, current_user):
             f.write(indent + 'k source V' + str(index) + '\n\n')
         if st == 'Ball':
             f.write(indent + 'k source B' + str(index) + '\n\n')
+        if st == 'Cylinder':
+            f.write(indent + 'k source CY' + str(index) + '\n\n')
         if st == 'SurfaceSourceBuilder':
             f.write(indent + 'k source $C' + str(index) + '\n\n')
         index += 1

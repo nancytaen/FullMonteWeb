@@ -300,6 +300,10 @@ def fmSimulatorSource(request):
             request.session['hemiSphereEmitDistribution'] = []
             request.session['numericalAperture'] = []
             request.session['checkDirection'] = []
+            request.session['xPos1'] = []
+            request.session['yPos1'] = []
+            request.session['zPos1'] = []
+            request.session['emitVolume'] = []
 
             for form in formset2:
                 print(form.cleaned_data)
@@ -318,6 +322,10 @@ def fmSimulatorSource(request):
                 request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
                 request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
                 request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
+                request.session['xPos1'].append(form.cleaned_data['xPos1'])
+                request.session['yPos1'].append(form.cleaned_data['yPos1'])
+                request.session['zPos1'].append(form.cleaned_data['zPos1'])
+                request.session['emitVolume'].append(form.cleaned_data['emitVolume'])
             
             mesh = tclInput.objects.filter(user = request.user).latest('id')
 
@@ -407,6 +415,10 @@ def simulation_confirmation(request):
         temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
         temp.numericalAperture = request.session['numericalAperture'][i]
         temp.checkDirection = request.session['checkDirection'][i]
+        temp.xPos1 = request.session['xPos1'][i]
+        temp.yPos1 = request.session['yPos1'][i]
+        temp.zPos1 = request.session['zPos1'][i]
+        temp.emitVolume = request.session['emitVolume'][i]
         light_sources.append(temp)
     
     tcl_form = Optional_Tcl()

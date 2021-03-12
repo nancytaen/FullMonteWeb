@@ -74,6 +74,43 @@
                                 </td>
                             </tr>
                         </tbody>
+                        <!-- Cylinder Source Type -->
+                        <tbody id="CylinderEP1" style="display: none">
+                            <tr>
+                                <th><label>End Point 1</label></th>
+                                <td>
+                                    {{ form.xPos.errors }}
+                                    {{ form.yPos.errors }}
+                                    {{ form.zPos.errors }}
+                                    {{ form.xPos }} {{ unit }} &nbsp;
+                                    {{ form.yPos }} {{ unit }} &nbsp;
+                                    {{ form.zPos }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="CylinderEP2" style="display: none">
+                            <tr>
+                                <th><label>End Point 2</label></th>
+                                <td>
+                                    {{ form.xPos1.errors }}
+                                    {{ form.yPos1.errors }}
+                                    {{ form.zPos1.errors }}
+                                    {{ form.xPos1 }} {{ unit }} &nbsp;
+                                    {{ form.yPos1 }} {{ unit }} &nbsp;
+                                    {{ form.zPos1 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="CylinderEmitVolume" style="display: none">
+                            <tr>
+                                <th>{{ form.emitVolume.label_tag }}</th>
+                                <td>
+                                    {{ form.emitVolume.errors }}
+                                    {{ form.emitVolume }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- SurfaceSourceBuilder Source Type -->
                         <tbody id="SurfaceSourceBuilder" style="display: none">
                             <tr>
                                 <th>{{ form.volumeRegion.label_tag }}</th>
@@ -207,6 +244,43 @@
                                 </td>
                             </tr>
                         </tbody>
+                        <!-- Cylinder Source Type -->
+                        <tbody id="temp_CylinderEP1" style="display: none">
+                            <tr>
+                                <th><label>End Point 1</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xPos.errors }}
+                                    {{ formset2.empty_form.yPos.errors }}
+                                    {{ formset2.empty_form.zPos.errors }}
+                                    {{ formset2.empty_form.xPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_CylinderEP2" style="display: none">
+                            <tr>
+                                <th><label>End Point 2</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xPos1.errors }}
+                                    {{ formset2.empty_form.yPos1.errors }}
+                                    {{ formset2.empty_form.zPos1.errors }}
+                                    {{ formset2.empty_form.xPos1 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos1 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos1 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_CylinderEmitVolume" style="display: none">
+                            <tr>
+                                <th>{{ formset2.empty_form.emitVolume.label_tag }}</th>
+                                <td>
+                                    {{ formset2.empty_form.emitVolume.errors }}
+                                    {{ formset2.empty_form.emitVolume }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- SurfaceSourceBuilder Source Type -->
                         <tbody id="temp_SurfaceSourceBuilder" style="display: none">
                             <tr>
                                 <th><label>{{ formset2.empty_form.volumeRegion.label_tag }}</label></th>
@@ -293,6 +367,9 @@
             var x_pencilbeam = document.getElementById("temp_pencilbeam");
             var x_volume = document.getElementById("temp_volume");
             var x_ball = document.getElementById("temp_ball");
+            var x_CylinderEP1 = document.getElementById("temp_CylinderEP1");
+            var x_CylinderEP2 = document.getElementById("temp_CylinderEP2");
+            var x_CylinderEmitVolume = document.getElementById("temp_CylinderEmitVolume");
             var x_SurfaceSourceBuilder = document.getElementById("temp_SurfaceSourceBuilder");
             var x_SurfaceSourceBuilderEmitHemiSphere = document.getElementById("temp_SurfaceSourceBuilderEmitHemiSphere");
             var x_hemiSphereEmitDistribution = document.getElementById("temp_hemiSphereEmitDistribution");
@@ -303,6 +380,9 @@
             x_pencilbeam.id = "PencilBeam" + String(form_idx)
             x_volume.id = "Volume" + String(form_idx)
             x_ball.id = "Ball" + String(form_idx)
+            x_CylinderEP1.id = "CylinderEP1" + String(form_idx)
+            x_CylinderEP2.id = "CylinderEP2" + String(form_idx)
+            x_CylinderEmitVolume.id = "CylinderEmitVolume" + String(form_idx)
             x_SurfaceSourceBuilder.id = "SurfaceSourceBuilder" + String(form_idx)
             x_SurfaceSourceBuilderEmitHemiSphere.id = "SurfaceSourceBuilderEmitHemiSphere" + String(form_idx)
             x_hemiSphereEmitDistribution.id = "SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx)
@@ -316,6 +396,9 @@
                     var pencilbeam = "#PencilBeam" + String(form_idx)
                     var volume = "#Volume" + String(form_idx)
                     var ball = "#Ball" + String(form_idx)
+                    var CylinderEP1 = "#CylinderEP1" + String(form_idx)
+                    var CylinderEP2 = "#CylinderEP2" + String(form_idx)
+                    var CylinderEmitVolume = "#CylinderEmitVolume" + String(form_idx)
                     var SurfaceSourceBuilder = "#SurfaceSourceBuilder" + String(form_idx)
                     var SurfaceSourceBuilderEmitHemiSphere = "#SurfaceSourceBuilderEmitHemiSphere" + String(form_idx)
                     var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx)
@@ -327,6 +410,9 @@
                     $(pencilbeam).hide()
                     $(volume).hide()
                     $(ball).hide()
+                    $(CylinderEP1).hide()
+                    $(CylinderEP2).hide()
+                    $(CylinderEmitVolume).hide()
                     $(SurfaceSourceBuilder).hide()
                     $(SurfaceSourceBuilderEmitHemiSphere).hide()
                     $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide()
@@ -348,6 +434,27 @@
                         case "Ball":
                             $(point).show()
                             $(ball).show()
+                            break;
+                        case "Cylinder":
+                            $(ball).show()
+                            $(CylinderEP1).show()
+                            $(CylinderEP2).show()
+                            $(CylinderEmitVolume).show()
+                            switch($('#id_form-'+String(form_idx)+'-emitVolume').val()){
+                                case "false":
+                                    $(SurfaceSourceBuilderEmitHemiSphere).show()
+                                default:
+                            }
+                            switch($('#id_form-'+String(form_idx)+'-emitHemiSphere').val()){
+                                case "true":
+                                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).show()
+                                default:
+                            }
+                            switch($('#id_form-'+String(form_idx)+'-hemiSphereEmitDistribution').val()){
+                                case "CUSTOM":
+                                    $(SurfaceSourceBuilderNumericalAperture).show()
+                                default:
+                            }
                             break;
                         case "SurfaceSourceBuilder":
                             $(SurfaceSourceBuilder).show()
@@ -372,10 +479,27 @@
                         default:
                     }
                 });
+                $('#id_form-' + form_idx + '-emitVolume').on('change', function () {
+                    var selection = $(this).val();
+                    var SurfaceSourceBuilderEmitHemiSphere = "#SurfaceSourceBuilderEmitHemiSphere" + String(form_idx);
+                    $(SurfaceSourceBuilderEmitHemiSphere).hide();
+                    var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx);
+                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide();
+                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx);
+                    $(SurfaceSourceBuilderNumericalAperture).hide();
+                    switch (selection) {
+                        case "false":
+                            $(SurfaceSourceBuilderEmitHemiSphere).show();
+                            break;
+                        default:
+                    }
+                });
                 $('#id_form-' + form_idx + '-emitHemiSphere').on('change', function () {
                     var selection = $(this).val();
                     var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx);
                     $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide();
+                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx);
+                    $(SurfaceSourceBuilderNumericalAperture).hide();
                     switch (selection) {
                         case "true":
                             $(SurfaceSourceBuilderHemiSphereEmitDistribution).show();
@@ -385,9 +509,8 @@
                     }
                 });
                 $('#id_form-' + form_idx + '-hemiSphereEmitDistribution').on('change', function () {
-                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx);
-                    $(SurfaceSourceBuilderNumericalAperture).hide();
                     var selection = $(this).val();
+                    $(SurfaceSourceBuilderNumericalAperture).hide()
                     switch (selection) {
                         case "CUSTOM":
                             $(SurfaceSourceBuilderNumericalAperture).show()
@@ -439,6 +562,27 @@
                     $("#Point").show()
                     $("#Ball").show()
                     break;
+                case "Cylinder":
+                    $("#Ball").show()
+                    $('#CylinderEP1').show()
+                    $('#CylinderEP2').show()
+                    $('#CylinderEmitVolume').show()
+                    switch($('#id_form-0-emitVolume').val()){
+                        case "false":
+                            $('#SurfaceSourceBuilderEmitHemiSphere').show()
+                        default:
+                    }
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').show()
+                        default:
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $('#SurfaceSourceBuilderNumericalAperture').show()
+                        default:
+                    }
+                    break;
                 case "SurfaceSourceBuilder":
                     $("#SurfaceSourceBuilder").show()
                     $("#SurfaceSourceBuilderEmitHemiSphere").show()
@@ -468,6 +612,9 @@
             $("#PencilBeam").hide()
             $("#Volume").hide()
             $("#Ball").hide()
+            $('#CylinderEP1').hide()
+            $('#CylinderEP2').hide()
+            $('#CylinderEmitVolume').hide()
             $("#SurfaceSourceBuilder").hide()
             $("#SurfaceSourceBuilderEmitHemiSphere").hide()
             $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
@@ -489,6 +636,36 @@
                 case "Ball":
                     $("#Point").show()
                     $("#Ball").show()
+                    break;
+                case "Cylinder":
+                    $("#Ball").show()
+                    $('#CylinderEP1').show()
+                    $('#CylinderEP2').show()
+                    $('#CylinderEmitVolume').show()
+                    switch($('#id_form-0-emitVolume').val()){
+                        case "false":
+                            $('#SurfaceSourceBuilderEmitHemiSphere').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderEmitHemiSphere').hide()
+                            break;
+                    }
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').hide()
+                            break;
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $('#SurfaceSourceBuilderNumericalAperture').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderNumericalAperture').hide()
+                            break;
+                    }
                     break;
                 case "SurfaceSourceBuilder":
                     $("#SurfaceSourceBuilder").show()
@@ -513,8 +690,22 @@
                 default:
             }
         });
+        $('#id_form-0-emitVolume').on('change', function () {
+            var selection = $(this).val();
+            alert(1);
+            $("#SurfaceSourceBuilderEmitHemiSphere").hide();
+            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
+            switch (selection) {
+                case "false":
+                    $("#SurfaceSourceBuilderEmitHemiSphere").show();
+                    break;
+                default:
+            }
+        });
         $('#id_form-0-emitHemiSphere').on('change', function () {
             $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
             var selection = $(this).val();
             switch (selection) {
                 case "true":
