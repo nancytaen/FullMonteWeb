@@ -248,6 +248,7 @@ def tclGenerator(session, mesh, current_user):
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
+    dvhResult = '/sims/' + name + '.dvh.txt'
     
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
@@ -260,7 +261,27 @@ def tclGenerator(session, mesh, current_user):
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
-    f.write(indent + 'TW write\n')
+    f.write(indent + 'TW write\n\n')
+
+    #generate dose volume histogram
+    f.write('DoseVolumeHistogramGenerator DVHG\n')
+    f.write(indent + 'DVHG mesh $M\n')
+    f.write(indent + 'DVHG dose [EF result]\n')
+    f.write(indent + 'DVHG update\n\n')
+
+    f.write('set DHC [DVHG result]\n\n')
+
+    #write dvh matrix to a text file
+    f.write('TextFileMatrixWriter TW\n')
+    f.write(indent + 'TW filename "' + dvhResult + '"\n')
+    f.write(indent + 'TW source [$DHC get 1]\n')
+    f.write(indent + 'TW write\n\n')
+
+    #overwrite the dvh textfile to dvh format
+    f.write('TextFileDoseHistogramWriter TDH\n')
+    f.write(indent + 'TDH filename "' + dvhResult + '"\n')
+    f.write(indent + 'TDH collection $DHC\n')
+    f.write(indent + 'TDH write\n')
 
     #copy and save script to AWS
     f = open(source, 'r')
