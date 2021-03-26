@@ -28,18 +28,21 @@ class tclInputForm(forms.ModelForm):
         initial['totalEnergy'] = 1000000
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
-        if CUDA == True:
-            CUDA_kernel_choices = (('TetraCUDASVKernel','TetraCUDASVKernel'),
-                         ('TetraCUDASurfaceKernel','TetraCUDASurfaceKernel'),
-                         ('TetraCUDAVolumeKernel','TetraCUDAVolumeKernel'),
-                         ('TetraCUDAInternalKernel','TetraCUDAInternalKernel'))
-            self.fields['kernelType'].widget = forms.Select(choices=CUDA_kernel_choices)
-        else:
-            kernel_choices = (('TetraSVKernel','TetraSVKernel'),
-                         ('TetraSurfaceKernel','TetraSurfaceKernel'),
-                         ('TetraVolumeKernel','TetraVolumeKernel'),
-                         ('TetraInternalKernel','TetraInternalKernel'))
-            self.fields['kernelType'].widget = forms.Select(choices=kernel_choices)
+        # if CUDA == True:
+        #     CUDA_kernel_choices = (('TetraCUDASVKernel','TetraCUDASVKernel'),
+        #                  ('TetraCUDASurfaceKernel','TetraCUDASurfaceKernel'),
+        #                  ('TetraCUDAVolumeKernel','TetraCUDAVolumeKernel'),
+        #                  ('TetraCUDAInternalKernel','TetraCUDAInternalKernel'))
+        #     self.fields['kernelType'].widget = forms.CheckboxSelectMultiple(choices=CUDA_kernel_choices)
+        # else:
+            # kernel_choices = (('TetraSVKernel','TetraSVKernel'),
+            #              ('TetraSurfaceKernel','TetraSurfaceKernel'),
+            #              ('TetraVolumeKernel','TetraVolumeKernel'),
+            #              ('TetraInternalKernel','TetraInternalKernel'))
+        kernel_choices = (('Absorbed','Energy Absorbed by Mesh'),
+                        ('Leaving','Energy Leaving Mesh'),
+                        ('Internal','Energy Entering/Exiting Internal Boundaries of Mesh'))
+        self.fields['kernelType'].widget = forms.CheckboxSelectMultiple(choices=kernel_choices)
         self.fields['meshFile'].required = False
         mesh_unit_choices = (('mm','milimeters (mm)'),
                          ('cm','centimeters (cm)'))

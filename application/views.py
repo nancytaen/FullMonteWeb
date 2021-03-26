@@ -115,7 +115,7 @@ def fmSimulator(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         #print(11111)
-        #print(request.POST)
+        print(request.POST)
         #print(request.FILES)
         sys.stdout.flush()
         form = tclInputForm(data=request.POST, files=request.FILES)
@@ -157,8 +157,41 @@ def fmSimulator(request):
                 obj.meshFileID = new_mesh_entry
                 obj.save()
 
+            print(form.cleaned_data['kernelType'])
+            selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
+            selected_leaving = 'Leaving' in form.cleaned_data['kernelType']
+            selected_internal = 'Internal' in form.cleaned_data['kernelType']
+
+            using_gpu = request.session['GPU_instance']
+            if selected_internal:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+            elif selected_leaving and selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASVKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSVKernel'
+            elif selected_leaving:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASurfaceKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSurfaceKernel'
+            elif selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAVolumeKernel'
+                else:
+                    request.session['kernelType'] = 'TetraVolumeKernel'
+            else:
+                # this should not happen, but just in case
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+
+            sys.stdout.flush()
             request.session['meshUnit'] = form.cleaned_data['meshUnit']
-            request.session['kernelType'] = form.cleaned_data['kernelType']
             request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
