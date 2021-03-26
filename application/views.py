@@ -381,8 +381,11 @@ def fmSimulatorSource(request):
                 request.session['emitVolume'].append(form.cleaned_data['emitVolume'])
             
             mesh = tclInput.objects.filter(user = request.user).latest('id')
+            energy  = request.session['totalEnergy']
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
 
-            script_path = tclGenerator(request.session, mesh, request.user)
+            script_path = tclGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
             return HttpResponseRedirect('/application/simulation_confirmation')
 
     # If this is a GET (or any other method) create the default form.
@@ -589,6 +592,20 @@ def visualization_mesh_upload(request):
             sftp = client.open_sftp()
             sftp.chdir('docker_sims/')
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
+            # parse out mesh and fluence energy units from mesh
+            i = 0
+            with sftp.open('./'+outputMeshFileName) as meshFile:
+                for line in meshFile:
+                    if i == 1: # look for second line
+                        data = line.split()
+                        if data[0] == "MeshUnit:":
+                            meshUnit = data[1]
+                            energyUnit = data[3]
+                        else:
+                            meshUnit = ""
+                            energyUnit = ""
+                        break
+                    i = i + 1
             sftp.close()
             client.close()
             
@@ -598,8 +615,11 @@ def visualization_mesh_upload(request):
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
             info.save()
 
-            # TODO: parse out fluence energy unit from mesh and save it
-            request.session['fluenceEnergyUnit'] = "(unit not provided in mesh file)"
+            # save units
+            if len(energyUnit) > 0 and len(meshUnit) > 0:
+                request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
+            else:
+                request.session['fluenceEnergyUnit'] = "(unit not provided in mesh file)"
 
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
@@ -626,13 +646,14 @@ def fmVisualization(request):
         messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
         return HttpResponseRedirect('/application/aws')
 
+    # Check if current session has simulation completed/mesh file uploaded
     info = meshFileInfo.objects.filter(user = request.user).latest('id')
     outputMeshFileName = info.fileName
     if len(outputMeshFileName) == 0:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # first, try to connect to remote server
+    # Try to connect to remote server
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -644,20 +665,26 @@ def fmVisualization(request):
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
 
-    # check if file exists in the remote server
+    # Check if mesh file and DVH file exist in the remote server
+    dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
         info.remoteFileExists = True
     except:
         info.remoteFileExists = False
+    try:
+        sftp.stat('docker_sims/'+dvhTxtFileName)
+        dvhTxtFileExists = True
+    except:
+        dvhTxtFileExists = False
     sftp.close()
     client.close()
     sys.stdout.flush()
     info.save()
 
     # file exists for DVH
-    if(info.remoteFileExists):
+    if(dvhTxtFileExists):
         # generate DVH
         if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
             print('generating DVH')
@@ -667,7 +694,10 @@ def fmVisualization(request):
             for child in children:
                 print('Child pid is {}'.format(child.pid))
             connections.close_all()
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, request.session['region_name'], ))
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
+            materials = request.session['region_name']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
             p.start()
             print('after')
             current_process = psutil.Process()
@@ -692,8 +722,9 @@ def fmVisualization(request):
             print('using last saved DVH')
             return HttpResponseRedirect('/application/displayVisualization')
     
-    # DBH cannot be generated
+    # DVH cannot be generated
     else:
+        info.maxFluence = 0
         info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
         info.save()
         return HttpResponseRedirect('/application/displayVisualization')

@@ -25,7 +25,7 @@ class tclInputForm(forms.ModelForm):
         initial = kwargs.get('initial', {})
         initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
-        initial['totalEnergy'] = 1000000
+        initial['totalEnergy'] = 10
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
         # if CUDA == True:

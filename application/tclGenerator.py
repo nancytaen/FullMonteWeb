@@ -7,7 +7,7 @@ from django.core.files.storage import default_storage
 from .models import *
 from django.core.files.base import ContentFile
 
-def tclGenerator(session, mesh, current_user):
+def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     script_name = mesh.originalMeshFileName[:-4] + '.tcl'
     new_script = tclScript()
     _temp = ""
@@ -233,11 +233,12 @@ def tclGenerator(session, mesh, current_user):
     #get results
     f.write('set ODC [k results]\n\n')
 
-    #convert energy absorbed per volume element to volume average fluence
+    #convert photon weight from simulation raw results to energy absorbed per volume element
     f.write('EnergyToFluence EF\n')
     f.write(indent + 'EF kernel k\n')
+    f.write(indent + 'EF energy ' + str(energy) + '\n')
+    f.write(indent + 'EF inputPhotonWeight\n')
     f.write(indent + 'EF source [$ODC getByName "VolumeEnergy"]\n')
-    f.write(indent + 'EF inputEnergy\n')
     f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
@@ -248,19 +249,42 @@ def tclGenerator(session, mesh, current_user):
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
+    dvhResult = '/sims/' + name + '.dvh.txt'
+    comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
     
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
     f.write(indent + 'W addData "Fluence" [EF result]\n')
     f.write(indent + 'W mesh $M\n')
+    f.write(indent + 'W addHeaderComment "' + comment + '"\n')
     f.write(indent + 'W write\n\n')
 
     #write the fluence values only to a text file
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
-    f.write(indent + 'TW write\n')
+    f.write(indent + 'TW write\n\n')
+
+    #generate dose volume histogram
+    f.write('DoseVolumeHistogramGenerator DVHG\n')
+    f.write(indent + 'DVHG mesh $M\n')
+    f.write(indent + 'DVHG dose [EF result]\n')
+    f.write(indent + 'DVHG update\n\n')
+
+    f.write('set DHC [DVHG result]\n\n')
+
+    #write dvh matrix to a text file
+    f.write('TextFileMatrixWriter TW\n')
+    f.write(indent + 'TW filename "' + dvhResult + '"\n')
+    f.write(indent + 'TW source [$DHC get 1]\n')
+    f.write(indent + 'TW write\n\n')
+
+    #overwrite the dvh textfile to dvh format
+    f.write('TextFileDoseHistogramWriter TDH\n')
+    f.write(indent + 'TDH filename "' + dvhResult + '"\n')
+    f.write(indent + 'TDH collection $DHC\n')
+    f.write(indent + 'TDH write\n')
 
     #copy and save script to AWS
     f = open(source, 'r')
