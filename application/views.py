@@ -227,7 +227,7 @@ def fmSimulatorMaterial(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        formset1 = materialSetSet(request.POST, form_kwargs={'mesh_unit': request.session['meshUnit']})
+        formset1 = materialSetSet(request.POST)
 
         # check whether it's valid:
         if formset1.is_valid():
@@ -253,7 +253,7 @@ def fmSimulatorMaterial(request):
 
     # If this is a GET (or any other method) create the default form.
     else:
-        formset1 = materialSetSet(request.GET or None, form_kwargs={'mesh_unit': request.session['meshUnit']})
+        formset1 = materialSetSet(request.GET or None)
 
     context = {
         'formset1': formset1,
@@ -268,6 +268,16 @@ def ajaxrequests_view(request):
     if(ind):
         ind = int(ind)
         get_data = Material.objects.filter(id=ind)
+        # do conversion if units do not match (temporory, do not save model after conversion)
+        for data in get_data:
+            if data.material_unit != request.session['meshUnit']:
+                if request.session['meshUnit'] == 'cm': # convert mm to cm
+                    data.scattering_coeff *= 10
+                    data.absorption_coeff *= 10
+                else: # convert cm to mm
+                    data.scattering_coeff /= 10
+                    data.absorption_coeff /= 10
+
         ser_data = serializers.serialize("json", get_data)
         return HttpResponse(ser_data, content_type="application/json")
     else:
