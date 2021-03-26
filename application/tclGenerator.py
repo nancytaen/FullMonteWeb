@@ -233,12 +233,12 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     #get results
     f.write('set ODC [k results]\n\n')
 
-    #convert energy absorbed per volume element to volume average fluence
+    #convert photon weight from simulation raw results to energy absorbed per volume element
     f.write('EnergyToFluence EF\n')
     f.write(indent + 'EF kernel k\n')
     f.write(indent + 'EF energy ' + str(energy) + '\n')
+    f.write(indent + 'EF inputPhotonWeight\n')
     f.write(indent + 'EF source [$ODC getByName "VolumeEnergy"]\n')
-    f.write(indent + 'EF inputEnergy\n')
     f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
