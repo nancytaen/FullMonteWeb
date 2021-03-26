@@ -545,9 +545,9 @@ def transfer_files_and_run_simulation(request):
 
     if request.session['GPU_instance']:
         # add an argument to add nvidia runtime for gpu
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log" 
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log 2>&1" 
     else:
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log"
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log 2>&1"
     client.exec_command(command)
     client.close()
     conn.close()
