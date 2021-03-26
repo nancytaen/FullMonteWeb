@@ -160,7 +160,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit
     rawDVHData = {}
     RegionID = 0
     maxFluence = 0
-    with sftp.open(remoteFilePath) as dvhFile:
+    with sftp.open(filename=remoteFilePath, bufsize=1) as dvhFile:
         for line in dvhFile:
             if firstLine:
                 numRegions = int(line) # first line is a single number that defines number of regions
