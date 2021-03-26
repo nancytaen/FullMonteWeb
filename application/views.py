@@ -164,6 +164,11 @@ def fmSimulator(request):
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
             request.session['energyUnit'] = form.cleaned_data['energyUnit']
 
+            if request.POST.get("overwrite_on_ec2") == "True":
+                request.session['overwrite_on_ec2'] = True
+            else:
+                request.session['overwrite_on_ec2'] = False
+
             return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
@@ -478,10 +483,26 @@ def transfer_files_and_run_simulation(request):
     ftp.chmod('docker.sh', 700)
 
     # transfer mesh in chunks to save memory
-    with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
-        with default_storage.open(meshFilePath) as mesh_file:
-            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
-                ftp_file.write(piece)
+    need_transfer = True
+    if not request.session['overwrite_on_ec2']:
+        need_transfer = False
+        try:
+            ftp.stat(meshFilePath)
+        except:
+            need_transfer = True
+
+    if not need_transfer:
+        print("skipped mesh file transfer")
+        sys.stdout.flush()
+    
+    if need_transfer:
+        print("starting mesh file transfer")
+        with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+            with default_storage.open(meshFilePath) as mesh_file:
+                for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                    ftp_file.write(piece)
+        print("finished mesh file transfer")
+        sys.stdout.flush()
 
     ftp.putfo(tcl_file, './'+generated_tcl.script.name)
     ftp.close()
