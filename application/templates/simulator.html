@@ -107,6 +107,30 @@
                         </td>
                     </tr>
                 </tbody>
+
+                <tbody>
+                    <tr>
+                        <th></th><td>
+                        <button id='advanced' type='button'>Advanced Options</button>
+                        </td>
+                    </tr>
+                </tbody>
+            
+                <tbody id='advancedOption'>
+                    <tr>
+                        <td colspan="2"><input name="overwrite_on_ec2" id='overwrite_on_ec2' type="checkbox" value="True" checked>
+                            <label for="overwrite_on_ec2" style="font-weight:normal">Overwrite the mesh file on EC2 instance&nbsp</label>
+                            <!-- https://stackoverflow.com/questions/32153973/how-to-display-popup-on-mouse-over-in-html-using-js-and-css -->
+                            <p id="p1" class="ppup"><a class="keyword" id="k1" href="glossary.xhtml#g1" onclick="return false;" style="font-weight:normal">What is this?</a>
+                                <span style="font-weight:normal">If you have run a simulation with this mesh file before, 
+                                    the website will try to skip transferring the mesh file to your EC2 instance again, 
+                                    to save time on file transfers. Check this checkbox if you wish to overwrite the mesh file
+                                    on your EC2 instance even if it exists.</span></p></td>
+                    <!-- <td>
+                        
+                    </td> -->
+                    </tr>
+                </tbody>
                 </table>
                 <b><a href="{% url 'kernel_info' %}">Click here for more info about the packet count and different kernel types.
                 </a></b>
@@ -166,6 +190,16 @@
 
 <script>
     $(document).ready(function(){
+                    var checkboxes = document.getElementsByTagName('input');
+
+                    for (var i=0; i<checkboxes.length; i++)  {
+                        if (checkboxes[i].type == 'checkbox')   {
+                            checkboxes[i].checked = false;
+                        }
+                    }
+                    $("#advanced").click(function(){
+                                        $("#advancedOption").toggle();
+                                        });
                     $("#mesh_upload").click(function(){
                         $("#select_existing")[0].selectedIndex = 0;
                                         });
