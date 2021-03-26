@@ -13,6 +13,7 @@ from matplotlib import pyplot as plt
 from django.db import models, connections
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from .mpld3CustomPlugin import CustomizedInteractiveLegendPlugin
+import sys
 
 # Define CSS for custom labels
 css = """
@@ -177,6 +178,8 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit
                     rawDVHData[RegionID][1].append(float(data[1])) # CDF (% cumulative volume)
                     rawDVHData[RegionID][2].append(float(data[2])) # Dose (fluence)
                     maxFluence = max(maxFluence, float(data[2]))
+    
+    print("DVH data array size:", sys.getsizeof(rawDVHData))
 
     # check if number of regions is correct
     try:
