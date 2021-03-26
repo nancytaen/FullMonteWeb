@@ -24,120 +24,38 @@ table, td
 }
 """
 
-# read vtk file
-def import_data(filePath):
-
-    reader = vtkUnstructuredGridReader()
-    reader.SetFileName(filePath)
-    reader.ReadAllScalarsOn()
-    reader.ReadAllVectorsOn()
-    reader.Update()
-    output = reader.GetOutput()
-
-    return output
-
-# map each region to its volumes
-def calculate_volumes(fullMonteOutputData, regionData):
-
-    volumeData = {}
-    global regionVolume
-    regionVolume = {}
-    numCells = regionData.size
-
-    # get array of volumes for each region
-    for n in range(numCells):
-        region = regionData[n]
-        if (region == 0): continue # region 0 is air, ignore this
-
-        else:
-            if region not in volumeData:
-                volumeData[region] = []
-
-            curCell = fullMonteOutputData.GetCell(n)
-            volume = vtkMeshQuality.TetVolume(curCell)
-            volumeData[region].append(volume)
-
-    # compute and save total volume in each region
-    for region, volumes in volumeData.items():
-        regionVolume[region] = sum(volumes)
-
-    return volumeData
-
-# map each region to its doses (fluence)
-def get_doses(fluenceData, regionData):
-
-    doseData = {}
-    global maxFluence
-    maxFluence = 0
-
-    # get array of doses for each region, also save the maximum fluence across all regions
-    for region, dose in zip(regionData, fluenceData):
-        if (region == 0): continue # region 0 is air, ignore this
-
-        else:
-            if region not in doseData:
-                doseData[region] = []
-
-            doseData[region].append(dose)
-            if(dose > maxFluence):
-                maxFluence = dose
-    print("maxFluence: ", maxFluence)
-    return doseData
-
-# compute relative dose to relative volume mapping
-# with doseData and volumeData, each region can be associated with its volume
-# and dose arrays. Now for each region, loop through all its data points, get
-# its relative dose, which will be represented by the x-axis, get its volume,
-# and add its volume to the volume that is associated with the relative dose.
-# Finally, compute the relative volume (fraction of volume against total volume).
-def calculate_DVH(doseData, volumeData, noBins):
-
-    doseVolumeData = {}
-    global export_data # for exporting to excel
-    export_data = {}
-
-    # map region volume to its corresponding dose bin for all regions
-    for region, doses in doseData.items():
-        doseVolumeData[region] = [0] * noBins
-        export_data[region] = np.zeros((5, noBins))
-        # for each point n on the region, cumulate volume to the total volume at dose_n
-        for n in range(len(doses)):
+# convert dose volume data into % max dose bins
+def groupIntoBins(rawDVHData, maxFluence, noBins):
+    cumulativeDVHData = {}
+    for region in rawDVHData:
+        cumulativeDVHData[region] = np.zeros((4, noBins)) # 4 rows: dose, %max dose, cumulative volume, %total volume
+        cumulativeDVHData[region][1] = (np.array(range(noBins)) / noBins * 100) # % max dose for each bin
+        cumulativeVolume = rawDVHData[region][0]
+        percentVolume = rawDVHData[region][1]
+        doses = rawDVHData[region][2]
+        numEntries = len(doses)
+        # compute the bin for each dose, and keep overwriting the dose and volume info in that bin with max value for that bin
+        for n in range(numEntries):
             # 500 (noBins) bins, so the dose bin ID on the x-axis is dose/max_dose * noBins
             bin_id = floor(doses[n] / maxFluence * (noBins-1))
-            doseVolumeData[region][bin_id] += volumeData[region][n]
-            # save data to be exported (save fluence dose values in order)
-            export_data[region][0][bin_id] = doses[n]
-
-    return doseVolumeData
-
-# For each region, compute the total volume of region that received fluence greater than or
-# qual to the fluence values in that bin
-def calculate_cumulative_DVH(doseVolumeData, noBins):
-
-    cumulativeDVH = {}
-
-    # for each dose interval
-    for region, doseVolume in doseVolumeData.items():
-
-        if region not in cumulativeDVH:
-            cumulativeDVH[region] = [0] * noBins
-
-        cumulativeTotal = 0
-
-        for n in range(noBins-1, -1, -1):
-            cumulativeTotal += doseVolume[n]
-            cumulativeDVH[region][n] = cumulativeTotal
-            # save data to be exported (save region volume and cumulative volume in order)
-            export_data[region][1][n] = doseVolume[n]
-            export_data[region][2][n] = cumulativeTotal
-
-    return cumulativeDVH
+            cumulativeDVHData[region][0][bin_id] = doses[n] # max dose for this bin
+            cumulativeDVHData[region][2][bin_id] = cumulativeVolume[n] # max cumulative volume for this bin
+            cumulativeDVHData[region][3][bin_id] = percentVolume[n] # max %cumulative volume for this bin
+        # fill in the gaps
+        for n in range(1, noBins):
+            if cumulativeDVHData[region][0][n] == 0:
+                cumulativeDVHData[region][0][n] = cumulativeDVHData[region][0][n-1]
+            if cumulativeDVHData[region][2][n] == 0:
+                cumulativeDVHData[region][2][n] = cumulativeDVHData[region][2][n-1]
+            if cumulativeDVHData[region][3][n] == 0:
+                cumulativeDVHData[region][3][n] = cumulativeDVHData[region][3][n-1]
+    return cumulativeDVHData
 
 # The cumulative DVH is plotted with bin doses (% maximum dose) along the horizontal
 # axis. The column height of each bin represents the %volume of structure receiving a
 # dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins, materials, outputMeshFileName):
+def plot_DVH(cumulativeDVHData, materials, outputMeshFileName, noBins):
     FIG_WIDTH = 11
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
@@ -161,9 +79,9 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
 
     # Plot for each region
     # color=next(ax._get_lines.prop_cycler)['color']
-    for region, cumulativeDoseVolume in data.items():
-        yVals = np.array(cumulativeDoseVolume) / regionVolume[region] * 100 # % region volume
-        line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
+    for region in cumulativeDVHData:
+        yVals = cumulativeDVHData[region][3] # % cumulative volume
+        line = ax.plot(xVals, yVals, lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
         lines.append(line)
         if(len(materials) > 0): # mesh file from simulation can use material info from simulation
             legendList.append(str(region) + " (" + materials[region] + ")")
@@ -174,9 +92,6 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
             label = "<table><td>Dose: "+"{:.2f}".format(xVals[i])+"%, Volume: "+"{:.2f}".format(yVals[i])+"%</td></table>"
             labels.append(label)
         labelsList.append(labels)
-        # save data to be exported (save % max fluence dose and % cumulative region volume in order)
-        export_data[region][3] = xVals
-        export_data[region][4] = yVals
 
     # Interactive legend
     interactive_legend = CustomizedInteractiveLegendPlugin(lines,
@@ -219,18 +134,17 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.SetExtent(regionBoundaries)
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
-def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials):
+    print("Generating DVH")
     conn = create_connection()
     conn.ensure_connection()
+
     info = meshFileInfo.objects.filter(user = user).latest('id')
     outputMeshFileName = info.fileName
-    remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName
-    localFilePath = os.path.dirname(__file__) + "/visualization/Meshes/" + outputMeshFileName
-
+    remoteFilePath = "/home/ubuntu/docker_sims/" + dvhTxtFileName
     print("remote file path: "+remoteFilePath)
-    print("local file path: "+localFilePath)
 
-    # tempororily get mesh from remote server to local
+    # connect to EC2
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -240,71 +154,59 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, materials):
     print ('connected to remote server in visualizerDVH')
     sys.stdout.flush()
     sftp = client.open_sftp()
-    sftp.get(remoteFilePath, localFilePath)
 
-    output = import_data(localFilePath)
+    # parce through DVH text file and extract data
+    firstLine = True
+    rawDVHData = {}
+    RegionID = 0
+    maxFluence = 0
+    with sftp.open(remoteFilePath) as dvhFile:
+        for line in dvhFile:
+            if firstLine:
+                numRegions = int(line) # first line is a single number that defines number of regions
+                print("Number of regions in DVH:", numRegions)
+                firstLine = False
+            else:
+                data = line.split()
+                if len(data) == 1: # new region
+                    RegionID = RegionID + 1 # start at 1 since region 0 (air) is ignored
+                    print("Saving data for Region", RegionID)
+                    rawDVHData[RegionID] = [[],[],[]]
+                else:
+                    rawDVHData[RegionID][0].append(float(data[0])) # CumulativeMeasure (cumulative volume)
+                    rawDVHData[RegionID][1].append(float(data[1])) # CDF (% cumulative volume)
+                    rawDVHData[RegionID][2].append(float(data[2])) # Dose (fluence)
+                    maxFluence = max(maxFluence, float(data[2]))
 
-    # delete temporory mesh
-    os.remove(localFilePath)
-
-    ## regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
-    ## output = extract_mesh_subregion(output, regionBoundaries)
-
-    # Arrays are of type numpy.ndarray
-    numpyWrapper = npi.WrapDataObject( output )
-
+    # check if number of regions is correct
     try:
-        fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
-        regionData = numpyWrapper.CellData["Region"]
-        print()
+        RegionID == numRegions
+    except:
+        print("Incorrect number of regions. Actual number of regions: " + numRegions + ", found number of regions: " + RegionID)
+        return -1
+    
+    # Group fluence into bins
+    noBins = 500    # max fluence is divided into this many bins
+    cumulativeDVHData = groupIntoBins(rawDVHData, maxFluence, noBins)
 
-        if (fluenceData.size != regionData.size):
-            print("Fluence and region data do not match")
-            return(-1)
-
-    except AttributeError:
-        print("Could not parse region or fluence data by name. Attempting to parse by index")
-
-        try:
-            regionData = numpyWrapper.CellData[0]
-            fluenceData = numpyWrapper.CellData[1] # Assuming you know the number of the array
-
-            if (fluenceData.size != regionData.size):
-                print("Fluence and region data do not match")
-                return(-1)
-
-        except IndexError:
-            print("Could not parse region or fluence data. Input mesh may not be a correctly formatted FullMonte output file.")
-            return(-1)
-
-        except:
-            print("Unidentified error occurred. Could not parse input data")
-            return(-2)
-
-
-    noBins = 500    # max fluence is divided into
-
-    volumeData = calculate_volumes(output,regionData)
-    doseData = get_doses(fluenceData,regionData)
-    DVHdata = calculate_DVH(doseData,volumeData,noBins)
-    cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    # save the figure's html string to session
-    info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName)
+    # plot DVH figure and save the figure's html string to session
+    info.dvhFig = plot_DVH(cumulativeDVHData, materials, outputMeshFileName, noBins)
     info.maxFluence = maxFluence
     info.save()
+
     # export the data to csv if mesh file comes from simulation
     localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
     if(len(materials) > 0): # only mesh files from simulation has material info
         print("Exporting DVH data to CSV")
         with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
-            for region in export_data:
+            for region in cumulativeDVHData:
                 title = ['', '', 'Region ' + str(region) + ' (' + materials[region] + ')']
                 df = pd.DataFrame(title).T
                 df.columns = ['', '', '']
                 f.write(df.to_csv(index=False))
 
-                df = pd.DataFrame(export_data[region]).T
-                df.columns = ['Fluence Dose', 'Region Volume', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
+                df = pd.DataFrame(cumulativeDVHData[region]).T
+                df.columns = ['Dose ('+energyUnit+')', '% Max Dose', 'Cumulative volume ('+meshUnit+')', '% Total coverage (% volume that received at most the respective dose)']
                 f.write(df.to_csv(index=False, float_format='%.3f'))
         print("DVH data export complete")
         remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName[:-8] + '.dvh.png'
