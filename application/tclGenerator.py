@@ -7,7 +7,7 @@ from django.core.files.storage import default_storage
 from .models import *
 from django.core.files.base import ContentFile
 
-def tclGenerator(session, mesh, current_user):
+def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     script_name = mesh.originalMeshFileName[:-4] + '.tcl'
     new_script = tclScript()
     _temp = ""
@@ -236,6 +236,7 @@ def tclGenerator(session, mesh, current_user):
     #convert energy absorbed per volume element to volume average fluence
     f.write('EnergyToFluence EF\n')
     f.write(indent + 'EF kernel k\n')
+    f.write(indent + 'EF energy ' + str(energy) + '\n')
     f.write(indent + 'EF source [$ODC getByName "VolumeEnergy"]\n')
     f.write(indent + 'EF inputEnergy\n')
     f.write(indent + 'EF outputFluence\n')
@@ -249,12 +250,14 @@ def tclGenerator(session, mesh, current_user):
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     dvhResult = '/sims/' + name + '.dvh.txt'
+    comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
     
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
     f.write(indent + 'W addData "Fluence" [EF result]\n')
     f.write(indent + 'W mesh $M\n')
+    f.write(indent + 'W addHeaderComment "' + comment + '"\n')
     f.write(indent + 'W write\n\n')
 
     #write the fluence values only to a text file
