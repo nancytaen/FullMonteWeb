@@ -145,3 +145,10 @@ class opFileInput(models.Model):
                              null = True,
                              on_delete=models.CASCADE
                              )
+class pdtOuputLogFile(models.Model):
+    user = models.ForeignKey(user_model,
+                             default = 0,
+                             null = True,
+                             on_delete=models.CASCADE
+                             )
+    pdt_space_log = models.FileField(storage=PublicMediaStorage())

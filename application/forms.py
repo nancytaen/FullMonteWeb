@@ -91,11 +91,10 @@ class pdtForm(forms.Form):
             self.fields['mesh'].choices = choice_mesh
         
 class pdtPlaceFile(forms.Form):
-    placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed','fixed'),
-                                                                        ('virtual', 'virtual'),),
-                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed, please palce sources at fixed position in placement file(below). <br />If it is virtual and source type is point, the tool will fill the mesh with candidate point sources.")
-    source_type = forms.ChoiceField(label='Source Type', choices=(('point','point'),
-                                                                        ('line', 'line'),),help_text="The type of light sources used. ")
+    placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed_point','fixed_point'),
+                                                                        ('fixed_line','fixed_line'),
+                                                                        ('virtual_point', 'virtual_point'),),
+                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed point and line, please place sources at fixed position in placement file(below). <br />If it is virtual point source, the tool will fill the mesh with candidate point sources.")
     light_placement_file = forms.FileField(
         label='Placement File',
         help_text="Placement of intial light sources."
