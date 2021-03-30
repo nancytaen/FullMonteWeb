@@ -57,7 +57,7 @@ from multiprocessing import Process, Event
 import threading
 import select
 import re
-import scipy.io as sio
+# import scipy.io as sio
 import os
 # from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -681,25 +681,26 @@ def fmVisualization(request):
         return HttpResponseRedirect('/application/aws')
 
     # Check if mesh file and DVH file exist in the remote server
-    dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
+    # dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
         info.remoteFileExists = True
     except:
         info.remoteFileExists = False
-    try:
-        sftp.stat('docker_sims/'+dvhTxtFileName)
-        dvhTxtFileExists = True
-    except:
-        dvhTxtFileExists = False
+    # try:
+    #     sftp.stat('docker_sims/'+dvhTxtFileName)
+    #     dvhTxtFileExists = True
+    # except:
+    #     dvhTxtFileExists = False
     sftp.close()
     client.close()
     sys.stdout.flush()
     info.save()
 
     # file exists for DVH
-    if(dvhTxtFileExists):
+    # if(dvhTxtFileExists):
+    if(info.remoteFileExists):
         # generate DVH
         if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
             print('generating DVH')
@@ -712,7 +713,8 @@ def fmVisualization(request):
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
             materials = request.session['region_name']
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, ))
+            # p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
             p.start()
             print('after')
             current_process = psutil.Process()
