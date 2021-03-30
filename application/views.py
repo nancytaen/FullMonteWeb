@@ -57,7 +57,7 @@ from multiprocessing import Process, Event
 import threading
 import select
 import re
-import scipy.io as sio
+# import scipy.io as sio
 import os
 # from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -330,6 +330,35 @@ def fmSimulatorSource(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    # visualize input mesh
+    # transfer input mesh to Ec2 instance
+    inputMeshFileName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    ftp = client.open_sftp()
+    ftp.chdir('docker_sims/')
+    # transfer mesh in chunks to save memory
+    with ftp.open('./'+inputMeshFileName, 'wb') as ftp_file:
+        with default_storage.open(inputMeshFileName) as mesh_file:
+            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                ftp_file.write(piece)
+    ftp.close()
+
+    # generate ParaView Visualization URL
+    # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
+    dns = request.session['DNS']
+    tcpPort = request.session['tcpPort']
+    visURL = "http://" + dns + ":" + tcpPort + "/"
+    # render 3D visualizer
+    text_obj = request.session['text_obj']
+    p = Process(target=visualizer, args=(inputMeshFileName, True, dns, tcpPort, text_obj, ))
+    p.start()
+    client.close()
+
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
@@ -410,6 +439,7 @@ def fmSimulatorSource(request):
     context = {
         'formset2': formset2,
         'unit': request.session['meshUnit'],
+        'visURL': visURL,
     }
 
     return render(request, "simulator_source.html", context)
@@ -681,25 +711,26 @@ def fmVisualization(request):
         return HttpResponseRedirect('/application/aws')
 
     # Check if mesh file and DVH file exist in the remote server
-    dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
+    # dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
         info.remoteFileExists = True
     except:
         info.remoteFileExists = False
-    try:
-        sftp.stat('docker_sims/'+dvhTxtFileName)
-        dvhTxtFileExists = True
-    except:
-        dvhTxtFileExists = False
+    # try:
+    #     sftp.stat('docker_sims/'+dvhTxtFileName)
+    #     dvhTxtFileExists = True
+    # except:
+    #     dvhTxtFileExists = False
     sftp.close()
     client.close()
     sys.stdout.flush()
     info.save()
 
     # file exists for DVH
-    if(dvhTxtFileExists):
+    # if(dvhTxtFileExists):
+    if(info.remoteFileExists):
         # generate DVH
         if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
             print('generating DVH')
@@ -712,7 +743,8 @@ def fmVisualization(request):
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
             materials = request.session['region_name']
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, ))
+            # p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
             p.start()
             print('after')
             current_process = psutil.Process()
