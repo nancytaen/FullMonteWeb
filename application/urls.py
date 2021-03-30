@@ -97,6 +97,9 @@ urlpatterns = [
     # /application/pdt_space_display_visualization
     path('pdt_space_display_visualization', views.pdt_space_display_visualization, name='pdt_space_display_visualization'),
     
+    # /application/pdt_space_visualize
+    path('pdt_space_visualize', views.pdt_space_visualize, name='pdt_space_visualize'),
+
     ####################### presets #######################
     # /application/create_preset_material
     path('create_preset_material', views.createPresetMaterial, name='create_preset_material'),

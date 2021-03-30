@@ -120,7 +120,7 @@ def fmSimulator(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         #print(11111)
-        #print(request.POST)
+        print(request.POST)
         #print(request.FILES)
         sys.stdout.flush()
         form = tclInputForm(data=request.POST, files=request.FILES)
@@ -162,9 +162,50 @@ def fmSimulator(request):
                 obj.meshFileID = new_mesh_entry
                 obj.save()
 
-            request.session['kernelType'] = form.cleaned_data['kernelType']
+            print(form.cleaned_data['kernelType'])
+            selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
+            selected_leaving = 'Leaving' in form.cleaned_data['kernelType']
+            selected_internal = 'Internal' in form.cleaned_data['kernelType']
+
+            using_gpu = request.session['GPU_instance']
+            if selected_internal:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+            elif selected_leaving and selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASVKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSVKernel'
+            elif selected_leaving:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASurfaceKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSurfaceKernel'
+            elif selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAVolumeKernel'
+                else:
+                    request.session['kernelType'] = 'TetraVolumeKernel'
+            else:
+                # this should not happen, but just in case
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+
+            sys.stdout.flush()
+            request.session['meshUnit'] = form.cleaned_data['meshUnit']
             request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
             request.session['packetCount'] = form.cleaned_data['packetCount']
+            request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
+            request.session['energyUnit'] = form.cleaned_data['energyUnit']
+
+            if request.POST.get("overwrite_on_ec2") == "True":
+                request.session['overwrite_on_ec2'] = True
+            else:
+                request.session['overwrite_on_ec2'] = False
 
             return HttpResponseRedirect('/application/simulator_material')
 
@@ -221,6 +262,7 @@ def fmSimulatorMaterial(request):
 
     context = {
         'formset1': formset1,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_material.html", context)
@@ -231,6 +273,16 @@ def ajaxrequests_view(request):
     if(ind):
         ind = int(ind)
         get_data = Material.objects.filter(id=ind)
+        # do conversion if units do not match (temporory, do not save model after conversion)
+        for data in get_data:
+            if data.material_unit != request.session['meshUnit']:
+                if request.session['meshUnit'] == 'cm': # convert mm to cm
+                    data.scattering_coeff *= 10
+                    data.absorption_coeff *= 10
+                else: # convert cm to mm
+                    data.scattering_coeff /= 10
+                    data.absorption_coeff /= 10
+
         ser_data = serializers.serialize("json", get_data)
         return HttpResponse(ser_data, content_type="application/json")
     else:
@@ -281,6 +333,9 @@ def fmSimulatorSource(request):
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         formset2 = lightSourceSet(request.POST)
+        print(request.POST)
+        sys.stdout.flush()
+
 
         # check whether it's valid:
         if formset2.is_valid():
@@ -296,6 +351,21 @@ def fmSimulatorSource(request):
             request.session['vElement'] = []
             request.session['rad'] = []
             request.session['power'] = []
+            request.session['volumeRegion'] = []
+            request.session['emitHemiSphere'] = []
+            request.session['hemiSphereEmitDistribution'] = []
+            request.session['numericalAperture'] = []
+            request.session['checkDirection'] = []
+            request.session['xDir1'] = []
+            request.session['yDir1'] = []
+            request.session['zDir1'] = []
+            request.session['xPos0'] = []
+            request.session['yPos0'] = []
+            request.session['zPos0'] = []
+            request.session['xPos1'] = []
+            request.session['yPos1'] = []
+            request.session['zPos1'] = []
+            request.session['emitVolume'] = []
 
             for form in formset2:
                 print(form.cleaned_data)
@@ -309,10 +379,28 @@ def fmSimulatorSource(request):
                 request.session['vElement'].append(form.cleaned_data['vElement'])
                 request.session['rad'].append(form.cleaned_data['rad'])
                 request.session['power'].append(form.cleaned_data['power'])
+                request.session['volumeRegion'].append(form.cleaned_data['volumeRegion'])
+                request.session['emitHemiSphere'].append(form.cleaned_data['emitHemiSphere'])
+                request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
+                request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
+                request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
+                request.session['xDir1'].append(form.cleaned_data['xDir1'])
+                request.session['yDir1'].append(form.cleaned_data['yDir1'])
+                request.session['zDir1'].append(form.cleaned_data['zDir1'])
+                request.session['xPos0'].append(form.cleaned_data['xPos0'])
+                request.session['yPos0'].append(form.cleaned_data['yPos0'])
+                request.session['zPos0'].append(form.cleaned_data['zPos0'])
+                request.session['xPos1'].append(form.cleaned_data['xPos1'])
+                request.session['yPos1'].append(form.cleaned_data['yPos1'])
+                request.session['zPos1'].append(form.cleaned_data['zPos1'])
+                request.session['emitVolume'].append(form.cleaned_data['emitVolume'])
             
             mesh = tclInput.objects.filter(user = request.user).latest('id')
+            energy  = request.session['totalEnergy']
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
 
-            script_path = tclGenerator(request.session, mesh, request.user)
+            script_path = tclGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
             return HttpResponseRedirect('/application/simulation_confirmation')
 
     # If this is a GET (or any other method) create the default form.
@@ -321,6 +409,7 @@ def fmSimulatorSource(request):
 
     context = {
         'formset2': formset2,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, "simulator_source.html", context)
@@ -392,6 +481,21 @@ def simulation_confirmation(request):
         temp.vElement = request.session['vElement'][i]
         temp.rad = request.session['rad'][i]
         temp.power = request.session['power'][i]
+        temp.volumeRegion = request.session['volumeRegion'][i]
+        temp.emitHemiSphere = request.session['emitHemiSphere'][i]
+        temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
+        temp.numericalAperture = request.session['numericalAperture'][i]
+        temp.checkDirection = request.session['checkDirection'][i]
+        temp.xDir1 = request.session['xDir1'][i]
+        temp.yDir1 = request.session['yDir1'][i]
+        temp.zDir1 = request.session['zDir1'][i]
+        temp.xPos0 = request.session['xPos0'][i]
+        temp.yPos0 = request.session['yPos0'][i]
+        temp.zPos0 = request.session['zPos0'][i]
+        temp.xPos1 = request.session['xPos1'][i]
+        temp.yPos1 = request.session['yPos1'][i]
+        temp.zPos1 = request.session['zPos1'][i]
+        temp.emitVolume = request.session['emitVolume'][i]
         light_sources.append(temp)
     
     tcl_form = Optional_Tcl()
@@ -402,6 +506,7 @@ def simulation_confirmation(request):
         'light_sources': light_sources,
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
+        'unit': request.session['meshUnit'],
     }
 
     return render(request, 'simulation_confirmation.html', context)
@@ -429,19 +534,35 @@ def transfer_files_and_run_simulation(request):
     ftp.chmod('docker.sh', 700)
 
     # transfer mesh in chunks to save memory
-    with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
-        with default_storage.open(meshFilePath) as mesh_file:
-            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
-                ftp_file.write(piece)
+    need_transfer = True
+    if not request.session['overwrite_on_ec2']:
+        need_transfer = False
+        try:
+            ftp.stat(meshFilePath)
+        except:
+            need_transfer = True
+
+    if not need_transfer:
+        print("skipped mesh file transfer")
+        sys.stdout.flush()
+    
+    if need_transfer:
+        print("starting mesh file transfer")
+        with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+            with default_storage.open(meshFilePath) as mesh_file:
+                for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                    ftp_file.write(piece)
+        print("finished mesh file transfer")
+        sys.stdout.flush()
 
     ftp.putfo(tcl_file, './'+generated_tcl.script.name)
     ftp.close()
 
     if request.session['GPU_instance']:
         # add an argument to add nvidia runtime for gpu
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log" 
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log 2>&1" 
     else:
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log"
+        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log 2>&1"
     client.exec_command(command)
     client.close()
     conn.close()
@@ -486,6 +607,20 @@ def visualization_mesh_upload(request):
             sftp = client.open_sftp()
             sftp.chdir('docker_sims/')
             sftp.putfo(outputMeshFile, './'+outputMeshFileName)
+            # parse out mesh and fluence energy units from mesh
+            i = 0
+            with sftp.open('./'+outputMeshFileName) as meshFile:
+                for line in meshFile:
+                    if i == 1: # look for second line
+                        data = line.split()
+                        if data[0] == "MeshUnit:":
+                            meshUnit = data[1]
+                            energyUnit = data[3]
+                        else:
+                            meshUnit = ""
+                            energyUnit = ""
+                        break
+                    i = i + 1
             sftp.close()
             client.close()
             
@@ -494,6 +629,12 @@ def visualization_mesh_upload(request):
             info.fileName = outputMeshFileName
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
             info.save()
+
+            # save units
+            if len(energyUnit) > 0 and len(meshUnit) > 0:
+                request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
+            else:
+                request.session['fluenceEnergyUnit'] = "(unit not provided in mesh file)"
 
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
@@ -520,13 +661,14 @@ def fmVisualization(request):
         messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
         return HttpResponseRedirect('/application/aws')
 
+    # Check if current session has simulation completed/mesh file uploaded
     info = meshFileInfo.objects.filter(user = request.user).latest('id')
     outputMeshFileName = info.fileName
     if len(outputMeshFileName) == 0:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
 
-    # first, try to connect to remote server
+    # Try to connect to remote server
     private_key_file = io.StringIO(text_obj)
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -538,20 +680,26 @@ def fmVisualization(request):
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
 
-    # check if file exists in the remote server
+    # Check if mesh file and DVH file exist in the remote server
+    dvhTxtFileName = outputMeshFileName[:-8] + ".dvh.txt"
     sftp = client.open_sftp()
     try:
         sftp.stat('docker_sims/'+outputMeshFileName)
         info.remoteFileExists = True
     except:
         info.remoteFileExists = False
+    try:
+        sftp.stat('docker_sims/'+dvhTxtFileName)
+        dvhTxtFileExists = True
+    except:
+        dvhTxtFileExists = False
     sftp.close()
     client.close()
     sys.stdout.flush()
     info.save()
 
     # file exists for DVH
-    if(info.remoteFileExists):
+    if(dvhTxtFileExists):
         # generate DVH
         if info.dvhFig == "<p>Dose Volume Histogram not yet generated</p>":
             print('generating DVH')
@@ -561,7 +709,10 @@ def fmVisualization(request):
             for child in children:
                 print('Child pid is {}'.format(child.pid))
             connections.close_all()
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, request.session['region_name'], ))
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
+            materials = request.session['region_name']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
             p.start()
             print('after')
             current_process = psutil.Process()
@@ -586,8 +737,9 @@ def fmVisualization(request):
             print('using last saved DVH')
             return HttpResponseRedirect('/application/displayVisualization')
     
-    # DBH cannot be generated
+    # DVH cannot be generated
     else:
+        info.maxFluence = 0
         info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
         info.save()
         return HttpResponseRedirect('/application/displayVisualization')
@@ -669,7 +821,7 @@ def displayVisualization(request):
         msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -1227,6 +1379,10 @@ def simulation_finish(request):
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
     info.save()
+    # save fluence energy unit
+    meshUnit = request.session['meshUnit']
+    energyUnit = request.session['energyUnit']
+    request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
     # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))
@@ -2073,3 +2229,31 @@ def pdt_space_display_visualization(request):
     dvhFig = info.dvhFig
     context = {'dvhFig': dvhFig}
     return render(request, "pdt_space_display_visualization.html", context)
+
+    
+
+def pdt_space_visualize(request):
+    """
+    Todo:
+    In pdt_space_finish, save mesh file info
+        info = meshFileInfo.objects.filter(user = request.user).latest('id')
+        info.fileName = <output mesh name>
+        exists = <check if file actually exists on disk>
+        if exists:
+            info.remoteFileExists = true
+        else
+            info.remoteFileExists = false
+        info.dvhFig = <dose volume histogram html string generated>
+        info.maxFluence = <maximum fluence from simulation>
+    In displayVisualization
+        add a new parameter to check if visualization request comes from fullmonte or pdtspace.
+        p = Process(target=visualizer, args=(outputMeshFileName, fileExists, dns, tcpPort, text_obj, caller))
+            where caller = 'fullmonte' or 'pdtspace'
+    In visualizer3D.py
+        choose file path depending on caller
+        if caller == 'fullmonte':
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_sims/ --port " + tcpPort
+        else:
+            cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_pdt/ --port " + tcpPort
+    """
+    return HttpResponseRedirect('/application/displayVisualization')

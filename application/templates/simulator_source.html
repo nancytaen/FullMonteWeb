@@ -5,9 +5,8 @@
     <h1>FullMonte Simulator</h1>
 
     <div class="center_container">
-        <p>Please remember that the light source positions must be in unite matching that of the mesh.</p>
+        <p>Please make sure that light source positions are specified in units matching that of the mesh.</p>
     </div>
-
 
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post">
@@ -32,9 +31,9 @@
                                     {{ form.xPos.errors }}
                                     {{ form.yPos.errors }}
                                     {{ form.zPos.errors }}
-                                    {{ form.xPos }}
-                                    {{ form.yPos }}
-                                    {{ form.zPos }}
+                                    {{ form.xPos }} {{ unit }} &nbsp;
+                                    {{ form.yPos }} {{ unit }} &nbsp;
+                                    {{ form.zPos }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>
@@ -71,7 +70,102 @@
                                 <th>{{ form.rad.label_tag }}</th>
                                 <td>
                                     {{ form.rad.errors }}
-                                    {{ form.rad }}
+                                    {{ form.rad }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Cylinder Source Type -->
+                        <tbody id="CylinderEP1" style="display: none">
+                            <tr>
+                                <th><label>End Point 1</label></th>
+                                <td>
+                                    {{ form.xPos0.errors }}
+                                    {{ form.yPos0.errors }}
+                                    {{ form.zPos0.errors }}
+                                    {{ form.xPos0 }} {{ unit }} &nbsp;
+                                    {{ form.yPos0 }} {{ unit }} &nbsp;
+                                    {{ form.zPos0 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="CylinderEP2" style="display: none">
+                            <tr>
+                                <th><label>End Point 2</label></th>
+                                <td>
+                                    {{ form.xPos1.errors }}
+                                    {{ form.yPos1.errors }}
+                                    {{ form.zPos1.errors }}
+                                    {{ form.xPos1 }} {{ unit }} &nbsp;
+                                    {{ form.yPos1 }} {{ unit }} &nbsp;
+                                    {{ form.zPos1 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="CylinderEmitVolume" style="display: none">
+                            <tr>
+                                <th>{{ form.emitVolume.label_tag }}</th>
+                                <td>
+                                    {{ form.emitVolume.errors }}
+                                    {{ form.emitVolume }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- SurfaceSourceBuilder Source Type -->
+                        <tbody id="SurfaceSourceBuilder" style="display: none">
+                            <tr>
+                                <th>{{ form.volumeRegion.label_tag }}</th>
+                                <td>
+                                    {{ form.volumeRegion.errors }}
+                                    {{ form.volumeRegion }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="SurfaceSourceBuilderEmitHemiSphere" style="display: none">
+                            <tr>
+                                <th>{{ form.emitHemiSphere.label_tag }}</th>
+                                <td>
+                                    {{ form.emitHemiSphere.errors }}
+                                    {{ form.emitHemiSphere }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="SurfaceSourceBuilderHemiSphereEmitDistribution" style="display: none">
+                            <tr>
+                                <th>{{ form.hemiSphereEmitDistribution.label_tag }}</th>
+                                <td>
+                                    {{ form.hemiSphereEmitDistribution.errors }}
+                                    {{ form.hemiSphereEmitDistribution }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="SurfaceSourceBuilderNumericalAperture" style="display: none">
+                            <tr>
+                                <th>{{ form.numericalAperture.label_tag }}</th>
+                                <td>
+                                    {{ form.numericalAperture.errors }}
+                                    {{ form.numericalAperture }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="SurfaceSourceBuildercheckDirection" style="display: none">
+                            <tr>
+                                <th>{{ form.checkDirection.label_tag }}</th>
+                                <td>
+                                    {{ form.checkDirection.errors }}
+                                    {{ form.checkDirection }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="SurfaceSourceBuilderDirection" style="display: none">
+                            <tr>
+                                <th><label>Direction</label></th>
+                                <td>
+                                    {{ form.xDir1.errors }}
+                                    {{ form.yDir1.errors }}
+                                    {{ form.zDir1.errors }}
+                                    {{ form.xDir1 }}
+                                    {{ form.yDir1 }}
+                                    {{ form.zDir1 }}
                                 </td>
                             </tr>
                         </tbody>
@@ -107,9 +201,9 @@
                                     {{ formset2.empty_form.xPos.errors }}
                                     {{ formset2.empty_form.yPos.errors }}
                                     {{ formset2.empty_form.zPos.errors }}
-                                    {{ formset2.empty_form.xPos }}
-                                    {{ formset2.empty_form.yPos }}
-                                    {{ formset2.empty_form.zPos }}
+                                    {{ formset2.empty_form.xPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos }} {{ unit }}
                                 </td>
                             </tr>
                         </tbody>
@@ -146,7 +240,102 @@
                                 <th><label>{{ formset2.empty_form.rad.label_tag }}</label></th>
                                 <td>
                                     {{ formset2.empty_form.rad.errors }}
-                                    {{ formset2.empty_form.rad }}
+                                    {{ formset2.empty_form.rad }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- Cylinder Source Type -->
+                        <tbody id="temp_CylinderEP1" style="display: none">
+                            <tr>
+                                <th><label>End Point 1</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xPos0.errors }}
+                                    {{ formset2.empty_form.yPos0.errors }}
+                                    {{ formset2.empty_form.zPos0.errors }}
+                                    {{ formset2.empty_form.xPos0 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos0 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos0 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_CylinderEP2" style="display: none">
+                            <tr>
+                                <th><label>End Point 2</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xPos1.errors }}
+                                    {{ formset2.empty_form.yPos1.errors }}
+                                    {{ formset2.empty_form.zPos1.errors }}
+                                    {{ formset2.empty_form.xPos1 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.yPos1 }} {{ unit }} &nbsp;
+                                    {{ formset2.empty_form.zPos1 }} {{ unit }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_CylinderEmitVolume" style="display: none">
+                            <tr>
+                                <th>{{ formset2.empty_form.emitVolume.label_tag }}</th>
+                                <td>
+                                    {{ formset2.empty_form.emitVolume.errors }}
+                                    {{ formset2.empty_form.emitVolume }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <!-- SurfaceSourceBuilder Source Type -->
+                        <tbody id="temp_SurfaceSourceBuilder" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.volumeRegion.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.volumeRegion.errors }}
+                                    {{ formset2.empty_form.volumeRegion }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_SurfaceSourceBuilderEmitHemiSphere" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.emitHemiSphere.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.emitHemiSphere.errors }}
+                                    {{ formset2.empty_form.emitHemiSphere }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_hemiSphereEmitDistribution" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.hemiSphereEmitDistribution.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.hemiSphereEmitDistribution.errors }}
+                                    {{ formset2.empty_form.hemiSphereEmitDistribution }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_numericalAperture" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.numericalAperture.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.numericalAperture.errors }}
+                                    {{ formset2.empty_form.numericalAperture }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_checkDirection" style="display: none">
+                            <tr>
+                                <th><label>{{ formset2.empty_form.checkDirection.label_tag }}</label></th>
+                                <td>
+                                    {{ formset2.empty_form.checkDirection.errors }}
+                                    {{ formset2.empty_form.checkDirection }}
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody id="temp_SurfaceSourceBuilderDirection" style="display: none">
+                            <tr>
+                                <th><label>Direction</label></th>
+                                <td>
+                                    {{ formset2.empty_form.xDir1.errors }}
+                                    {{ formset2.empty_form.yDir1.errors }}
+                                    {{ formset2.empty_form.zDir1.errors }}
+                                    {{ formset2.empty_form.xDir1 }}
+                                    {{ formset2.empty_form.yDir1 }}
+                                    {{ formset2.empty_form.zDir1 }}
                                 </td>
                             </tr>
                         </tbody>
@@ -171,50 +360,175 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script>
         $('#add_row').click(function() {
-                            var form_idx = $('#id_form-TOTAL_FORMS').val();
-                            $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
-                            $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-                            var x_point = document.getElementById("temp_point");
-                            var x_pencilbeam = document.getElementById("temp_pencilbeam");
-                            var x_volume = document.getElementById("temp_volume");
-                            var x_ball = document.getElementById("temp_ball");
-                            x_point.id = "Point" + String(form_idx)
-                            x_pencilbeam.id = "PencilBeam" + String(form_idx)
-                            x_volume.id = "Volume" + String(form_idx)
-                            x_ball.id = "Ball" + String(form_idx)
-                            if ('#id_form-' + form_idx + '-sourceType'){
-                                var point = "#Point" + String(form_idx)
-                                $(point).show()
-                                $('#id_form-' + form_idx + '-sourceType').on('change', function () {
-                                                            var pencilbeam = "#PencilBeam" + String(form_idx)
-                                                            var volume = "#Volume" + String(form_idx)
-                                                            var ball = "#Ball" + String(form_idx)
-                                                            
-                                                            $(point).hide()
-                                                            $(pencilbeam).hide()
-                                                            $(volume).hide()
-                                                            $(ball).hide()
-                                                            var selection = $(this).val();
-                                                            switch (selection) {
-                                                                case "Point":
-                                                                    $(point).show()
-                                                                break;
-                                                                case "PencilBeam":
-                                                                    $(point).show()
-                                                                    $(pencilbeam).show()
-                                                                break;
-                                                                case "Volume":
-                                                                    $(volume).show()
-                                                                break;
-                                                                case "Ball":
-                                                                    $(point).show()
-                                                                    $(ball).show()
-                                                                break;
-                                                                default:
-                                                            }
-                                                            });
+            var form_idx = $('#id_form-TOTAL_FORMS').val();
+            $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+            $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+            var x_point = document.getElementById("temp_point");
+            var x_pencilbeam = document.getElementById("temp_pencilbeam");
+            var x_volume = document.getElementById("temp_volume");
+            var x_ball = document.getElementById("temp_ball");
+            var x_CylinderEP1 = document.getElementById("temp_CylinderEP1");
+            var x_CylinderEP2 = document.getElementById("temp_CylinderEP2");
+            var x_CylinderEmitVolume = document.getElementById("temp_CylinderEmitVolume");
+            var x_SurfaceSourceBuilder = document.getElementById("temp_SurfaceSourceBuilder");
+            var x_SurfaceSourceBuilderEmitHemiSphere = document.getElementById("temp_SurfaceSourceBuilderEmitHemiSphere");
+            var x_hemiSphereEmitDistribution = document.getElementById("temp_hemiSphereEmitDistribution");
+            var x_numericalAperture = document.getElementById("temp_numericalAperture");
+            var x_checkDirection = document.getElementById("temp_checkDirection");
+            var x_SurfaceSourceBuilderDirection = document.getElementById("temp_SurfaceSourceBuilderDirection");
+            x_point.id = "Point" + String(form_idx)
+            x_pencilbeam.id = "PencilBeam" + String(form_idx)
+            x_volume.id = "Volume" + String(form_idx)
+            x_ball.id = "Ball" + String(form_idx)
+            x_CylinderEP1.id = "CylinderEP1" + String(form_idx)
+            x_CylinderEP2.id = "CylinderEP2" + String(form_idx)
+            x_CylinderEmitVolume.id = "CylinderEmitVolume" + String(form_idx)
+            x_SurfaceSourceBuilder.id = "SurfaceSourceBuilder" + String(form_idx)
+            x_SurfaceSourceBuilderEmitHemiSphere.id = "SurfaceSourceBuilderEmitHemiSphere" + String(form_idx)
+            x_hemiSphereEmitDistribution.id = "SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx)
+            x_numericalAperture.id = "SurfaceSourceBuilderNumericalAperture" + String(form_idx)
+            x_checkDirection.id = "SurfaceSourceBuildercheckDirection" + String(form_idx)
+            x_SurfaceSourceBuilderDirection.id = "SurfaceSourceBuilderDirection" + String(form_idx)
+            if ('#id_form-' + form_idx + '-sourceType'){
+                var point = "#Point" + String(form_idx)
+                $(point).show()
+                $('#id_form-' + form_idx + '-sourceType').on('change', function () {
+                    var pencilbeam = "#PencilBeam" + String(form_idx)
+                    var volume = "#Volume" + String(form_idx)
+                    var ball = "#Ball" + String(form_idx)
+                    var CylinderEP1 = "#CylinderEP1" + String(form_idx)
+                    var CylinderEP2 = "#CylinderEP2" + String(form_idx)
+                    var CylinderEmitVolume = "#CylinderEmitVolume" + String(form_idx)
+                    var SurfaceSourceBuilder = "#SurfaceSourceBuilder" + String(form_idx)
+                    var SurfaceSourceBuilderEmitHemiSphere = "#SurfaceSourceBuilderEmitHemiSphere" + String(form_idx)
+                    var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx)
+                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx)
+                    var SurfaceSourceBuildercheckDirection = "#SurfaceSourceBuildercheckDirection" + String(form_idx)
+                    var SurfaceSourceBuilderDirection = "#SurfaceSourceBuilderDirection" + String(form_idx)
+                    
+                    $(point).hide()
+                    $(pencilbeam).hide()
+                    $(volume).hide()
+                    $(ball).hide()
+                    $(CylinderEP1).hide()
+                    $(CylinderEP2).hide()
+                    $(CylinderEmitVolume).hide()
+                    $(SurfaceSourceBuilder).hide()
+                    $(SurfaceSourceBuilderEmitHemiSphere).hide()
+                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide()
+                    $(SurfaceSourceBuilderNumericalAperture).hide()
+                    $(SurfaceSourceBuildercheckDirection).hide()
+                    $(SurfaceSourceBuilderDirection).hide()
+                    var selection = $(this).val();
+                    switch (selection) {
+                        case "Point":
+                            $(point).show()
+                            break;
+                        case "PencilBeam":
+                            $(point).show()
+                            $(pencilbeam).show()
+                            break;
+                        case "Volume":
+                            $(volume).show()
+                            break;
+                        case "Ball":
+                            $(point).show()
+                            $(ball).show()
+                            break;
+                        case "Cylinder":
+                            $(ball).show()
+                            $(CylinderEP1).show()
+                            $(CylinderEP2).show()
+                            $(CylinderEmitVolume).show()
+                            switch($('#id_form-'+String(form_idx)+'-emitVolume').val()){
+                                case "false":
+                                    $(SurfaceSourceBuilderEmitHemiSphere).show()
+                                default:
                             }
-                            });
+                            switch($('#id_form-'+String(form_idx)+'-emitHemiSphere').val()){
+                                case "true":
+                                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).show()
+                                default:
+                            }
+                            switch($('#id_form-'+String(form_idx)+'-hemiSphereEmitDistribution').val()){
+                                case "CUSTOM":
+                                    $(SurfaceSourceBuilderNumericalAperture).show()
+                                default:
+                            }
+                            break;
+                        case "SurfaceSourceBuilder":
+                            $(SurfaceSourceBuilder).show()
+                            $(SurfaceSourceBuilderEmitHemiSphere).show()
+                            $(SurfaceSourceBuildercheckDirection).show()
+                            switch($('#id_form-'+String(form_idx)+'-emitHemiSphere').val()){
+                                case "true":
+                                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).show()
+                                default:
+                            }
+                            switch($('#id_form-'+String(form_idx)+'-hemiSphereEmitDistribution').val()){
+                                case "CUSTOM":
+                                    $(SurfaceSourceBuilderNumericalAperture).show()
+                                default:
+                            }
+                            switch($('#id_form-'+String(form_idx)+'-checkDirection').val()){
+                                case "true":
+                                    $(SurfaceSourceBuilderDirection).show()
+                                default:
+                            }
+                            break;
+                        default:
+                    }
+                });
+                $('#id_form-' + form_idx + '-emitVolume').on('change', function () {
+                    var selection = $(this).val();
+                    var SurfaceSourceBuilderEmitHemiSphere = "#SurfaceSourceBuilderEmitHemiSphere" + String(form_idx);
+                    $(SurfaceSourceBuilderEmitHemiSphere).hide();
+                    var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx);
+                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide();
+                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx);
+                    $(SurfaceSourceBuilderNumericalAperture).hide();
+                    switch (selection) {
+                        case "false":
+                            $(SurfaceSourceBuilderEmitHemiSphere).show();
+                            break;
+                        default:
+                    }
+                });
+                $('#id_form-' + form_idx + '-emitHemiSphere').on('change', function () {
+                    var selection = $(this).val();
+                    var SurfaceSourceBuilderHemiSphereEmitDistribution = "#SurfaceSourceBuilderHemiSphereEmitDistribution" + String(form_idx);
+                    $(SurfaceSourceBuilderHemiSphereEmitDistribution).hide();
+                    var SurfaceSourceBuilderNumericalAperture = "#SurfaceSourceBuilderNumericalAperture" + String(form_idx);
+                    $(SurfaceSourceBuilderNumericalAperture).hide();
+                    switch (selection) {
+                        case "true":
+                            $(SurfaceSourceBuilderHemiSphereEmitDistribution).show();
+                            break;
+                        default:
+
+                    }
+                });
+                $('#id_form-' + form_idx + '-hemiSphereEmitDistribution').on('change', function () {
+                    var selection = $(this).val();
+                    $(SurfaceSourceBuilderNumericalAperture).hide()
+                    switch (selection) {
+                        case "CUSTOM":
+                            $(SurfaceSourceBuilderNumericalAperture).show()
+                        default:
+                    }
+                });
+                $('#id_form-' + form_idx + '-checkDirection').on('change', function () {
+                    var SurfaceSourceBuilderDirection = "#SurfaceSourceBuilderDirection" + String(form_idx);
+                    $(SurfaceSourceBuilderDirection).hide();
+                    var selection = $(this).val();
+                    switch (selection) {
+                        case "true":
+                            $(SurfaceSourceBuilderDirection).show()
+                        default:
+                    }
+                });
+            }
+        });
         $('#remove_row').click(function() {
                             var form_idx = $('#id_form-TOTAL_FORMS').val();
                             if (parseInt(form_idx) > 1) {
@@ -227,8 +541,70 @@
     <script type="text/javascript" src="jquery-ui-1.10.0/tests/jquery-1.9.0.js"></script>
     <script src="jquery-ui-1.10.0/ui/jquery-ui.js"></script>
     <script>
-        $(document).ready(function () {
-            $("#Point").show();
+        // $(document).ready(function () {
+        //     $("#Point").show();
+        //     $("#id_form-0-sourceType")[0].selectedIndex = 0;
+        // });
+        $(window).on('pageshow', function(){
+            var selection = $('#id_form-0-sourceType').val();
+            switch (selection) {
+                case "Point":
+                    $("#Point").show()
+                    break;
+                case "PencilBeam":
+                    $("#Point").show()
+                    $("#PencilBeam").show()
+                    break;
+                case "Volume":
+                    $("#Volume").show()
+                    break;
+                case "Ball":
+                    $("#Point").show()
+                    $("#Ball").show()
+                    break;
+                case "Cylinder":
+                    $("#Ball").show()
+                    $('#CylinderEP1').show()
+                    $('#CylinderEP2').show()
+                    $('#CylinderEmitVolume').show()
+                    switch($('#id_form-0-emitVolume').val()){
+                        case "false":
+                            $('#SurfaceSourceBuilderEmitHemiSphere').show()
+                        default:
+                    }
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').show()
+                        default:
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $('#SurfaceSourceBuilderNumericalAperture').show()
+                        default:
+                    }
+                    break;
+                case "SurfaceSourceBuilder":
+                    $("#SurfaceSourceBuilder").show()
+                    $("#SurfaceSourceBuilderEmitHemiSphere").show()
+                    $("#SurfaceSourceBuildercheckDirection").show()
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").show()
+                        default:
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $("#SurfaceSourceBuilderNumericalAperture").show()
+                        default:
+                    }
+                    switch($('#id_form-0-checkDirection').val()){
+                        case "true":
+                            $("#SurfaceSourceBuilderDirection").show()
+                        default:
+                    }
+                    break;
+                default:
+            }
         });
 
         $('#id_form-0-sourceType').on('change', function () {
@@ -236,6 +612,15 @@
             $("#PencilBeam").hide()
             $("#Volume").hide()
             $("#Ball").hide()
+            $('#CylinderEP1').hide()
+            $('#CylinderEP2').hide()
+            $('#CylinderEmitVolume').hide()
+            $("#SurfaceSourceBuilder").hide()
+            $("#SurfaceSourceBuilderEmitHemiSphere").hide()
+            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
+            $("#SurfaceSourceBuildercheckDirection").hide()
+            $("#SurfaceSourceBuilderDirection").hide()
             var selection = $(this).val();
             switch (selection) {
                 case "Point":
@@ -252,6 +637,96 @@
                     $("#Point").show()
                     $("#Ball").show()
                     break;
+                case "Cylinder":
+                    $("#Ball").show()
+                    $('#CylinderEP1').show()
+                    $('#CylinderEP2').show()
+                    $('#CylinderEmitVolume').show()
+                    switch($('#id_form-0-emitVolume').val()){
+                        case "false":
+                            $('#SurfaceSourceBuilderEmitHemiSphere').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderEmitHemiSphere').hide()
+                            break;
+                    }
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderHemiSphereEmitDistribution').hide()
+                            break;
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $('#SurfaceSourceBuilderNumericalAperture').show()
+                            break;
+                        default:
+                            $('#SurfaceSourceBuilderNumericalAperture').hide()
+                            break;
+                    }
+                    break;
+                case "SurfaceSourceBuilder":
+                    $("#SurfaceSourceBuilder").show()
+                    $("#SurfaceSourceBuilderEmitHemiSphere").show()
+                    $("#SurfaceSourceBuildercheckDirection").show()
+                    switch($('#id_form-0-emitHemiSphere').val()){
+                        case "true":
+                            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").show()
+                        default:
+                    }
+                    switch($('#id_form-0-hemiSphereEmitDistribution').val()){
+                        case "CUSTOM":
+                            $("#SurfaceSourceBuilderNumericalAperture").show()
+                        default:
+                    }
+                    switch($('#id_form-0-checkDirection').val()){
+                        case "true":
+                            $("#SurfaceSourceBuilderDirection").show()
+                        default:
+                    }
+                    break;
+                default:
+            }
+        });
+        $('#id_form-0-emitVolume').on('change', function () {
+            var selection = $(this).val();
+            $("#SurfaceSourceBuilderEmitHemiSphere").hide();
+            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
+            switch (selection) {
+                case "false":
+                    $("#SurfaceSourceBuilderEmitHemiSphere").show();
+                    break;
+                default:
+            }
+        });
+        $('#id_form-0-emitHemiSphere').on('change', function () {
+            $("#SurfaceSourceBuilderHemiSphereEmitDistribution").hide()
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
+            var selection = $(this).val();
+            switch (selection) {
+                case "true":
+                    $("#SurfaceSourceBuilderHemiSphereEmitDistribution").show()
+                default:
+            }
+        });
+        $('#id_form-0-hemiSphereEmitDistribution').on('change', function () {
+            $("#SurfaceSourceBuilderNumericalAperture").hide()
+            var selection = $(this).val();
+            switch (selection) {
+                case "CUSTOM":
+                    $("#SurfaceSourceBuilderNumericalAperture").show()
+                default:
+            }
+        });
+        $('#id_form-0-checkDirection').on('change', function () {
+            $("#SurfaceSourceBuilderDirection").hide()
+            var selection = $(this).val();
+            switch (selection) {
+                case "true":
+                    $("#SurfaceSourceBuilderDirection").show()
                 default:
             }
         });

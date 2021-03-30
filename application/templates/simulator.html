@@ -5,7 +5,6 @@
     <h1>FullMonte Simulator</h1>
     <div class="txt_container" style="text-align: center;">
         <p>Currently connected to <b>{{ aws_path }}</b> through port <b>{{ port }}</b>.</p>
-        <p>The meshfile can be in any units (e.g. mm or cm), but make sure that when you enter the optical properties later, they must be in unites matching that of the mesh. For example, if the mesh units are in mm, then the scattering and absorption coefficients must be specified in mm<sup>-1</sup>.</p>
     </div>
 
     <div class="d-flex justify-content-center ">
@@ -44,9 +43,23 @@
             <div id='advancedOptionaaa' class='table'>
                 <table class='no_error'>
                 {% csrf_token %}
+                <tbody id="meshUnit">
+                    <tr>
+                        <th>{{ form.meshUnit.label_tag }}</th>
+                        <td>
+                            {{ form.meshUnit.errors }}
+                        {% for checkbox in form.meshUnit %}
+                        <label>
+                            {{ checkbox.tag }} {{ checkbox.choice_label }}
+                        </label>
+                        &emsp;
+                        {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
                 <tbody id="kernelType">
                     <tr>
-                        <th>{{ form.kernelType.label_tag }}</th>
+                        <th>Energies to score:</th>
                         <td>
                         {{ form.kernelType.errors }}
                         {{ form.kernelType }}
@@ -71,15 +84,56 @@
                         </td>
                     </tr>
                 </tbody>
-                <tbody id="pc">
+                <tbody id="totalEnergy">
                     <tr>
-                        <th></th>
-                        <td><a href="{% url 'kernel_info' %}">
-                        Click here for more info about the kernel type.
-                    </a></td>
+                        <th>{{ form.totalEnergy.label_tag }}</th>
+                        <td>
+                        {{ form.totalEnergy.errors }}
+                        {{ form.totalEnergy }}
+                        </td>
+                    </tr>
+                </tbody>
+                <tbody id="energyUnit">
+                    <tr>
+                        <th>{{ form.energyUnit.label_tag }}</th>
+                        <td>
+                            {{ form.energyUnit.errors }}
+                        {% for checkbox in form.energyUnit %}
+                        <label>
+                            {{ checkbox.tag }} {{ checkbox.choice_label }}
+                        </label>
+                        &emsp;
+                        {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
+
+                <tbody>
+                    <tr>
+                        <th></th><td>
+                        <button id='advanced' type='button'>Advanced Options</button>
+                        </td>
+                    </tr>
+                </tbody>
+            
+                <tbody id='advancedOption'>
+                    <tr>
+                        <td colspan="2"><input name="overwrite_on_ec2" id='overwrite_on_ec2' type="checkbox" value="True" checked>
+                            <label for="overwrite_on_ec2" style="font-weight:normal">Overwrite the mesh file on EC2 instance&nbsp</label>
+                            <!-- https://stackoverflow.com/questions/32153973/how-to-display-popup-on-mouse-over-in-html-using-js-and-css -->
+                            <p id="p1" class="ppup"><a class="keyword" id="k1" href="glossary.xhtml#g1" onclick="return false;" style="font-weight:normal">What is this?</a>
+                                <span style="font-weight:normal">If you have run a simulation with this mesh file before, 
+                                    the website will try to skip transferring the mesh file to your EC2 instance again, 
+                                    to save time on file transfers. Check this checkbox if you wish to overwrite the mesh file
+                                    on your EC2 instance even if it exists.</span></p></td>
+                    <!-- <td>
+                        
+                    </td> -->
                     </tr>
                 </tbody>
                 </table>
+                <b><a href="{% url 'kernel_info' %}">Click here for more info about the packet count and different Energies to score.
+                </a></b>
             </div>
             
             <p><br/><input type="submit" value="Next"></p>
@@ -93,8 +147,13 @@
     var _validFileExtensions = [".vtk"];
     function Validate(oForm) {
         var regionID = $("#scoredVolumeRegionID :input").val();
-        var selection = $('#kernelType :selected').val();
-        if((selection == "TetraInternalKernel" || selection == "TetraCUDAInternalKernel") 
+        if(!$(`[name=kernelType][value="Absorbed"]`).prop("checked") &&
+           !$(`[name=kernelType][value="Leaving"]`).prop("checked") &&
+           !$(`[name=kernelType][value="Internal"]`).prop("checked")){
+               alert("Please select at least one type of Energy to score for the simulation!");
+               return false;
+           }
+        if($(`[name=kernelType][value="3"]`).prop("checked")
                     && (regionID == "" || parseInt(regionID) <= 0)){
             alert("Please set scoredVolumeRegionID to be a positive value!");
             return false;
@@ -136,25 +195,32 @@
 
 <script>
     $(document).ready(function(){
+                    var checkboxes = document.getElementsByTagName('input');
+
+                    for (var i=0; i<checkboxes.length; i++)  {
+                        if (checkboxes[i].type == 'checkbox')   {
+                            checkboxes[i].checked = false;
+                        }
+                    }
+                    $(`[name=kernelType][value="Absorbed"]`).prop("checked", true);
+                    $(`[name=kernelType][value="Leaving"]`).prop("checked", true);
+
+                    $("#advanced").click(function(){
+                                        $("#advancedOption").toggle();
+                                        });
                     $("#mesh_upload").click(function(){
                         $("#select_existing")[0].selectedIndex = 0;
                                         });
                     $("#select_existing").change(function(){
                         document.getElementById("id_meshFile").value=null;
                                         });
+                    $("[name=kernelType]").change(function() {
+                        let selectedValA = $(this).val();
+                        if(selectedValA == "Internal"){
+                            $("#scoredVolumeRegionID").toggle();
+                        }
                     });
-                    
-    $('#kernelType').change(function () {
-            $("#scoredVolumeRegionID").hide();
-            var selection = $('#kernelType :selected').val();
-            switch (selection) {
-                case "TetraInternalKernel":
-                case "TetraCUDAInternalKernel":
-                    $("#scoredVolumeRegionID").show()
-                    break;
-                default:
-            }
-        });
+                    });
 </script>
 
 

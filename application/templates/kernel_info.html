@@ -12,6 +12,60 @@
 
     <h1>FullMonte Simulator</h1>
 
+    <h2>Packet Count</h2>
+
+    <p>The packet count refers to the number of photons that will be launched in the kernel. A higher number of photons will give a better simulation accuracy, but will linearly increase the simulation execution time.</p>
+
+    <h2>Energies to score</h2>
+
+    <p>
+        Different options of energies to score is used to infer the Kernel Types of FullMonte.
+        <table style="text-align:center;">
+            <tr>
+                <th>Energy Absorbed by Mesh</th>
+                <th>Energy Leaving Mesh</th>
+                <th>Energy Entering/Exiting Internal Boundaries of Mesh</th>
+                <th>Kernel Type</th>
+            </tr>
+            <tr>
+                <td>&check;</td>
+                <td></td>
+                <td></td>
+                <td>TetraVolumeKernel</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>&check;</td>
+                <td></td>
+                <td>TetraSurfaceKernel</td>
+            </tr>
+            <tr>
+                <td>&check;</td>
+                <td>&check;</td>
+                <td></td>
+                <td>TetraSVKernel</td>
+            </tr>
+            <tr>
+                <td>&check;</td>
+                <td></td>
+                <td>&check;</td>
+                <td>TetraInternalKernel</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>&check;</td>
+                <td>&check;</td>
+                <td>TetraInternalKernel</td>
+            </tr>
+            <tr>
+                <td>&check;</td>
+                <td>&check;</td>
+                <td>&check;</td>
+                <td>TetraInternalKernel</td>
+            </tr>
+        </table>
+    </p>
+    
     <h2>Kernel Type</h2>
 
     <p>

@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'kernelType', 'scoredVolumeRegionID', 'packetCount')
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'scoredVolumeRegionID', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -25,21 +25,31 @@ class tclInputForm(forms.ModelForm):
         initial = kwargs.get('initial', {})
         initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
+        initial['totalEnergy'] = 10
         kwargs['initial'] = initial
         super(tclInputForm, self).__init__(*args, **kwargs)
-        if CUDA == True:
-            CUDA_kernel_choices = (('TetraCUDASVKernel','TetraCUDASVKernel'),
-                         ('TetraCUDASurfaceKernel','TetraCUDASurfaceKernel'),
-                         ('TetraCUDAVolumeKernel','TetraCUDAVolumeKernel'),
-                         ('TetraCUDAInternalKernel','TetraCUDAInternalKernel'))
-            self.fields['kernelType'].widget = forms.Select(choices=CUDA_kernel_choices)
-        else:
-            kernel_choices = (('TetraSVKernel','TetraSVKernel'),
-                         ('TetraSurfaceKernel','TetraSurfaceKernel'),
-                         ('TetraVolumeKernel','TetraVolumeKernel'),
-                         ('TetraInternalKernel','TetraInternalKernel'))
-            self.fields['kernelType'].widget = forms.Select(choices=kernel_choices)
+        # if CUDA == True:
+        #     CUDA_kernel_choices = (('TetraCUDASVKernel','TetraCUDASVKernel'),
+        #                  ('TetraCUDASurfaceKernel','TetraCUDASurfaceKernel'),
+        #                  ('TetraCUDAVolumeKernel','TetraCUDAVolumeKernel'),
+        #                  ('TetraCUDAInternalKernel','TetraCUDAInternalKernel'))
+        #     self.fields['kernelType'].widget = forms.CheckboxSelectMultiple(choices=CUDA_kernel_choices)
+        # else:
+            # kernel_choices = (('TetraSVKernel','TetraSVKernel'),
+            #              ('TetraSurfaceKernel','TetraSurfaceKernel'),
+            #              ('TetraVolumeKernel','TetraVolumeKernel'),
+            #              ('TetraInternalKernel','TetraInternalKernel'))
+        kernel_choices = (('Absorbed','Energy Absorbed by Mesh'),
+                        ('Leaving','Energy Leaving Mesh'),
+                        ('Internal','Energy Entering/Exiting Internal Boundaries of Mesh'))
+        self.fields['kernelType'].widget = forms.CheckboxSelectMultiple(choices=kernel_choices)
         self.fields['meshFile'].required = False
+        mesh_unit_choices = (('mm','milimeters (mm)'),
+                         ('cm','centimeters (cm)'))
+        self.fields['meshUnit'].widget = forms.RadioSelect(choices=mesh_unit_choices)
+        energy_unit_choices = (('J','Joules (J)'),
+                         ('W','Watts (W)'))
+        self.fields['energyUnit'].widget = forms.RadioSelect(choices=energy_unit_choices)
 
 class presetForm(forms.ModelForm):
     class Meta:
@@ -63,7 +73,13 @@ class materialSet(forms.Form):
 class materialForm(forms.ModelForm):
     class Meta:
         model = Material
-        fields = ('material_name', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy')
+        fields = ('material_name', 'material_unit', 'scattering_coeff', 'absorption_coeff', 'refractive_index', 'anisotropy' )
+    
+    def __init__(self, *args, **kwargs):
+        super(materialForm, self).__init__(*args, **kwargs)
+        unit_choices = (('mm','milimeters (mm)'),
+                         ('cm','centimeters (cm)'))
+        self.fields['material_unit'].widget = forms.RadioSelect(choices=unit_choices)
 
 class pdtForm(forms.Form):
     opt = forms.ChoiceField(label="Optical File", 
@@ -111,10 +127,8 @@ class lightSource(forms.Form):
                                                           ('PencilBeam','PencilBeam'),
                                                           ('Volume','Volume'),
                                                           ('Ball','Ball'),
-                                                          #('Line','Line'),
-                                                          #('Fiber','Fiber'),
-                                                          #('Tetraface','Tetraface'),
-                                                          #('Composite','Composite')
+                                                          ('Cylinder','Cylinder'),
+                                                          ('SurfaceSourceBuilder','SurfaceSourceBuilder'),
                                                           ))
     # for Point
     xPos = forms.FloatField(label='X Position', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
@@ -132,7 +146,28 @@ class lightSource(forms.Form):
     # for Ball (center uses xyz from point)
     rad = forms.FloatField(label='Radius', required=False)
 
-    # for Line
+    # for SurfaceSourceBuilder
+    volumeRegion = forms.IntegerField(label='volumeRegion', required=False, initial=1)
+    emitHemiSphere = forms.ChoiceField(label='emitHemiSphere', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='false')
+    hemiSphereEmitDistribution = forms.ChoiceField(label='hemiSphereEmitDistribution', required=False,
+        choices=(('UNIFORM', 'UNIFORM'), ('CUSTOM', 'CUSTOM'), ('LAMBERT', 'LAMBERT')), initial='LAMBERT')
+    numericalAperture = forms.FloatField(label='numericalAperture', required=False)
+    checkDirection = forms.ChoiceField(label='checkDirection', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='false')
+    xDir1 = forms.FloatField(label='X Direction', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yDir1 = forms.FloatField(label='Y Direction', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zDir1 = forms.FloatField(label='Z Direction', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+
+    # for cylinder
+    xPos0 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos0 = forms.FloatField(label='Y Position1', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos0 = forms.FloatField(label='Z Position1', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+    xPos1 = forms.FloatField(label='X Position1', widget=forms.TextInput(attrs={'placeholder': 'x'}), required=False)
+    yPos1 = forms.FloatField(label='Y Position1', widget=forms.TextInput(attrs={'placeholder': 'y'}), required=False)
+    zPos1 = forms.FloatField(label='Z Position1', widget=forms.TextInput(attrs={'placeholder': 'z'}), required=False)
+    emitVolume = forms.ChoiceField(label='emitVolume', required=False, choices=(('false','false'),
+                                                                         ('true','true')), initial='true')
 
 
     power = forms.IntegerField(label='Power', required=False, initial=1)

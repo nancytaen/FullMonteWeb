@@ -7,7 +7,7 @@ from django.core.files.storage import default_storage
 from .models import *
 from django.core.files.base import ContentFile
 
-def tclGenerator(session, mesh, current_user):
+def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     script_name = mesh.originalMeshFileName[:-4] + '.tcl'
     new_script = tclScript()
     _temp = ""
@@ -16,7 +16,7 @@ def tclGenerator(session, mesh, current_user):
     script_name = new_script.script.name
 
     #initialize session inputs
-    indent = '     '
+    indent = '    '
     kernelType = session['kernelType']
     scoredVolumeRegionID = session['scoredVolumeRegionID']
     packetCount = session['packetCount']
@@ -35,6 +35,21 @@ def tclGenerator(session, mesh, current_user):
     vElement = session['vElement']
     rad = session['rad']
     power = session['power']
+    volumeRegion = session['volumeRegion']
+    emitHemiSphere = session['emitHemiSphere']
+    hemiSphereEmitDistribution = session['hemiSphereEmitDistribution']
+    numericalAperture = session['numericalAperture']
+    checkDirection = session['checkDirection']
+    xDir1 = session['xDir1']
+    yDir1 = session['yDir1']
+    zDir1 = session['zDir1']
+    xPos0 = session['xPos0']
+    yPos0 = session['yPos0']
+    zPos0 = session['zPos0']
+    xPos1 = session['xPos1']
+    yPos1 = session['yPos1']
+    zPos1 = session['zPos1']
+    emitVolume = session['emitVolume']
     
     #initialize path for copying tcl template
     dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -100,7 +115,9 @@ def tclGenerator(session, mesh, current_user):
 
     #append sources to tcl script
     index = 1
-    for st, x, y, z, xD, yD, zD, vE, ra, po in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power):
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd, xD1, yD1, zD1, x0, y0, z0, x1, y1, z1, ev in \
+            zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, \
+            volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection, xDir, yDir, zDir, xPos0, yPos0, zPos0, xPos1, yPos1, zPos1, emitVolume):
         if st == 'Point':
             f.write(st + ' P' + str(index) + '\n')
             line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
@@ -128,18 +145,85 @@ def tclGenerator(session, mesh, current_user):
             line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
+        if st == 'Cylinder':
+            f.write(st + ' CY' + str(index) + '\n')
+            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x0)+ ' ' + str(y0) + ' ' + str(z0) + '\"\n'
+            line2 = 'CY' + str(index) + ' endpoint 1 \"' + str(x1)+ ' ' + str(y1) + ' ' + str(z1) + '\"\n'
+            line3 = 'CY' + str(index) + ' radius ' + str(ra) + '\n'
+            line4 = 'CY' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+            f.write(indent + line4)
+            line5 = 'CY' + str(index) + ' emitVolume ' + str(ev) + '\n'
+            f.write(indent + line5)
+            if ev == "false":
+                line6 = 'CY' + str(index) + ' emitHemiSphere ' + str(ehs) + '\n'
+                f.write(indent + line6)
+                if ehs == "true":
+                    line7 = 'CY' + str(index) + ' hemiSphereEmitDistribution \"' + str(hsed) + '\"\n'
+                    f.write(indent + line7)
+                    if hsed == "CUSTOM":
+                        line8 = 'CY' + str(index) + ' numericalAperture ' + str(na) + '\n'
+                        f.write(indent + line8)
+        if st == 'SurfaceSourceBuilder':
+            f.write('VolumeCellInRegionPredicate SSBvol' + str(index) + '\n')
+            f.write('SSBvol' + str(index) +' setRegion ' + str(vr) +'\n\n')
+
+            f.write(st + ' SSB' + str(index) + '\n')
+            line = 'SSB' + str(index) + ' mesh $M\n'
+            line2 = 'SSB' + str(index) + ' setRegion SSBvol' + str(index) + '\n'
+            line3 = 'SSB' + str(index) + ' power ' + str(po) + '\n\n'
+            f.write(indent + line)
+            f.write(indent + line2)
+            f.write(indent + line3)
+
+            line4 = 'SSB' + str(index) + ' emitHemiSphere ' + str(ehs) + '\n'
+            f.write(indent + line4)
+            if ehs == "true":
+                line5 = 'SSB' + str(index) + ' hemiSphereEmitDistribution \"' + str(hsed) + '\"\n'
+                f.write(indent + line5)
+                if hsed == "CUSTOM":
+                    line6 = 'SSB' + str(index) + ' numericalAperture ' + str(na) + '\n'
+                    f.write(indent + line6)
+            if cd == "true":
+                line7 = 'SSB' + str(index) + ' checkDirection 1\n'
+                line8 = 'SSB' + str(index) + ' emitDirection \"' + str(xD1)+ ' ' + str(yD1) + ' ' + str(zD1) + '\"\n'
+                f.write(indent + line7)
+                f.write(indent + line8)
+            else:
+                line7 = 'SSB' + str(index) + ' checkDirection 0\n'
+                f.write(indent + line7)
+            f.write(indent + 'SSB' + str(index) + ' update\n')
+            f.write(indent + 'set C' + str(index) + ' [SSB' + str(index) + ' output]\n\n')
         index += 1
 
     #append kernel to tcl script
     f.write(kernelType + ' k\n')
     f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
-    f.write(indent + 'k source P1\n')
+    # f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
     f.write(indent + 'k materials MS\n')
     if kernelType == "TetraInternalKernel":
-        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n\n')
+        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n')
     elif kernelType == "TetraCUDAInternalKernel":
-        f.write(indent + 'k addScoringRegionBoundary vol\n\n')
+        f.write(indent + 'k addScoringRegionBoundary vol\n')
+
+    index = 1
+    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
+        if st == 'Point':
+            f.write(indent + 'k source P' + str(index) + '\n\n')
+        if st == 'PencilBeam':
+            f.write(indent + 'k source PB' + str(index) + '\n\n')
+        if st == 'Volume':
+            f.write(indent + 'k source V' + str(index) + '\n\n')
+        if st == 'Ball':
+            f.write(indent + 'k source B' + str(index) + '\n\n')
+        if st == 'Cylinder':
+            f.write(indent + 'k source CY' + str(index) + '\n\n')
+        if st == 'SurfaceSourceBuilder':
+            f.write(indent + 'k source $C' + str(index) + '\n\n')
+        index += 1
 
     #run and wait
     f.write(indent + 'k startAsync\n')
@@ -149,12 +233,12 @@ def tclGenerator(session, mesh, current_user):
     #get results
     f.write('set ODC [k results]\n\n')
 
-    #convert energy absorbed per volume element to volume average fluence
+    #convert photon weight from simulation raw results to energy absorbed per volume element
     f.write('EnergyToFluence EF\n')
-    f.write(indent + 'EF geometry $M\n')
-    f.write(indent + 'EF materials MS\n')
+    f.write(indent + 'EF kernel k\n')
+    f.write(indent + 'EF energy ' + str(energy) + '\n')
+    f.write(indent + 'EF inputPhotonWeight\n')
     f.write(indent + 'EF source [$ODC getByName "VolumeEnergy"]\n')
-    f.write(indent + 'EF inputEnergy\n')
     f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
@@ -165,19 +249,42 @@ def tclGenerator(session, mesh, current_user):
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
+    dvhResult = '/sims/' + name + '.dvh.txt'
+    comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
     
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
     f.write(indent + 'W addData "Fluence" [EF result]\n')
     f.write(indent + 'W mesh $M\n')
+    f.write(indent + 'W addHeaderComment "' + comment + '"\n')
     f.write(indent + 'W write\n\n')
 
     #write the fluence values only to a text file
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
-    f.write(indent + 'TW write\n')
+    f.write(indent + 'TW write\n\n')
+
+    #generate dose volume histogram
+    f.write('DoseVolumeHistogramGenerator DVHG\n')
+    f.write(indent + 'DVHG mesh $M\n')
+    f.write(indent + 'DVHG dose [EF result]\n')
+    f.write(indent + 'DVHG update\n\n')
+
+    f.write('set DHC [DVHG result]\n\n')
+
+    #write dvh matrix to a text file
+    f.write('TextFileMatrixWriter TW\n')
+    f.write(indent + 'TW filename "' + dvhResult + '"\n')
+    f.write(indent + 'TW source [$DHC get 1]\n')
+    f.write(indent + 'TW write\n\n')
+
+    #overwrite the dvh textfile to dvh format
+    f.write('TextFileDoseHistogramWriter TDH\n')
+    f.write(indent + 'TDH filename "' + dvhResult + '"\n')
+    f.write(indent + 'TDH collection $DHC\n')
+    f.write(indent + 'TDH write\n')
 
     #copy and save script to AWS
     f = open(source, 'r')
