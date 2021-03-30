@@ -3,6 +3,7 @@
 <div class="txt_container" style="text-align: center;">
     <h1>PDT-SPACE</h1> 
     <p><b>Please enter light source properties and upload a placement file for light sources.</b></p>
+    <p>You can view the complete list of input parameters and detailed explaination <a href="https://gitlab.com/FullMonte/pdt-space/-/wikis/user-guide#input-parameters" target="_blank" rel="noopener noreferrer">here</a>.</p>
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data">
             <b><p>Input parameters for PDT-SPACE</p></b>
@@ -15,19 +16,19 @@
                             {{ form.placement_type.errors }}
                             {{ form.placement_type }}
                         </td>
-                    </tr>
-                    <tr>
-                        <th>{{ form.source_type.label_tag }}</th>
-                        <td>
-                            {{ form.source_type.errors }}
-                            {{ form.source_type }}
+                        <td style="text-align:left">
+                            {% autoescape off %}{{ form.placement_type.help_text }}{% endautoescape %}
                         </td>
                     </tr>
+                    
                     <tr>
                         <th>{{ form.light_placement_file.label_tag }}</th>
                         <td>
                             {{ form.light_placement_file.errors }}
                             {{ form.light_placement_file }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.light_placement_file.help_text }}
                         </td>
                     </tr>
                 </table>

@@ -4,19 +4,20 @@
     <h1>PDT-SPACE</h1> 
     <p><b>The PDT-SPACE run finished. Output from PDT-SPACE run:</b></p> 
     <br/>
-   
+    <p><b>Total energy:</b> {{total_energy}}</p> 
+    <p><b>Number of packets:</b> {{total_pack}}</p> 
     <p><b>Fluence distribution:</b></p> 
     <p>{% autoescape off %}{{html_fluence_dist}}{% endautoescape %}</p>
-    <p><b>Power allocation:</b></p> 
+    <p><b>Relative power allocation for {{num_source}} light sources:</b></p> 
     <p>{% autoescape off %}{{html_pow_alloc}}{% endautoescape %}</p>
     <p><b>Time usage:</b></p> 
     <p>{% autoescape off %}Running FM simulation for all sources: {{time_simu}} minutes. {% endautoescape %}</p>
     <p>{% autoescape off %}Running optimization: {{time_opt}} minutes. {% endautoescape %}</p>
     <br/>
+    <ul class="suggestion-list">
+        <li><a href=pdt_space_visualization>Visualize the PDT-SPACE output</a></li><br/>
+    </ul>
 
-    <p><b>Visualize optimized result:</b></p>
-    <a class="btn btn-info" href="{% url 'pdt_space_visualize' %}">Visualizer Placeholder</a>
-    <br/>
 </div>
 
 {% endblock %}

@@ -22,6 +22,7 @@ except OSError:
     pass
 
 from .visualizerDVH import dose_volume_histogram as dvh
+from .visualizerDVH import pdt_dose_volume_histogram as pdvh
 from .visualizer3D import visualizer
 from application.tclGenerator import *
 from django.contrib.auth.views import LoginView
@@ -55,6 +56,10 @@ from decouple import config
 from multiprocessing import Process, Event
 import threading
 import select
+import re
+import scipy.io as sio
+import os
+# from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
 
@@ -1731,7 +1736,7 @@ def pdt_space_lightsource(request):
             conn.ensure_connection()
             opfile = opFileInput.objects.filter(user = request.user).latest('id')
             opfile.placement_file = request.FILES['light_placement_file']
-            opfile.source_type = form.cleaned_data['source_type']
+            # opfile.source_type = form.cleaned_data['source_type']
             opfile.placement_type = form.cleaned_data['placement_type']
             
             opfile.save()
@@ -1743,7 +1748,7 @@ def pdt_space_lightsource(request):
             print(opfile.wave_length)
             print(opfile.data_dir)
             print(opfile.data_name)
-            print(opfile.source_type)
+            # print(opfile.source_type)
             print(opfile.tumor_weight)
             print(opfile.placement_type)
             print(opfile.opt_file)
@@ -1768,13 +1773,25 @@ def pdt_space_lightsource(request):
             f.write('TOTAL_ENERGY = ' + opfile.total_energy + '\n\n')
             f.write('NUM_PACKETS = ' + opfile.num_packets + '\n\n')
             f.write('WAVELENGTH = ' + opfile.wave_length + '\n\n')
+            wavelength = opfile.wave_length
             f.write('DATA_DIR = ' + opfile.data_dir + '\n\n')
+            data_dir = opfile.data_dir
             f.write('DATA_NAME = ' + opfile.data_name + '\n\n')
             f.write('READ_VTK = false\n\n')
-            f.write('source_type = ' + opfile.source_type + '\n\n')
-            f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
-            f.write('PLACEMENT_TYPE = ' + opfile.placement_type + '\n\n')
-            f.write('TAILORED = false\n\n')
+            if opfile.placement_type == 'fixed_point':
+                f.write('source_type = ' + 'point' + '\n\n')
+                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+                f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
+            if opfile.placement_type == 'fixed_line':
+                f.write('source_type = ' + 'line' + '\n\n')
+                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+                f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
+            if opfile.placement_type == 'virtual_point':
+                f.write('source_type = ' + 'point' + '\n\n')
+                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+                f.write('PLACEMENT_TYPE = ' + 'virtual' + '\n\n')
+
+            # f.write('TAILORED = false\n\n')
             f.write('OPTICAL_FILE = ' + opfile.opt_file + '\n\n')
             f.write('INIT_PLACEMENT_FILE = ' + opfile.light_source_file + '\n\n')
             f.close()
@@ -1794,7 +1811,7 @@ def pdt_space_lightsource(request):
             ftp = client.open_sftp()
             ftp.chdir('docker_pdt/')
             file=ftp.file('docker.sh', "w")
-            file.write('#!/bin/bash\nexport MOSEKLM_LICENSE_FILE=/sims/mosek.lic\ncd sims/\npdt_space pdt_space.op')
+            file.write('#!/bin/bash\nexport MOSEKLM_LICENSE_FILE=/sims/mosek.lic\ncd sims/\npdt_space pdt_space.op v100_dvh.m')
             file.flush()
             ftp.chmod('docker.sh', 700)
             ftp.putfo(f,'./pdt_space.op')
@@ -1802,6 +1819,23 @@ def pdt_space_lightsource(request):
             ftp.close()
             conn.close()
             f.close()
+            request.session['source_type'] = opfile.placement_type
+            ##get tissue type name
+            command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat " + data_dir + "/tissue_properties_" + wavelength + "nm.txt\" 0"
+            print(command)
+            stdin, stdout, stderr = client.exec_command(command)
+            stdout_line = stdout.readlines()
+            stderr_line = stderr.readlines()
+            request.session['region_name']= []
+            for line in stdout_line:
+                print(line)
+            
+
+            for line in stdout_line:
+                if len(line.split(',')) == 3:
+                    request.session['region_name'].append(line.split(',')[0])
+            print(request.session['region_name'])
+            sys.stdout.flush()
 
             # lanuch pdt-space with a use process
             print('before')
@@ -1839,8 +1873,10 @@ def pdt_space_lightsource(request):
             # sys.stdout.flush()  
             # time.sleep(3)
             client.close()
+            request.session['started'] = "false"
             return HttpResponseRedirect('/application/pdt_space_running')
         else:
+            print(" pdt_space_lightsource form error")
             print(form.errors)
             sys.stdout.flush()
             return HttpResponseRedirect('/application/pdt_space_running')
@@ -1863,7 +1899,62 @@ def pdt_space_running(request):
     if running_process.running:
         print("pdt-space running")
         sys.stdout.flush()
-        return render(request, "pdt_space_running.html")
+
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        ftp = client.open_sftp()
+
+        stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/eval_result.log > ~/copy_eval_result.log')
+        file=ftp.file('copy_eval_result.log', "r")
+        output = file.read().decode()
+        output_lines = output.splitlines()
+
+        progress = ''
+        status = ''
+        index = -1
+        
+        for line in output_lines:
+            if len(output_lines[index]) > 0:
+                if output_lines[index] == "Solving for objective":
+                    progress = '99.00%'
+                    status = 'Running optimization'
+                    break
+
+                if len(output_lines[index].split()) == 5 and output_lines[index].split()[0] == "Currently":
+                    request.session['started'] = "true"
+                    if progress == '':
+                        progress = '0.00%'
+                    else:
+                        progress = progress
+                    status = "Running simulation for light source number: " + output_lines[index].split()[-1]
+                    break
+
+                if output_lines[index].split()[0] == "Progress:" and progress == '':
+                    progress = output_lines[index].split()[-1]
+
+            index -= 1
+
+        if status == '' or request.session['started'] == "false":
+            status = "Preparing PDT-SPACE"
+            progress ="0.00%"
+        progress = progress[:-2]
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        print(status)
+        print(progress)
+        print(running_time)
+        print(request.session['source_type'])
+        sys.stdout.flush()
+        ftp.close()
+        client.close()
+        return render(request, "pdt_space_running.html", {'status':status, 'progress':progress, 'time':running_time})
 
     else:
         # client.close()
@@ -1936,7 +2027,8 @@ def launch_pdt_space(request):
 
 def pdt_space_finish(request):
     # print("in fihish")
-    sys.stdout.flush()
+    # sys.stdout.flush()
+    
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     text_obj = request.session['text_obj']
@@ -1950,10 +2042,27 @@ def pdt_space_finish(request):
         return HttpResponseRedirect('/application/aws')
     
     # pdt-space output in ~/eval_result.log
+    conn = create_connection()
+    conn.ensure_connection()
+    opfile = opFileInput.objects.filter(user = request.user).latest('id')
+    total_energy = opfile.total_energy
+    total_pack = opfile.num_packets
+    
     ftp = client.open_sftp()
     file=ftp.file('eval_result.log', "r")
     output = file.read().decode()
     output_lines = output.splitlines()
+    check_success = output_lines[-3]
+    # print(check_success)
+    check_success = re.sub(r'[^\w]', ' ', check_success)
+    check_success = "".join(check_success.split())
+    # print(check_success)
+    if check_success != "ENDOFRUN":
+        print("pdt-space fail")
+        ftp.close()
+        client.close()
+        return HttpResponseRedirect('/application/pdt_space_fail')
+        
     # get num_material and num_source by reading the log file
     # num_material: number of materials in input mesh
     # num_source: number of light source placement
@@ -1966,6 +2075,7 @@ def pdt_space_finish(request):
             break
         index += 1
     print(num_material)
+    request.session['num_material'] = num_material
 
     index = -1
     for line in output_lines:
@@ -1981,22 +2091,146 @@ def pdt_space_finish(request):
     num_material = int(num_material)
     num_source = int(num_source)
 
-    output_info = output_lines[-7:-5]
+    output_info = output_lines[-8:-5]
     time_simu = output_info[0].split()[8]
     time_opt = output_info[1].split()[3]
 
-    output_info = output_lines[-12 - num_source :-12]
+    output_info = output_lines[-13 - num_source :-13]
     for e in output_info:
         html_pow_alloc += e + '<br />'
-
-    output_info = output_lines[-12 - num_source - 2 - num_material :-12 - num_source - 2]
+    
+    request.session['material_name']= []
+    output_info = output_lines[-13 - num_source - 2 - num_material :-13 - num_source - 2]
     for e in output_info:
         html_fluence_dist += e + '<br />'
+        request.session['material_name'].append(e.split()[0])
 
+    print(request.session['material_name'])
     sys.stdout.flush()
     ftp.close()
     client.close()
-    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt})
+    conn.close()
+    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt, 'total_energy':total_energy, 'total_pack':total_pack, 'num_source':num_source})
+
+def pdt_space_fail(request):
+    # print("in fail")
+    # sys.stdout.flush()
+    conn = create_connection()
+    conn.ensure_connection()
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+ 
+    ftp = client.open_sftp()
+    pdt_log_file = pdtOuputLogFile()
+    pdt_log_file.user=request.user
+    f = ftp.file('eval_result.log')
+    pdt_log_file.pdt_space_log.save('eval_result.log', f)
+    
+    pdt_log_file.save()
+    conn.close()
+    # ftp.chdir('docker_pdt/')
+    # v100 = ftp.file('fp_v100.m')
+
+    # output_lines = v100.read().decode().splitlines()
+
+    # local_path = os.path.dirname(__file__) + "/temp/v100.m"
+    # ft = open(local_path, "w+")
+    # for line in output_lines:
+    #     ft.write(line + "\n")
+    # ft.close()
+
+    
+    ftp.close()
+    client.close()
+    
+    return render(request, "pdt_space_fail.html", {'pdt_log_file':pdt_log_file})
+
+def pdt_space_visualization(request):
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+    
+    try:
+        ftp = client.open_sftp()
+        ftp.chdir('docker_pdt/')
+        v100 = ftp.file('v100_dvh.m')
+
+        output_lines = v100.read().decode().splitlines()
+        ##copy v100 file to local
+        local_path = os.path.dirname(__file__) + "/temp/v100.m"
+        ft = open(local_path, "w+")
+        for line in output_lines:
+            ft.write(line + "\n")
+        ft.close()
+        ftp.close()
+        client.close()
+    except:
+        context = {'dvhFig': "Error: No DVH file."}
+        return render(request, "pdt_space_display_visualization.html", context)
+
+    print('before')
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+    for child in children:
+        print('Child pid is {}'.format(child.pid))
+    connections.close_all()
+    p = Process(target=pdvh, args=(request.user, request.session['num_material'], request.session['region_name'], ))
+    p.start()
+    print('after')
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+
+    form = processRunning()
+    form.user=request.user
+    for child in children:
+        form.pid = child.pid
+        form.running = True
+        print('Child pid is {}'.format(child.pid))
+
+    conn = create_connection()
+    conn.ensure_connection()
+    form.save()
+    conn.close()
+    sys.stdout.flush()
+    return HttpResponseRedirect('/application/pdt_space_wait_visualization')
+
+
+def pdt_space_wait_visualization(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    if running_process.running:
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "pdt_space_wait_visualization.html", {'time':running_time})
+    else:
+        return HttpResponseRedirect('/application/pdt_space_display_visualization')
+
+def pdt_space_display_visualization(request):
+    info = meshFileInfo.objects.filter(user = request.user).latest('id')
+    dvhFig = info.dvhFig
+    context = {'dvhFig': dvhFig}
+    return render(request, "pdt_space_display_visualization.html", context)
+
+    
 
 def pdt_space_visualize(request):
     """

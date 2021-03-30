@@ -1,0 +1,15 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<div class="txt_container">
+    <h1>PDT-SPACE</h1> 
+    <p><b>The PDT-SPACE run failed.</b></p> 
+    <br/>
+    
+    <p>Please download the log file and manually check the raw output.</p> 
+    <a href="download/{{pdt_log_file.pdt_space_log.name}}">pdt-space-output.log</a>
+    
+
+
+</div>
+
+{% endblock %}

@@ -14,6 +14,8 @@ from django.db import models, connections
 from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from .mpld3CustomPlugin import CustomizedInteractiveLegendPlugin
 import sys
+import re
+
 
 # Define CSS for custom labels
 css = """
@@ -24,7 +26,42 @@ table, td
   background-color: #cccccc;
 }
 """
+# load pdt-space dvh file
+def load_dvh_data(num_material, filePath):
+    mf = open(filePath, 'r')
+    dvh_data = []
+    for line in mf.read().splitlines():
+        if len(line) != 0:
+            if line[0:3] != "dvh":
+                continue
+            else:
+                data_line = line.split(");")
+                dvh_data.extend(data_line)
+    
+    dvh_data.pop(0)
+    # print(dvh_data) 
+    # temp = dvh_data[0].split('=')[1].split(';')
 
+    dic = {}
+    for x in range(0, num_material):
+        dic[x]=[]
+    
+    # print(dic)
+    # print(len(dvh_data))
+    index = 0
+    for d in dvh_data:
+        temp = d.split('=')[1].split(';')
+        for it in temp:
+            if it != '':
+                it = re.sub(r'\[','', it)
+                it = re.sub(r'\]','', it)
+                
+                dic[index].append(float(it))
+                index += 1
+        index = 0
+    # print(dic)
+    return dic
+    
 # convert dose volume data into % max dose bins
 def groupIntoBins(rawDVHData, maxFluence, noBins):
     cumulativeDVHData = {}
@@ -118,6 +155,71 @@ def plot_DVH(cumulativeDVHData, materials, outputMeshFileName, noBins):
 
     return mpld3.fig_to_html(fig)
 
+# Function to plot DVH of PDT-SPACE
+# This is function is copied from the plot_DVH() above with small changes.
+# This function can be refactored later.
+def plot_PDVH(data, noBins, materials, outputMeshFileName):
+    FIG_WIDTH = 11
+    FIG_HEIGHT = 6
+    LINE_WIDTH = 4
+
+    # Plot style
+    plt.style.use("bmh")
+
+    # Set up figure and plot
+    fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
+    fig.suptitle("Cumulative Dose-Volume Histogram", fontsize=30, y = 1)
+    ax = fig.add_subplot(111)
+    ax.set_xlabel("Percentage of dose threshold",fontsize = 20) # xlabel
+    ax.set_ylabel("Percentage of region volume", fontsize = 20)# ylabel
+    ax.grid(True)
+
+    legendList = [] # legend items (region ID and material) for the interactive legend
+    lines = []      # array of matplotlib objects; a line for each region for the interactive legend
+    labelsList = [] # x,y labels for the interactive tooltip
+
+    xVals = (np.array(range(noBins)) ) # % max dose
+
+    # Plot for each region
+    # color=next(ax._get_lines.prop_cycler)['color']
+    for region, cumulativeDoseVolume in data.items():
+        yVals = np.array(cumulativeDoseVolume) 
+        line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
+        lines.append(line)
+        if(len(materials) > 0): # mesh file from simulation can use material info from simulation
+            legendList.append(str(region) + " (" + materials[region] + ")")
+        else: # uploaded mesh files cannot be associated with material info
+            legendList.append(str(region) + " (No material info)")
+        labels = []
+        for i in range(1, len(xVals)):
+            label = "<table><td>Dose: "+"{:.2f}".format(xVals[i])+"%, Volume: "+"{:.2f}".format(yVals[i])+"%</td></table>"
+            labels.append(label)
+        labelsList.append(labels)
+        
+
+    # Interactive legend
+    interactive_legend = CustomizedInteractiveLegendPlugin(lines,
+                                                     legendList,
+                                                     alpha_unsel=0,
+                                                     alpha_over=1.5, 
+                                                     start_visible=True)
+    plugins.connect(fig, interactive_legend)
+
+    # Interactive tooltip
+    for line, labels in zip(lines, labelsList):
+        tooltip = plugins.PointHTMLTooltip(line[0], labels=labels,
+                                    voffset=10, hoffset=10, css=css)
+        plugins.connect(fig, tooltip)
+
+    # Adjust chart margins
+    fig.set_size_inches(FIG_WIDTH, FIG_HEIGHT)
+    plt.subplots_adjust(left=0.07, bottom=0.1, right=0.77, top=0.99) # avoid legend going off screen
+
+    # Save temporory DVH figure locally in png format
+    localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
+    plt.savefig(localFilePath, orientation='portrait', format="png")
+
+    return mpld3.fig_to_html(fig)
 
 # https://stackoverflow.com/questions/56733112/how-to-create-new-database-connection-in-django
 def create_connection(alias=DEFAULT_DB_ALIAS):
@@ -224,6 +326,26 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit
     running_process.save()
     sftp.close()
     client.close()
+    conn.close()
+    print("done generating DVH")
+    sys.stdout.flush()
+
+# Function to generate DVH for PDT-SPACE
+def pdt_dose_volume_histogram(user, num_material, materials):
+    conn = create_connection()
+    conn.ensure_connection()
+    info = meshFileInfo.objects.filter(user = user).latest('id')
+    
+    localFilePath = os.path.dirname(__file__) + "/temp/v100.m"
+    dvh_data = load_dvh_data(int(num_material), localFilePath)
+    noBins = 500
+    info.dvhFig = plot_PDVH(dvh_data,noBins,materials,"pdt_space_dvh")
+    info.save()
+    # update process status
+    running_process = processRunning.objects.filter(user = user).latest('id')
+    running_process.running = False
+    running_process.save()
+
     conn.close()
     print("done generating DVH")
     sys.stdout.flush()

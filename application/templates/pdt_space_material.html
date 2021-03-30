@@ -3,7 +3,8 @@
 {% block content %}
 <div class="txt_container" style="text-align: center;">
     <h1>PDT-SPACE</h1> 
-    <p><b>Please enter parameters for PDT-SPACE run.</b></p>
+    <p><b>Please specify required input parameters for PDT-SPACE run.</b></p>
+    <p>You can view the complete list of input parameters and detailed explaination <a href="https://gitlab.com/FullMonte/pdt-space/-/wikis/user-guide#input-parameters" target="_blank" rel="noopener noreferrer">here</a>.</p>
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post">
             <b><p>Input parameters for PDT-SPACE</p></b>
@@ -16,12 +17,18 @@
                             {{ form.total_energy.errors }}
                             {{ form.total_energy }}
                         </td>
+                        <td style="text-align:left">
+                            {% autoescape off %}{{ form.total_energy.help_text }}{% endautoescape %}
+                        </td>
                     </tr>
                     <tr>
                         <th>{{ form.num_packets.label_tag }}</th>
                         <td>
                             {{ form.num_packets.errors }}
                             {{ form.num_packets }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.num_packets.help_text }}
                         </td>
                     </tr>
                     <tr>
@@ -30,12 +37,18 @@
                             {{ form.opt.errors }}
                             {{ form.opt }}
                         </td>
+                        <td style="text-align:left">
+                            {{ form.opt.help_text }}
+                        </td>
                     </tr>
                     <tr>
                         <th>{{ form.mesh.label_tag }}</th>
                         <td>
                             {{ form.mesh.errors }}
                             {{ form.mesh }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.mesh.help_text }}
                         </td>
                     </tr>
                     <tr>
@@ -44,12 +57,18 @@
                             {{ form.wave_length.errors }}
                             {{ form.wave_length }}
                         </td>
+                        <td style="text-align:left">
+                            {{ form.wave_length.help_text }}
+                        </td>
                     </tr>
                     <tr>
                         <th>{{ form.tumor_weight.label_tag }}</th>
                         <td>
                             {{ form.tumor_weight.errors }}
                             {{ form.tumor_weight }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.tumor_weight.help_text }}
                         </td>
                     </tr>
                 </table>
