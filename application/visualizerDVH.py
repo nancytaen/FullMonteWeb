@@ -236,6 +236,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
 
     return mpld3.fig_to_html(fig)
 
+# Function to plot DVH of PDT-SPACE
 # This is function is copied from the plot_DVH() above with small changes.
 # This function can be refactored later.
 def plot_PDVH(data, noBins, materials, outputMeshFileName):
@@ -250,8 +251,8 @@ def plot_PDVH(data, noBins, materials, outputMeshFileName):
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
     fig.suptitle("Cumulative Dose-Volume Histogram", fontsize=30, y = 1)
     ax = fig.add_subplot(111)
-    ax.set_xlabel("% max fluence dose",fontsize = 20) # xlabel
-    ax.set_ylabel("% region volume coverage", fontsize = 20)# ylabel
+    ax.set_xlabel("Percentage of dose threshold",fontsize = 20) # xlabel
+    ax.set_ylabel("Percentage of region volume", fontsize = 20)# ylabel
     ax.grid(True)
 
     legendList = [] # legend items (region ID and material) for the interactive legend

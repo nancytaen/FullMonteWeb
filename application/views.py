@@ -1635,7 +1635,7 @@ def pdt_space_lightsource(request):
                 f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
                 f.write('PLACEMENT_TYPE = ' + 'virtual' + '\n\n')
 
-            f.write('TAILORED = false\n\n')
+            # f.write('TAILORED = false\n\n')
             f.write('OPTICAL_FILE = ' + opfile.opt_file + '\n\n')
             f.write('INIT_PLACEMENT_FILE = ' + opfile.light_source_file + '\n\n')
             f.close()
@@ -1935,16 +1935,16 @@ def pdt_space_finish(request):
     num_material = int(num_material)
     num_source = int(num_source)
 
-    output_info = output_lines[-7:-5]
+    output_info = output_lines[-8:-5]
     time_simu = output_info[0].split()[8]
     time_opt = output_info[1].split()[3]
 
-    output_info = output_lines[-12 - num_source :-12]
+    output_info = output_lines[-13 - num_source :-13]
     for e in output_info:
         html_pow_alloc += e + '<br />'
     
     request.session['material_name']= []
-    output_info = output_lines[-12 - num_source - 2 - num_material :-12 - num_source - 2]
+    output_info = output_lines[-13 - num_source - 2 - num_material :-13 - num_source - 2]
     for e in output_info:
         html_fluence_dist += e + '<br />'
         request.session['material_name'].append(e.split()[0])
