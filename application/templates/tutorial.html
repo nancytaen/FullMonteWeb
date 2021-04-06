@@ -18,12 +18,17 @@
     <div class="figure_container">
         <img class="tutorial_image" src="{% static 'images/AWS_launch_instance.png' %}" alt="AWS_launch_instance">
     </div>
-    <p>4. Scroll down and select "Ubuntu Server 18.04" in step 1, and select the appropriate CPU size that is suitable for your simulation in step 2.</p>
+    <p>4. Scroll down and select "Ubuntu Server 18.04" in step 1, and select the appropriate CPU size that is suitable for your simulation in step 2.<br>
+        For exploring the functionalities of the website, we recommend the instance type of "t2.micro", which contains 1 CPU core and is free-tier eligible. <br>
+        To reduce the runtime of simulations and optimizations of large meshes, we recommend the instance type of "t3.xlarge" or "t3.2xlarge", which contain 4 CPU cores and 8 CPU cores respectively.<br>
+        For even shorter turnaround time, we recommend the instance type of "g4dn.xlarge" for hardware acceleration, which contains one Nvidia Tesla T4 GPU.<br>
+        More information regarding instance types and pricing can be found on <a href="https://aws.amazon.com/ec2/pricing/on-demand/" target="_blank">https://aws.amazon.com/ec2/pricing/on-demand/</a>.
+    </p>
     <div class="figure_container">
         <img class="tutorial_image" src="{% static 'images/AWS_Ubuntu.png' %}" alt="AWS_Ubuntu">
         <img class="tutorial_image" src="{% static 'images/AWS_CPU.png' %}" alt="AWS_CPU">
     </div>
-    <p>5. Skip Step 3 and selete the appropriate Memory size that is suitable for your simulation in Step 4.</p>
+    <p>5. Skip Step 3 and selete the appropriate storage size that is suitable for your simulation in Step 4. We recommend at least 24 GiB of storage size.</p>
     <div class="figure_container">
         <img class="tutorial_image" src="{% static 'images/AWS_skip3.png' %}" alt="AWS_skip3">
         <img class="tutorial_image" src="{% static 'images/AWS_mem.png' %}" alt="AWS_mem">
