@@ -232,9 +232,47 @@ def fmSimulatorMaterial(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
+        # transfer input mesh to Ec2 instance
+        conn = create_connection()
+        conn.ensure_connection()
+        meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        ftp = client.open_sftp()
+        ftp.chdir('docker_sims/')
+        # transfer mesh in chunks to save memory
+        need_transfer = True
+        if not request.session['overwrite_on_ec2']:
+            need_transfer = False
+            try:
+                ftp.stat(meshFilePath)
+            except:
+                need_transfer = True
+
+        if not need_transfer:
+            print("skipped mesh file transfer")
+            sys.stdout.flush()
+        
+        if need_transfer:
+            print("starting mesh file transfer")
+            with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+                with default_storage.open(meshFilePath) as mesh_file:
+                    for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                        ftp_file.write(piece)
+            print("finished mesh file transfer")
+            sys.stdout.flush()
+        
+        ftp.close()
+        client.close()
+        conn.close()
+
+        # get formset and check whether it's valid
         formset1 = materialSetSet(request.POST)
 
-        # check whether it's valid:
         if formset1.is_valid():
             # process cleaned data from formsets
 
@@ -339,14 +377,6 @@ def fmSimulatorSource(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
-    ftp = client.open_sftp()
-    ftp.chdir('docker_sims/')
-    # transfer mesh in chunks to save memory
-    with ftp.open('./'+inputMeshFileName, 'wb') as ftp_file:
-        with default_storage.open(inputMeshFileName) as mesh_file:
-            for piece in mesh_file.chunks(chunk_size=32*1024*1024):
-                ftp_file.write(piece)
-    ftp.close()
 
     # generate ParaView Visualization URL
     # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
