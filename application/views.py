@@ -1832,7 +1832,7 @@ def pdt_space_lightsource(request):
             
             f = open(source, 'a')
             f.write('RUN_TESTS = false\n\n')
-            f.write('TOTAL_ENERGY = ' + opfile.total_energy + '\n\n')
+            f.write('PNF = ' + opfile.total_energy + '\n\n')
             f.write('NUM_PACKETS = ' + opfile.num_packets + '\n\n')
             f.write('WAVELENGTH = ' + opfile.wave_length + '\n\n')
             wavelength = opfile.wave_length
@@ -1906,6 +1906,7 @@ def pdt_space_lightsource(request):
             for child in children:
                 print('Child pid is {}'.format(child.pid))
             connections.close_all()
+            # request.session['pdt_error_msg'] = []
             p = Process(target=launch_pdt_space, args=(request, ))
             p.start()
             print('after')
@@ -2074,6 +2075,9 @@ def launch_pdt_space(request):
     for line in stdout_line:
         print (line)
     for line in stderr_line:
+        # if len(line) > 0:
+        # request.session['pdt_error_msg'].append(line)
+        # print ("error:  ",request.session['pdt_error_msg'])
         print (line)
     sys.stdout.flush() 
 
@@ -2114,7 +2118,13 @@ def pdt_space_finish(request):
     file=ftp.file('eval_result.log', "r")
     output = file.read().decode()
     output_lines = output.splitlines()
-    check_success = output_lines[-3]
+    try:
+        check_success = output_lines[-3]
+    except:
+        print("pdt-space fail")
+        ftp.close()
+        client.close()
+        return HttpResponseRedirect('/application/pdt_space_fail')
     # print(check_success)
     check_success = re.sub(r'[^\w]', ' ', check_success)
     check_success = "".join(check_success.split())
@@ -2128,51 +2138,57 @@ def pdt_space_finish(request):
     # get num_material and num_source by reading the log file
     # num_material: number of materials in input mesh
     # num_source: number of light source placement
-    num_material = 0
-    num_source = 0
-    index = 0
-    for line in output_lines:
-        if output_lines[index].split()[0] == "Directory":
-            num_material = output_lines[index + 1].split()[-1]
-            break
-        index += 1
-    print(num_material)
-    request.session['num_material'] = num_material
-
-    index = -1
-    for line in output_lines:
-        if len(output_lines[index].split()) == 5:
-            if output_lines[index].split()[0] == "Number" and output_lines[index].split()[3] == "sources:":
-                num_source = output_lines[index].split()[-1]
+    try:
+        num_material = 0
+        num_source = 0
+        index = 0
+        for line in output_lines:
+            if output_lines[index].split()[0] == "Directory":
+                num_material = output_lines[index + 1].split()[-1]
                 break
-        index -= 1
-    print(num_source)    
+            index += 1
+        print(num_material)
+        request.session['num_material'] = num_material
 
-    html_fluence_dist=''
-    html_pow_alloc=''
-    num_material = int(num_material)
-    num_source = int(num_source)
+        index = -1
+        for line in output_lines:
+            if len(output_lines[index].split()) == 5:
+                if output_lines[index].split()[0] == "Number" and output_lines[index].split()[3] == "sources:":
+                    num_source = output_lines[index].split()[-1]
+                    break
+            index -= 1
+        print(num_source)    
 
-    output_info = output_lines[-8:-5]
-    time_simu = output_info[0].split()[8]
-    time_opt = output_info[1].split()[3]
+        html_fluence_dist=''
+        html_pow_alloc=''
+        num_material = int(num_material)
+        num_source = int(num_source)
 
-    output_info = output_lines[-13 - num_source :-13]
-    for e in output_info:
-        html_pow_alloc += e + '<br />'
-    
-    request.session['material_name']= []
-    output_info = output_lines[-13 - num_source - 2 - num_material :-13 - num_source - 2]
-    for e in output_info:
-        html_fluence_dist += e + '<br />'
-        request.session['material_name'].append(e.split()[0])
+        output_info = output_lines[-8:-5]
+        time_simu = output_info[0].split()[8]
+        time_opt = output_info[1].split()[3]
 
-    print(request.session['material_name'])
-    sys.stdout.flush()
-    ftp.close()
-    client.close()
-    conn.close()
-    return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt, 'total_energy':total_energy, 'total_pack':total_pack, 'num_source':num_source})
+        output_info = output_lines[-13 - num_source :-13]
+        for e in output_info:
+            html_pow_alloc += e + '<br />'
+        
+        request.session['material_name']= []
+        output_info = output_lines[-13 - num_source - 2 - num_material :-13 - num_source - 2]
+        for e in output_info:
+            html_fluence_dist += e + '<br />'
+            request.session['material_name'].append(e.split()[0])
+
+        print(request.session['material_name'])
+        sys.stdout.flush()
+        ftp.close()
+        client.close()
+        conn.close()
+        return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt, 'total_energy':total_energy, 'total_pack':total_pack, 'num_source':num_source})
+    except:
+        print("pdt-space fail")
+        ftp.close()
+        client.close()
+        return HttpResponseRedirect('/application/pdt_space_fail')
 
 def pdt_space_fail(request):
     # print("in fail")
@@ -2199,6 +2215,12 @@ def pdt_space_fail(request):
     
     pdt_log_file.save()
     conn.close()
+    # error_msg = ''
+    # for line in request.session['pdt_error_msg']:
+    #     print(line)
+    #     error_msg = error_msg + line + '<br />'
+    # print("catch: ", len(request.session['pdt_error_msg']), error_msg)
+    # sys.stdout.flush()
     # ftp.chdir('docker_pdt/')
     # v100 = ftp.file('fp_v100.m')
 
@@ -2213,8 +2235,8 @@ def pdt_space_fail(request):
     
     ftp.close()
     client.close()
-    
     return render(request, "pdt_space_fail.html", {'pdt_log_file':pdt_log_file})
+    # return render(request, "pdt_space_fail.html", {'error_msg':error_msg ,'pdt_log_file':pdt_log_file})
 
 def pdt_space_visualization(request):
     client = paramiko.SSHClient()
