@@ -122,10 +122,10 @@ class visualizeMesh(models.Model):
                             )
 
 class pdtPresetData(models.Model):
-    opt_list = models.CharField(max_length=1024)
-    mesh_list = models.CharField(max_length=1024)
-    opt_addr = models.CharField(max_length=1024)
-    mesh_addr = models.CharField(max_length=1024)
+    opt_list = models.CharField(max_length=10240)
+    mesh_list = models.CharField(max_length=10240)
+    opt_addr = models.CharField(max_length=10240)
+    mesh_addr = models.CharField(max_length=10240)
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
