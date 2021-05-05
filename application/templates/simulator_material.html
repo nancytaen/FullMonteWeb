@@ -26,7 +26,7 @@
                     <table class='no_error'>
                         {% csrf_token %}
                         <tr>
-                            <th>Layer 1 - Outer layer:</th>
+                            <th>Region 1 - Outer region:</th>
                         </tr>
                         <tr>
                             <th>{{ form.custom.label_tag }} </th>
@@ -201,7 +201,7 @@
                         var label = document.getElementsByTagName("LABEL");
                         var index = 6 + ((parseInt(form_idx)-1) * 7)
                         var layer_ind = parseInt(form_idx)+1
-                        label[index].innerText = "Layer " + layer_ind + ":"
+                        label[index].innerText = "Region " + layer_ind + ":"
                         });
     
     $('#remove_row').click(function() {
