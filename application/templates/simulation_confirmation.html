@@ -10,7 +10,7 @@
 
     <h5 style="color:#0894d1;">Optical Materials:</h5>
     {% for item in materials %}
-        <h5><b>Layer {{ item.layer }}:</b></h5>
+        <h5><b>Region {{ item.layer }}:</b></h5>
         <h6>Material: {{ item.material }}</h6>
         <h6>Scattering Coefficient: {{ item.scatteringCoeff }} {{ unit }}<sup>-1</sup></h6>
         <h6>Absorption Coefficient: {{ item.absorptionCoeff }} {{ unit }}<sup>-1</sup></h6>
