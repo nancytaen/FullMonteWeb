@@ -519,7 +519,7 @@ def simulation_confirmation(request):
     materials = []
     for i in range(len(request.session['material'])):
         temp = Material_Class()
-        temp.layer = i + 1
+        temp.layer = i
         temp.material = request.session['material'][i]
         temp.scatteringCoeff = request.session['scatteringCoeff'][i]
         temp.absorptionCoeff = request.session['absorptionCoeff'][i]
