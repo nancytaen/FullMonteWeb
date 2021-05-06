@@ -26,14 +26,15 @@
                     <table class='no_error'>
                         {% csrf_token %}
                         <tr>
-                            <th>Region 1 - Outer region:</th>
+                            <th>Region 0 - Outer region:</th>
                         </tr>
                         <tr>
                             <th>{{ form.custom.label_tag }} </th>
-                            <td>
-                                {{ form.custom.errors }}
-                                {{ form.custom }}
-                            </td>
+                            
+                                <td>
+                                    {{ form.custom.errors }}
+                                    {{ form.custom }}
+                                </td>
                         </tr>
                         <tr>
                             <th>{{ form.material.label_tag }}</th>
@@ -200,7 +201,7 @@
                         
                         var label = document.getElementsByTagName("LABEL");
                         var index = 6 + ((parseInt(form_idx)-1) * 7)
-                        var layer_ind = parseInt(form_idx)+1
+                        var layer_ind = parseInt(form_idx)
                         label[index].innerText = "Region " + layer_ind + ":"
                         });
     
@@ -271,6 +272,13 @@
                     $("#advanced").click(function(){
                                         $("#advancedOption").toggle();
                                         });
+                    // make the default value of the region 0 to be air (outer region)
+                    document.querySelector("#id_form-0-custom").selectedIndex=1;
+                    document.querySelector("#id_form-0-material").value="Air"
+                    document.querySelector("#id_form-0-scatteringCoeff").value="0"
+                    document.querySelector("#id_form-0-absorptionCoeff").value="0"
+                    document.querySelector("#id_form-0-refractiveIndex").value="1"
+                    document.querySelector("#id_form-0-anisotropy").value="0"
                     });
 </script>
 
