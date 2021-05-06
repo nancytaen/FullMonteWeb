@@ -238,7 +238,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + 'EF kernel k\n')
     f.write(indent + 'EF inputPhotonWeight\n')
     f.write(indent + 'EF data [$ODC getByName "VolumeEnergy"]\n')
-    f.write(indent + 'EF outputFluence\n')
+    f.write(indent + 'EF outputPhotonWeight\n')
     f.write(indent + 'EF update\n\n')
 
 
