@@ -83,7 +83,8 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('VTKMeshReader R\n')
     f.write(indent + 'R filename $fn\n')
     f.write(indent + 'R read\n\n')
-    f.write('set M [R mesh]\n\n')
+    f.write('set M [R mesh]\n')
+    f.write('$M unitDimension ' + '"' + mesh_unit + '"\n\n')
     
     #append material set to tcl script
     f.write('MaterialSet MS\n\n')
@@ -92,6 +93,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
         matLower = ma.lower()
         mat = matLower.replace(' ','')
         f.write('Material ' + mat + '\n')
+        f.write(indent + mat + indent + 'unitDimension' + indent + '"' + mesh_unit + '"\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
         f.write(indent + mat + indent + 'refractiveIndex' + indent + str(re) + '\n')
@@ -204,6 +206,8 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     # f.write(indent + 'k source P1\n')
     f.write(indent + 'k geometry $M\n')
     f.write(indent + 'k materials MS\n')
+    f.write(indent + 'k isEnergy_or_Power "' + energy_unit + '"\n')
+    f.write(indent + 'k energyPowerValue ' + str(energy) + '\n')
     if kernelType == "TetraInternalKernel":
         f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n')
     elif kernelType == "TetraCUDAInternalKernel":
@@ -254,7 +258,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
-    f.write(indent + 'W addData "Fluence" [EF result]\n')
+    f.write(indent + 'W addData "Raw Weight" [$ODC getByName "VolumeEnergy"]\n')
     f.write(indent + 'W mesh $M\n')
     f.write(indent + 'W addHeaderComment "' + comment + '"\n')
     f.write(indent + 'W write\n\n')
@@ -265,25 +269,25 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n\n')
 
-    #generate dose volume histogram
-    f.write('DoseVolumeHistogramGenerator DVHG\n')
-    f.write(indent + 'DVHG mesh $M\n')
-    f.write(indent + 'DVHG dose [EF result]\n')
-    f.write(indent + 'DVHG update\n\n')
+    # #generate dose volume histogram
+    # f.write('DoseVolumeHistogramGenerator DVHG\n')
+    # f.write(indent + 'DVHG mesh $M\n')
+    # f.write(indent + 'DVHG dose [EF result]\n')
+    # f.write(indent + 'DVHG update\n\n')
 
-    f.write('set DHC [DVHG result]\n\n')
+    # f.write('set DHC [DVHG result]\n\n')
 
-    #write dvh matrix to a text file
-    f.write('TextFileMatrixWriter TW\n')
-    f.write(indent + 'TW filename "' + dvhResult + '"\n')
-    f.write(indent + 'TW source [$DHC get 1]\n')
-    f.write(indent + 'TW write\n\n')
+    # #write dvh matrix to a text file
+    # f.write('TextFileMatrixWriter TW\n')
+    # f.write(indent + 'TW filename "' + dvhResult + '"\n')
+    # f.write(indent + 'TW source [$DHC get 1]\n')
+    # f.write(indent + 'TW write\n\n')
 
-    #overwrite the dvh textfile to dvh format
-    f.write('TextFileDoseHistogramWriter TDH\n')
-    f.write(indent + 'TDH filename "' + dvhResult + '"\n')
-    f.write(indent + 'TDH collection $DHC\n')
-    f.write(indent + 'TDH write\n')
+    # #overwrite the dvh textfile to dvh format
+    # f.write('TextFileDoseHistogramWriter TDH\n')
+    # f.write(indent + 'TDH filename "' + dvhResult + '"\n')
+    # f.write(indent + 'TDH collection $DHC\n')
+    # f.write(indent + 'TDH write\n')
 
     #copy and save script to AWS
     f = open(source, 'r')
