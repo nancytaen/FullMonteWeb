@@ -86,7 +86,7 @@ class pdtForm(forms.Form):
                             help_text="Available optical files.")
     mesh = forms.ChoiceField(label="Mesh File", 
                             help_text="Available mesh files.")
-    total_energy = forms.CharField( label='PNF', required = True, max_length=255, 
+    total_energy = forms.CharField( label='PNF', required = False, max_length=255, initial="1e11",
                                     help_text="Stands for 'Pruning Normalization Factor. Used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 4e11.")
     num_packets = forms.CharField(label='Num Packets', required = True, max_length=255, 
                                     help_text="The number of photon packets to launch in the light simulator FullMonte. Typically it is around 1e5 to 1e6.")
