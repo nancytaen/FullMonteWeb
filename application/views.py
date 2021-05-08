@@ -11,6 +11,7 @@ import io
 import codecs
 import psutil
 from datetime import datetime, timezone
+from pytz import timezone as tz
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
@@ -1598,6 +1599,38 @@ def search_pdt_space(request):
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
 
+    ####### check whether image cleanup is required
+    need_cleanup = False
+    command = "tail -1 ~/docker_pdt/daily_cleanup.txt"
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+
+    timezone = tz('US/Eastern')
+    current_date = str(datetime.now(timezone).date())
+    if len(stdout_line) == 0:
+        need_cleanup = True
+        print("daily_cleanup.txt file is not exist.")
+    
+    elif stdout_line[-1].rstrip() != current_date:
+        need_cleanup = True
+        print("date in file: ",stdout_line[-1].rstrip())
+        print("date current: ",current_date)
+    
+    else:
+        print("date match.")
+
+    if need_cleanup == True:
+        print("cleanup instance.")
+        command = "echo \"" + current_date + "\" > ~/docker_pdt/daily_cleanup.txt"
+        stdin, stdout, stderr = client.exec_command(command)
+        command = "sudo docker image prune --all -f"
+        stdin, stdout, stderr = client.exec_command(command)
+        stdout_line = stdout.readlines()
+        for line in stdout_line:
+            print (line)
+
+    sys.stdout.flush()
+    #########################################
     foo_list = []
     addr_list = []
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"find /usr/local/pdt-space/data -name *.opt\" 0"
@@ -2014,6 +2047,7 @@ def pdt_space_running(request):
         print(progress)
         print(running_time)
         print(request.session['source_type'])
+        print(request.session['started'])
         sys.stdout.flush()
         ftp.close()
         client.close()
@@ -2179,11 +2213,30 @@ def pdt_space_finish(request):
             request.session['material_name'].append(e.split()[0])
 
         print(request.session['material_name'])
+
+        ####### get log file
+        pdt_log_file = pdtOuputLogFile()
+        pdt_log_file.user=request.user
+        f = ftp.file('eval_result.log')
+        pdt_log_file.pdt_space_log.save('eval_result.log', f)
+        
+        pdt_log_file.save()
+
+
+
         sys.stdout.flush()
         ftp.close()
         client.close()
         conn.close()
-        return render(request, "pdt_space_finish.html", {'html_fluence_dist':html_fluence_dist, 'html_pow_alloc':html_pow_alloc, 'time_simu':time_simu, 'time_opt':time_opt, 'total_energy':total_energy, 'total_pack':total_pack, 'num_source':num_source})
+        return render(request, "pdt_space_finish.html", 
+                    {'html_fluence_dist':html_fluence_dist, 
+                    'html_pow_alloc':html_pow_alloc, 
+                    'time_simu':time_simu, 
+                    'time_opt':time_opt, 
+                    'total_energy':total_energy, 
+                    'total_pack':total_pack, 
+                    'num_source':num_source, 
+                    'pdt_log_file':pdt_log_file})
     except:
         print("pdt-space fail")
         ftp.close()

@@ -11,16 +11,7 @@
             <div class='table'>
                 <table class='no_error'>
                     {% csrf_token %}
-                    <tr>
-                        <th>{{ form.total_energy.label_tag }}</th>
-                        <td>
-                            {{ form.total_energy.errors }}
-                            {{ form.total_energy }}
-                        </td>
-                        <td style="text-align:left">
-                            {% autoescape off %}{{ form.total_energy.help_text }}{% endautoescape %}
-                        </td>
-                    </tr>
+                    
                     <tr>
                         <th>{{ form.num_packets.label_tag }}</th>
                         <td>
@@ -72,12 +63,39 @@
                         </td>
                     </tr>
                 </table>
+
+                <button type="button" id='advanced'>Advanced Options</button>
+
+                <div id="advancedOption1" class="table">
+                    <h6>Advanced parameters.</h6>
+                    <table class='no_error'>
+                        {% csrf_token %}
+                        <tr>
+                            <th>{{ form.total_energy.label_tag }}</th>
+                            <td>
+                                {{ form.total_energy.errors }}
+                                {{ form.total_energy }}
+                            </td>
+                            <td style="text-align:left">
+                                {% autoescape off %}{{ form.total_energy.help_text }}{% endautoescape %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
+
             <p><br/><input type="submit" value="Next"></p>
         </form>
     </div>
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-
+<script>
+    $(document).ready(function(){
+        $("#advancedOption1").hide();
+                    $("#advanced").click(function(){
+                                        $("#advancedOption1").toggle();
+                                        });
+                    });
+</script>
 {% endblock %}
