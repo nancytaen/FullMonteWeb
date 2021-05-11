@@ -7,16 +7,42 @@
     <div class="center_container">
         <p>Please specify the material properties in the order that matches the region IDs in the supplied mesh.</p>
         <p>Please specify the material properties in units that matches the supplied mesh.</p>
-        <button id='advanced'>Developer Options</button>
-        <br>
 
+        <!-- Advanced options -->
+        <button id='advanced'>Advanced Options</button>
+        <br>
         <div id='advancedOption'>
             <a href="{% url 'create_preset_material' %}">
                 Click here to upload a new preset material (developer only).
             </a>
+            <br>
+            Click here to download the TCL script template if you wish to write your own script: <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a>
         </div>
     </div>
 
+    <div id="advancedOption1">
+        <div class="d-flex justify-content-center ">
+            <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
+                <h6>Upload your TCL script to run the simulation (please make sure to follow the instructions in the template and keep the filename unmodified):</h6>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ tcl_form.tcl_file.label_tag }}</th>
+                        <td>
+                            {{ tcl_form.tcl_file.errors }}
+                            {{ tcl_form.tcl_file }}
+                        </td>
+                    </tr>
+                </table>
+                <br>
+                <p><input type="submit" name="_skip" value="Submit and Run"></p>
+                <small style="color: grey; text-align: center;">* By clicking on this, you will be skipping the rest of setup and launch simulation with the uploaded TCl script.</small>
+            </form>
+        </div>
+    </div>
+    <br>
+
+    <!-- Material entries -->
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post">
             <h3>Material Set</h3>
@@ -136,7 +162,7 @@
                 </div>
             <p></p>
             
-            <p><input type="submit" value="Next"></p>
+            <p><input type="submit" name="_next" value="Next"></p>
 
         </form>
     </div>
@@ -269,8 +295,10 @@
 </script>
 <script>
     $(document).ready(function(){
+                    $("#advancedOption1").hide();
                     $("#advanced").click(function(){
                                         $("#advancedOption").toggle();
+                                        $("#advancedOption1").toggle();
                                         });
                     // make the default value of the region 0 to be air (outer region)
                     document.querySelector("#id_form-0-custom").selectedIndex=1;
@@ -280,6 +308,38 @@
                     document.querySelector("#id_form-0-refractiveIndex").value="1"
                     document.querySelector("#id_form-0-anisotropy").value="0"
                     });
+</script>
+
+<script>
+    function Validate(oForm) {
+        var arrInputs = oForm.getElementsByTagName("input");
+        var tcl_script_name = '{{ tcl_script_name|escapejs }}';
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var filename = sFileName.replace(/^.*[\\\/]/, '');
+                        var blnValid = (filename === tcl_script_name);
+                        
+                        if(blnValid) {
+                            return confirm('This will run the FullMonte Simulator with your uploaded TCL script and will take some time. Please wait.'); 
+                        }
+                        
+                        if (!blnValid) {
+                            alert("Sorry, " + filename + " is invalid. Please change your uploaded TCL script to be " + tcl_script_name);
+                            return false;
+                        }
+                    }
+                    else {
+                        alert("No TCl script uploaded. Please upload a TCL script before launching simulation, or set up manually by filling out the forms below.");
+                        return false;
+                    }
+                }
+            }
+        
+            return confirm('This will run the FullMonte Simulator with your uploaded TCL script and will take some time. Please wait.'); 
+    }
 </script>
 
 

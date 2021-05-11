@@ -207,6 +207,13 @@ def fmSimulator(request):
             else:
                 request.session['overwrite_on_ec2'] = False
 
+            # generate empty TCL template
+            mesh = tclInput.objects.filter(user = request.user).latest('id')
+            energy  = request.session['totalEnergy']
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
+            script_path = tclGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
+
             return HttpResponseRedirect('/application/simulator_material')
 
     # If this is a GET (or any other method) create the default form.
@@ -230,6 +237,13 @@ def fmSimulatorMaterial(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    # Info about the generated TCL
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+
+    # Form for user-uploaded TCL
+    class Optional_Tcl(forms.Form):
+        tcl_file = forms.FileField(required=False)
+    
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         # transfer input mesh to Ec2 instance
@@ -241,7 +255,12 @@ def fmSimulatorMaterial(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
         ftp = client.open_sftp()
         ftp.chdir('docker_sims/')
         # transfer mesh in chunks to save memory
@@ -270,37 +289,72 @@ def fmSimulatorMaterial(request):
         client.close()
         conn.close()
 
-        # get formset and check whether it's valid
-        formset1 = materialSetSet(request.POST)
+        # Skip rest of setup if user uploaded their own TCL script
+        if '_skip' in request.POST:
+            # file uploaded and "Submit and Run" button clicked
+            form = Optional_Tcl(request.POST, request.FILES)
+            default_storage.delete(request.FILES['tcl_file'].name)
+            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
 
-        if formset1.is_valid():
-            # process cleaned data from formsets
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            text_obj = request.session['text_obj']
+            private_key_file = io.StringIO(text_obj)
+            privkey = paramiko.RSAKey.from_private_key(private_key_file)
+            try:
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            except:
+                sys.stdout.flush()
+                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+                return HttpResponseRedirect('/application/aws')
+            client.exec_command('> ~/sim_run.log')
+            client.close()
+            connections.close_all()
 
-            request.session['material'] = []
-            request.session['region_name'] = [] # for visualization legend
-            request.session['scatteringCoeff'] = []
-            request.session['absorptionCoeff'] = []
-            request.session['refractiveIndex'] = []
-            request.session['anisotropy'] = []
+            # transfer all necessary files to run simulation
+            p = Process(target=transfer_files_and_run_simulation, args=(request, ))
+            p.start()
+            
+            # redirect to run simulation
+            request.session['start_time'] = str(datetime.now(timezone.utc))
+            request.session['started'] = "false"
+            return HttpResponseRedirect('/application/running')
 
-            for form in formset1:
-                #print(form.cleaned_data)
-                request.session['material'].append(form.cleaned_data['material'])
-                request.session['region_name'].append(form.cleaned_data['material'])  # for visualization legend
-                request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
-                request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
-                request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
-                request.session['anisotropy'].append(form.cleaned_data['anisotropy'])
+        # Get all entries from materials formset and check whether it's valid
+        else:
+            formset1 = materialSetSet(request.POST)
 
-            return HttpResponseRedirect('/application/simulator_source')
+            if formset1.is_valid():
+                # process cleaned data from formsets
+
+                request.session['material'] = []
+                request.session['region_name'] = [] # for visualization legend
+                request.session['scatteringCoeff'] = []
+                request.session['absorptionCoeff'] = []
+                request.session['refractiveIndex'] = []
+                request.session['anisotropy'] = []
+
+                for form in formset1:
+                    #print(form.cleaned_data)
+                    request.session['material'].append(form.cleaned_data['material'])
+                    request.session['region_name'].append(form.cleaned_data['material'])  # for visualization legend
+                    request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
+                    request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
+                    request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
+                    request.session['anisotropy'].append(form.cleaned_data['anisotropy'])
+
+                return HttpResponseRedirect('/application/simulator_source')
 
     # If this is a GET (or any other method) create the default form.
     else:
         formset1 = materialSetSet(request.GET or None)
+        tcl_form = Optional_Tcl()
 
     context = {
         'formset1': formset1,
         'unit': request.session['meshUnit'],
+        'tcl_script_name': generated_tcl.script.name,
+        'tcl_form': tcl_form,
     }
 
     return render(request, "simulator_material.html", context)
@@ -376,7 +430,12 @@ def fmSimulatorSource(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
 
     # generate ParaView Visualization URL
     # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
@@ -476,23 +535,26 @@ def fmSimulatorSource(request):
 
 # FullMonte Simulator input confirmation page
 def simulation_confirmation(request):
+    # Info about the generated TCL and mesh file
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+
+    # Form for user-uploaded TCL
     class Optional_Tcl(forms.Form):
         tcl_file = forms.FileField(required=False)
-    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
-    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    
     if request.method == 'POST':
+        # Check if user uploaded their own TCL script
         form = Optional_Tcl(request.POST, request.FILES)
         if not request.POST.__contains__('tcl_file'):
             # there is a file uploaded
             default_storage.delete(request.FILES['tcl_file'].name)
-            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file'])
+            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # replace the TCL file in S3
 
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
-        
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         try:
             client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
@@ -500,17 +562,20 @@ def simulation_confirmation(request):
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
             return HttpResponseRedirect('/application/aws')
-
         client.exec_command('> ~/sim_run.log')
         client.close()
         connections.close_all()
+
+        # Transfer all neccessary files for simulation
         p = Process(target=transfer_files_and_run_simulation, args=(request, ))
         p.start()
         
+        # redirect to run simulation
         request.session['start_time'] = str(datetime.now(timezone.utc))
         request.session['started'] = "false"
         return HttpResponseRedirect('/application/running')
     
+    # Info to display on confirmation page
     class Material_Class:
         pass
     class Light_Source_Class:
@@ -584,7 +649,12 @@ def transfer_files_and_run_simulation(request):
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    try:
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
     ftp = client.open_sftp()
 
     ftp.chdir('docker_sims/')
@@ -1968,7 +2038,12 @@ def pdt_space_running(request):
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        try:
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
         ftp = client.open_sftp()
 
         stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/eval_result.log > ~/copy_eval_result.log')

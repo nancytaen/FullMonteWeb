@@ -242,7 +242,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + 'EF kernel k\n')
     f.write(indent + 'EF inputPhotonWeight\n')
     f.write(indent + 'EF data [$ODC getByName "VolumeEnergy"]\n')
-    f.write(indent + 'EF outputPhotonWeight\n')
+    f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
 
@@ -258,7 +258,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     #write the mesh with fluence appended
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
-    f.write(indent + 'W addData "Raw Weight" [$ODC getByName "VolumeEnergy"]\n')
+    f.write(indent + 'W addData "Fluence" [EF result]\n')
     f.write(indent + 'W mesh $M\n')
     f.write(indent + 'W addHeaderComment "' + comment + '"\n')
     f.write(indent + 'W write\n\n')
