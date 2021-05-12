@@ -213,7 +213,7 @@ def fmSimulator(request):
             energy  = request.session['totalEnergy']
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
-            script_path = tclGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
+            script_path = emptyTclTemplateGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
 
             return HttpResponseRedirect('/application/simulator_material')
 
