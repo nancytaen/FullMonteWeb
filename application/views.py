@@ -257,7 +257,7 @@ def fmSimulatorMaterial(request):
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         try:
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
         except:
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -287,8 +287,6 @@ def fmSimulatorMaterial(request):
             sys.stdout.flush()
         
         ftp.close()
-        client.close()
-        conn.close()
 
         # Skip rest of setup if user uploaded their own TCL script
         if '_skip' in request.POST:
@@ -297,17 +295,6 @@ def fmSimulatorMaterial(request):
             default_storage.delete(request.FILES['tcl_file'].name)
             default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
 
-            client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            text_obj = request.session['text_obj']
-            private_key_file = io.StringIO(text_obj)
-            privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            try:
-                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
-            except:
-                sys.stdout.flush()
-                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
             client.exec_command('> ~/sim_run.log')
             client.close()
             connections.close_all()
@@ -319,10 +306,14 @@ def fmSimulatorMaterial(request):
             # redirect to run simulation
             request.session['start_time'] = str(datetime.now(timezone.utc))
             request.session['started'] = "false"
+            client.close()
+            conn.close()
             return HttpResponseRedirect('/application/running')
 
         # Get all entries from materials formset and check whether it's valid
         else:
+            client.close()
+            conn.close()
             formset1 = materialSetSet(request.POST)
 
             if formset1.is_valid():
@@ -424,7 +415,6 @@ def fmSimulatorSource(request):
         return redirect('please_login')
 
     # visualize input mesh
-    # transfer input mesh to Ec2 instance
     inputMeshFileName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -432,7 +422,7 @@ def fmSimulatorSource(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -558,7 +548,7 @@ def simulation_confirmation(request):
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         try:
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
         except:
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -651,7 +641,7 @@ def transfer_files_and_run_simulation(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -689,12 +679,29 @@ def transfer_files_and_run_simulation(request):
     ftp.putfo(tcl_file, './'+generated_tcl.script.name)
     ftp.close()
 
+    # command to remove previously created temporary files, just in case
+    cd_cmd = 'cd ~/docker_sims;'
+    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt;'
+    
+    # command to identify files before simulation
+    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "files_diff.txt" ! -name "*.sh" -type f >> files_before.txt;'
+    
+    # command to run simulation
     if request.session['GPU_instance']:
         # add an argument to add nvidia runtime for gpu
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log 2>&1" 
+        run_cmd = "sudo ~/docker_sims/FullMonteSW_setup.sh 1 > ~/sim_run.log 2>&1" 
     else:
-        command = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log 2>&1"
-    client.exec_command(command)
+        run_cmd = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log 2>&1"
+    
+    # command to execute commands in order
+    stdin, stdout, stderr = client.exec_command(cd_cmd + rm_cmd + find_cmd + run_cmd)
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Files identified before simulation")
+    else:
+        print("Error", exit_status)
+    sys.stdout.flush()
+
     client.close()
     conn.close()
 
@@ -729,7 +736,7 @@ def visualization_mesh_upload(request):
             client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             try:
-                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -805,7 +812,7 @@ def fmVisualization(request):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(dns, username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(dns, username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -923,7 +930,7 @@ def displayVisualization(request):
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         try:
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
         except:
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -951,7 +958,11 @@ def displayVisualization(request):
     if(fileExists):
         msg = "Using output mesh \"" + outputMeshFileName + "\" from the last simulation or upload."
     else:
-        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. Root folder will be loaded for visualization."
+        msg = "Mesh \"" + outputMeshFileName + "\" from the last simulation or upload was not found. Perhaps it was deleted. \
+                Please also note that the DVH generator looks for a default mesh name from simulation, so if you modified the output file paths \
+                in the TCL script, the generator would not find the output mesh. However, you can work around by downloading the mesh file(s) and uploading \
+                them back to this page to view their DVH. You can also still use the 3D visualizer: if the default file name is not found, your AWS instance's \
+                Root folder will be loaded to the ParaView application, and you can look for your desired mesh by browsing through the Root folder."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
     context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
@@ -1132,7 +1143,7 @@ def aws(request):
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             request.session['text_obj'] = text_obj
             try:
-                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1211,7 +1222,7 @@ def run_aws_setup(request, GPU_instance):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1336,7 +1347,7 @@ def AWSsetup(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1400,7 +1411,7 @@ def running(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1469,7 +1480,7 @@ def simulation_finish(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1532,7 +1543,7 @@ def populate_simulation_history(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1552,16 +1563,37 @@ def populate_simulation_history(request):
     mesh_vtk_name = mesh.meshFile.name
     mesh_name = mesh_vtk_name[:-4]
     tcl_name = history.tcl_script_path.name
-    output_vtk_name = tcl_name[:-4] + '.out.vtk'
-    output_txt_name = tcl_name[:-4] + '.phi_v.txt'
+    output_vtk_name = tcl_name[:-4]
+    output_vtk_name = output_vtk_name.replace(".", "_") + '_vtk.zip'
+    output_txt_name = tcl_name[:-4]
+    output_txt_name = output_txt_name.replace(".", "_") + '_phi_v.zip'
+
+    # command to identify files after simulation
+    cd_cmd = 'cd ~/docker_sims;'
+    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "files_diff.txt" ! -name "*.sh" -type f >> files_after.txt;'
+
+    # command to diff directory for newly created files and zip them
+    diff_cmd = 'comm -13 files_before.txt files_after.txt >> files_diff.txt;'
+    zip_vtk_cmd = 'grep ".vtk" files_diff.txt | zip ' + output_vtk_name + ' -@ > /dev/null 2>&1;'
+    zip_txt_cmd = 'grep ".txt" files_diff.txt | zip ' + output_txt_name + ' -@ > /dev/null 2>&1;'
+
+    # command to remove temporary files
+    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt'
+
+    # execute commands in order
+    stdin, stdout, stderr = client.exec_command(cd_cmd + find_cmd + diff_cmd + zip_vtk_cmd + zip_txt_cmd + rm_cmd)
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Output files successfully zipped")
+    else:
+        print("Error", exit_status)
+    sys.stdout.flush()
 
     try:
-        output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
-        # default_storage.save(output_vtk_name, output_vtk_file)
-        output_txt_file = ftp.file('docker_sims/' + output_txt_name)
-        history.output_vtk_path.save(output_vtk_name, output_vtk_file)
-        history.output_txt_path.save(output_txt_name, output_txt_file)
-        # default_storage.save(output_txt_name, output_txt_file)
+        output_vtk_zip = ftp.file('docker_sims/' + output_vtk_name)
+        history.output_vtk_path.save(output_vtk_name, output_vtk_zip)
+        output_txt_zip = ftp.file('docker_sims/' + output_txt_name)
+        history.output_txt_path.save(output_txt_name, output_txt_zip)
     except:
         print("Cannot save history for simulation output because file does not exist")
     
@@ -1663,7 +1695,7 @@ def search_pdt_space(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1774,7 +1806,7 @@ def pdt_space_license(request):
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             try:
-                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1793,7 +1825,7 @@ def pdt_space_license(request):
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
         try:
-            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+            client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
         except:
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -1968,7 +2000,7 @@ def pdt_space_lightsource(request):
             private_key_file = io.StringIO(text_obj)
             privkey = paramiko.RSAKey.from_private_key(private_key_file)
             try:
-                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+                client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -2171,7 +2203,7 @@ def launch_pdt_space(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -2210,7 +2242,7 @@ def pdt_space_finish(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -2329,7 +2361,7 @@ def pdt_space_fail(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
@@ -2373,7 +2405,7 @@ def pdt_space_visualization(request):
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
     try:
-        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=10)
+        client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey, timeout=20)
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')

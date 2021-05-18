@@ -181,7 +181,16 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     
     #write the mesh with fluence appended
     f.write('#====================================================================================================================\n')
-    f.write('#                                  Output Mesh Writer (please do not modify)                                         \n')
+    f.write('#                                               Output Mesh Writer                                                   \n')
+    f.write('# This template generates one output VTK with the same name as the input mesh and a ".out.vtk" extension. You may    \n')
+    f.write('# modify this path or generate multiple output VTKs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+    f.write('#    Example 3: "example_subdir/example_output_mesh.vtk" is NOT ok                                                   \n')
+    f.write('# Please note that the DVH generator only looks for the default path, so you would not be able to automatically view \n')
+    f.write('# the DVH if you modify the file paths here. However, you can still manually download the output VTKs and upload them\n')
+    f.write('# back to the Visualization page to view their DVH. You can also use the 3D Visualizor in any case: if the default   \n')
+    f.write('# file name is not found, your Root folder will be loaded to the ParaView application, and you can find your desired \n')
+    f.write('# mesh by browsing through the Root folder.                                                                          \n')
     f.write('#====================================================================================================================\n')
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
@@ -192,7 +201,11 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
 
     #write the fluence values only to a text file
     f.write('#====================================================================================================================\n')
-    f.write('#                                 Fluence Matrix Writer (please do not modify)                                       \n')
+    f.write('#                                              Fluence Matrix Writer                                                 \n')
+    f.write('# This template generates one output TXT with the same name as the input mesh and a ".phi_v.txt" extension. You may  \n')
+    f.write('# modify this path or generate multiple output TXTs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('#    Example 1: "/sims/example_output_fluence.txt" is ok                                                             \n')
+    f.write('#    Example 3: "example_subdir/example_output_fluence.txt" is NOT ok                                                \n')
     f.write('#====================================================================================================================\n')
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
@@ -514,7 +527,16 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     
     #write the mesh with fluence appended
     f.write('#====================================================================================================================\n')
-    f.write('#                                  Output Mesh Writer (please do not modify)                                         \n')
+    f.write('#                                               Output Mesh Writer                                                   \n')
+    f.write('# This template generates one output VTK with the same name as the input mesh and a ".out.vtk" extension. You may    \n')
+    f.write('# modify this path or generate multiple output VTKs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+    f.write('#    Example 3: "example_subdir/example_output_mesh.vtk" is NOT ok                                                   \n')
+    f.write('# Please note that the DVH generator only looks for the default path, so you would not be able to automatically view \n')
+    f.write('# the DVH if you modify the file paths here. However, you can still manually download the output VTKs and upload them\n')
+    f.write('# back to the Visualization page to view their DVH. You can also use the 3D Visualizor in any case: if the default   \n')
+    f.write('# file name is not found, your Root folder will be loaded to the ParaView application, and you can find your desired \n')
+    f.write('# mesh by browsing through the Root folder.                                                                          \n')
     f.write('#====================================================================================================================\n')
     f.write('VTKMeshWriter W\n')
     f.write(indent + 'W filename "' + meshResult + '"\n')
@@ -525,7 +547,11 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
 
     #write the fluence values only to a text file
     f.write('#====================================================================================================================\n')
-    f.write('#                                 Fluence Matrix Writer (please do not modify)                                       \n')
+    f.write('#                                              Fluence Matrix Writer                                                 \n')
+    f.write('# This template generates one output TXT with the same name as the input mesh and a ".phi_v.txt" extension. You may  \n')
+    f.write('# modify this path or generate multiple output TXTs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('#    Example 1: "/sims/example_output_fluence.txt" is ok                                                             \n')
+    f.write('#    Example 3: "example_subdir/example_output_fluence.txt" is NOT ok                                                \n')
     f.write('#====================================================================================================================\n')
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
