@@ -338,104 +338,108 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
-    print ('connecting to remote server in visualizerDVH')
+    print ('>>> connecting to remote server in visualizerDVH...')
     client.connect(dns, username='ubuntu', pkey=privkey)
-    print ('connected to remote server in visualizerDVH')
-    sys.stdout.flush()
     sftp = client.open_sftp()
-    sftp.get(remoteFilePath, localFilePath)
-
-    output = import_data(localFilePath)
-
-    # delete temporory mesh
-    os.remove(localFilePath)
-
-    ## regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
-    ## output = extract_mesh_subregion(output, regionBoundaries)
-
-    # Arrays are of type numpy.ndarray
-    numpyWrapper = npi.WrapDataObject( output )
-    generation_success = True
-
     try:
-        fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
-        regionData = numpyWrapper.CellData["Region"]
-        print()
+        print ('>>> connected to remote server in visualizerDVH.')
+        sys.stdout.flush()
+        sftp.get(remoteFilePath, localFilePath)
 
-        if (fluenceData.size != regionData.size):
-            print("Fluence and region data do not match")
-            generation_success = False
+        output = import_data(localFilePath)
 
-    except AttributeError:
-        print("Could not parse region or fluence data by name. Attempting to parse by index")
+        # delete temporory mesh
+        os.remove(localFilePath)
+
+        ## regionBoundaries = [100, 140, 55, 75, 80, 110] ## Good region for FullMonte_fluence_line mesh
+        ## output = extract_mesh_subregion(output, regionBoundaries)
+
+        # Arrays are of type numpy.ndarray
+        numpyWrapper = npi.WrapDataObject( output )
+        generation_success = True
 
         try:
-            regionData = numpyWrapper.CellData[0]
-            fluenceData = numpyWrapper.CellData[1] # Assuming you know the number of the array
+            fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
+            regionData = numpyWrapper.CellData["Region"]
+            print()
 
             if (fluenceData.size != regionData.size):
                 print("Fluence and region data do not match")
                 generation_success = False
 
-        except IndexError:
-            print("Could not parse region or fluence data. Input mesh may not be a correctly formatted FullMonte output file.")
-            generation_success = False
+        except AttributeError:
+            print("Could not parse region or fluence data by name. Attempting to parse by index")
 
-        except:
-            print("Unidentified error occurred. Could not parse input data")
-            generation_success = False
+            try:
+                regionData = numpyWrapper.CellData[0]
+                fluenceData = numpyWrapper.CellData[1] # Assuming you know the number of the array
 
-    if generation_success == False:
-        info.maxFluence = 0
+                if (fluenceData.size != regionData.size):
+                    print("Fluence and region data do not match")
+                    generation_success = False
+
+            except IndexError:
+                print("Could not parse region or fluence data. Input mesh may not be a correctly formatted FullMonte output file.")
+                generation_success = False
+
+            except:
+                print("Unidentified error occurred. Could not parse input data")
+                generation_success = False
+
+        if generation_success == False:
+            info.maxFluence = 0
+            info.save()
+            # update process status
+            running_process = processRunning.objects.filter(user = user).latest('id')
+            running_process.running = False
+            running_process.save()
+            sftp.close()
+            client.close()
+            conn.close()
+            sys.stdout.flush()
+            return(-1)
+
+        noBins = 500    # max fluence is divided into
+
+        volumeData = calculate_volumes(output,regionData)
+        doseData = get_doses(fluenceData,regionData)
+        DVHdata = calculate_DVH(doseData,volumeData,noBins)
+        cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
+        # save the figure's html string to session
+        info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName)
+        info.maxFluence = maxFluence
         info.save()
+        # export the data to csv if mesh file comes from simulation
+        localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
+        if(len(materials) > 0): # only mesh files from simulation has material info
+            print("Exporting DVH data to CSV")
+            with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
+                for region in export_data:
+                    title = ['', '', 'Region ' + str(region) + ' (' + materials[region] + ')']
+                    df = pd.DataFrame(title).T
+                    df.columns = ['', '', '']
+                    f.write(df.to_csv(index=False))
+
+                    df = pd.DataFrame(export_data[region]).T
+                    df.columns = ['Fluence Dose'+' ('+energyUnit+')', 'Region Volume'+' ('+meshUnit+')', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
+                    f.write(df.to_csv(index=False, float_format='%.3f'))
+            print("DVH data export complete")
+            remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName[:-8] + '.dvh.png'
+            sftp.put(localFilePath, remoteFilePath) # transfer dvh figure from local to remote server
+
+        # delete temporory dvh plot
+        os.remove(localFilePath)
+            
         # update process status
         running_process = processRunning.objects.filter(user = user).latest('id')
         running_process.running = False
         running_process.save()
         sftp.close()
+    finally:
+        sftp.close()
         client.close()
         conn.close()
-        sys.stdout.flush()
-        return(-1)
-
-    noBins = 500    # max fluence is divided into
-
-    volumeData = calculate_volumes(output,regionData)
-    doseData = get_doses(fluenceData,regionData)
-    DVHdata = calculate_DVH(doseData,volumeData,noBins)
-    cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
-    # save the figure's html string to session
-    info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName)
-    info.maxFluence = maxFluence
-    info.save()
-    # export the data to csv if mesh file comes from simulation
-    localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'
-    if(len(materials) > 0): # only mesh files from simulation has material info
-        print("Exporting DVH data to CSV")
-        with sftp.open('/home/ubuntu/docker_sims/' + outputMeshFileName[:-8] + '.dvh.csv', "w") as f:
-            for region in export_data:
-                title = ['', '', 'Region ' + str(region) + ' (' + materials[region] + ')']
-                df = pd.DataFrame(title).T
-                df.columns = ['', '', '']
-                f.write(df.to_csv(index=False))
-
-                df = pd.DataFrame(export_data[region]).T
-                df.columns = ['Fluence Dose'+' ('+energyUnit+')', 'Region Volume'+' ('+meshUnit+')', 'Region Volume Coverage', '% Max Fluence Dose', '% Region Volume Coverage']
-                f.write(df.to_csv(index=False, float_format='%.3f'))
-        print("DVH data export complete")
-        remoteFilePath = "/home/ubuntu/docker_sims/" + outputMeshFileName[:-8] + '.dvh.png'
-        sftp.put(localFilePath, remoteFilePath) # transfer dvh figure from local to remote server
-
-    # delete temporory dvh plot
-    os.remove(localFilePath)
-        
-    # update process status
-    running_process = processRunning.objects.filter(user = user).latest('id')
-    running_process.running = False
-    running_process.save()
-    sftp.close()
-    client.close()
-    conn.close()
+        print ('>>> destroyed connection from remote server in dose_volume_histogram.')
     print("done generating DVH")
     sys.stdout.flush()
 
@@ -443,18 +447,19 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
 def pdt_dose_volume_histogram(user, num_material, materials):
     conn = create_connection()
     conn.ensure_connection()
-    info = meshFileInfo.objects.filter(user = user).latest('id')
-    
-    localFilePath = os.path.dirname(__file__) + "/temp/v100.m"
-    dvh_data = load_dvh_data(int(num_material), localFilePath)
-    noBins = 500
-    info.dvhFig = plot_PDVH(dvh_data,noBins,materials,"pdt_space_dvh")
-    info.save()
-    # update process status
-    running_process = processRunning.objects.filter(user = user).latest('id')
-    running_process.running = False
-    running_process.save()
-
-    conn.close()
+    try:
+        info = meshFileInfo.objects.filter(user = user).latest('id')
+        
+        localFilePath = os.path.dirname(__file__) + "/temp/v100.m"
+        dvh_data = load_dvh_data(int(num_material), localFilePath)
+        noBins = 500
+        info.dvhFig = plot_PDVH(dvh_data,noBins,materials,"pdt_space_dvh")
+        info.save()
+        # update process status
+        running_process = processRunning.objects.filter(user = user).latest('id')
+        running_process.running = False
+        running_process.save()
+    finally:
+        conn.close()
     print("done generating DVH")
     sys.stdout.flush()
