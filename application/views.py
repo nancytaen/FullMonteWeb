@@ -681,10 +681,10 @@ def transfer_files_and_run_simulation(request):
 
     # command to remove previously created temporary files, just in case
     cd_cmd = 'cd ~/docker_sims;'
-    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt;'
+    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt single_vtk_file.txt single_txt_file.txt;'
     
     # command to identify files before simulation
-    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "files_diff.txt" ! -name "*.sh" -type f >> files_before.txt;'
+    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "*.sh" ! -name "*.tcl" ! -name "*.csv" ! -name "*.png" -type f >> files_before.txt;'
     
     # command to run simulation
     if request.session['GPU_instance']:
@@ -694,6 +694,7 @@ def transfer_files_and_run_simulation(request):
         run_cmd = "sudo ~/docker_sims/FullMonteSW_setup.sh > ~/sim_run.log 2>&1"
     
     # command to execute commands in order
+    print("Commands executed:", cd_cmd + rm_cmd + find_cmd + run_cmd)
     stdin, stdout, stderr = client.exec_command(cd_cmd + rm_cmd + find_cmd + run_cmd)
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
     if exit_status == 0:
@@ -1564,36 +1565,64 @@ def populate_simulation_history(request):
     mesh_name = mesh_vtk_name[:-4]
     tcl_name = history.tcl_script_path.name
     output_vtk_name = tcl_name[:-4]
-    output_vtk_name = output_vtk_name.replace(".", "_") + '_vtk.zip'
+    output_vtk_name = output_vtk_name.replace(".", "_") + '_out_vtk.zip'
     output_txt_name = tcl_name[:-4]
-    output_txt_name = output_txt_name.replace(".", "_") + '_phi_v.zip'
+    output_txt_name = output_txt_name.replace(".", "_") + '_phi_v_txt.zip'
 
     # command to identify files after simulation
     cd_cmd = 'cd ~/docker_sims;'
-    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "files_diff.txt" ! -name "*.sh" -type f >> files_after.txt;'
+    find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "*.sh" ! -name "*.tcl" ! -name "*.csv" ! -name "*.png" -type f >> files_after.txt;'
 
-    # command to diff directory for newly created files and zip them
+    # command to diff directory for newly created files and determine the number of new files created
     diff_cmd = 'comm -13 files_before.txt files_after.txt >> files_diff.txt;'
-    zip_vtk_cmd = 'grep ".vtk" files_diff.txt | zip ' + output_vtk_name + ' -@ > /dev/null 2>&1;'
-    zip_txt_cmd = 'grep ".txt" files_diff.txt | zip ' + output_txt_name + ' -@ > /dev/null 2>&1;'
-
-    # command to remove temporary files
-    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt'
+    ct_vtk_cmd = 'if [[ $(grep -c ".vtk" files_diff.txt) -eq 1 ]]; then grep ".vtk" files_diff.txt > single_vtk_file.txt; fi;'
+    ct_txt_cmd = 'if [[ $(grep -c ".txt" files_diff.txt) -eq 1 ]]; then grep ".txt" files_diff.txt > single_txt_file.txt; fi'
 
     # execute commands in order
-    stdin, stdout, stderr = client.exec_command(cd_cmd + find_cmd + diff_cmd + zip_vtk_cmd + zip_txt_cmd + rm_cmd)
+    print("Command executed:", cd_cmd + find_cmd + diff_cmd + ct_vtk_cmd + ct_txt_cmd)
+    stdin, stdout, stderr = client.exec_command(cd_cmd + find_cmd + diff_cmd + ct_vtk_cmd + ct_txt_cmd)
     exit_status = stdout.channel.recv_exit_status()          # Blocking call
     if exit_status == 0:
-        print ("Output files successfully zipped")
+        print ("Output files successfully diffed")
+    else:
+        print("Error", exit_status)
+    sys.stdout.flush()
+
+    # if just one file, then overwrite the output vtk name with the sigle file's name and do not zip
+    try:
+        with ftp.open('docker_sims/single_vtk_file.txt') as single_vtk_file:
+            for line in single_vtk_file:
+                output_vtk_name = line.rstrip() # overwrite
+        zip_vtk_cmd = ''
+    except:
+        zip_vtk_cmd = 'grep ".vtk" files_diff.txt | zip ' + output_vtk_name + ' -@ > /dev/null 2>&1;'
+
+    try:
+        with ftp.open('docker_sims/single_txt_file.txt') as single_txt_file:
+            for line in single_txt_file:
+                output_txt_name = line.rstrip() # overwrite
+        zip_txt_cmd = ''
+    except:
+        zip_txt_cmd = 'grep ".txt" files_diff.txt | zip ' + output_txt_name + ' -@ > /dev/null 2>&1;'
+
+    # command to remove temporary files
+    rm_cmd = 'rm -rf files_before.txt files_after.txt files_diff.txt single_vtk_file.txt single_txt_file.txt'
+
+    # execute commands in order
+    print("Command executed:", cd_cmd + zip_vtk_cmd + zip_txt_cmd + rm_cmd)
+    stdin, stdout, stderr = client.exec_command(cd_cmd + zip_vtk_cmd + zip_txt_cmd + rm_cmd)
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Output files successfully prepared for download")
     else:
         print("Error", exit_status)
     sys.stdout.flush()
 
     try:
-        output_vtk_zip = ftp.file('docker_sims/' + output_vtk_name)
-        history.output_vtk_path.save(output_vtk_name, output_vtk_zip)
-        output_txt_zip = ftp.file('docker_sims/' + output_txt_name)
-        history.output_txt_path.save(output_txt_name, output_txt_zip)
+        output_vtk_file = ftp.file('docker_sims/' + output_vtk_name)
+        history.output_vtk_path.save(output_vtk_name, output_vtk_file)
+        output_txt_file = ftp.file('docker_sims/' + output_txt_name)
+        history.output_txt_path.save(output_txt_name, output_txt_file)
     except:
         print("Cannot save history for simulation output because file does not exist")
     
