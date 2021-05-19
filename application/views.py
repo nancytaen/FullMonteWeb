@@ -1257,7 +1257,7 @@ def run_aws_setup(request, GPU_instance):
 
     sftp = client.open_sftp()
     try:
-        client.exec_command('mkdir -p docker_sims; mkdir -p docker_pdt')
+        stdin, stdout, stderr = client.exec_command('mkdir -p docker_sims; mkdir -p docker_pdt')
         exit_status = stdout.channel.recv_exit_status()          # Blocking call
         if exit_status == 0:
             print ("Directories created")
@@ -2271,10 +2271,10 @@ def pdt_space_finish(request):
         ftp.close()
         client.close()
         return HttpResponseRedirect('/application/pdt_space_fail')
-    # print(check_success)
+    print(check_success)
     check_success = re.sub(r'[^\w]', ' ', check_success)
     check_success = "".join(check_success.split())
-    # print(check_success)
+    print(check_success)
     if check_success != "ENDOFRUN":
         print("pdt-space fail")
         ftp.close()
