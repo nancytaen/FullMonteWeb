@@ -14,3 +14,5 @@ sudo apt-get update
 echo 6 > ~/setup.log
 sudo apt-get -y install docker-ce docker-ce-cli containerd.io
 echo 7 > ~/setup.log
+sudo apt-get -y install zip
+echo 8 > ~/setup.log

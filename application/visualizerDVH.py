@@ -355,6 +355,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
 
     # Arrays are of type numpy.ndarray
     numpyWrapper = npi.WrapDataObject( output )
+    generation_success = True
 
     try:
         fluenceData = numpyWrapper.CellData["Fluence"] # Assuming you know the name of the array
@@ -363,7 +364,7 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
 
         if (fluenceData.size != regionData.size):
             print("Fluence and region data do not match")
-            return(-1)
+            generation_success = False
 
     except AttributeError:
         print("Could not parse region or fluence data by name. Attempting to parse by index")
@@ -374,16 +375,28 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
 
             if (fluenceData.size != regionData.size):
                 print("Fluence and region data do not match")
-                return(-1)
+                generation_success = False
 
         except IndexError:
             print("Could not parse region or fluence data. Input mesh may not be a correctly formatted FullMonte output file.")
-            return(-1)
+            generation_success = False
 
         except:
             print("Unidentified error occurred. Could not parse input data")
-            return(-2)
+            generation_success = False
 
+    if generation_success == False:
+        info.maxFluence = 0
+        info.save()
+        # update process status
+        running_process = processRunning.objects.filter(user = user).latest('id')
+        running_process.running = False
+        running_process.save()
+        sftp.close()
+        client.close()
+        conn.close()
+        sys.stdout.flush()
+        return(-1)
 
     noBins = 500    # max fluence is divided into
 
