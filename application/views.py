@@ -2271,10 +2271,10 @@ def pdt_space_finish(request):
         ftp.close()
         client.close()
         return HttpResponseRedirect('/application/pdt_space_fail')
-    print(check_success)
+    # print(check_success)
     check_success = re.sub(r'[^\w]', ' ', check_success)
     check_success = "".join(check_success.split())
-    print(check_success)
+    # print(check_success)
     if check_success != "ENDOFRUN":
         print("pdt-space fail")
         ftp.close()
@@ -2298,17 +2298,17 @@ def pdt_space_finish(request):
 
         index = -1
         for line in output_lines:
-            if len(output_lines[index].split()) == 5:
-                if output_lines[index].split()[0] == "Number" and output_lines[index].split()[3] == "sources:":
-                    num_source = output_lines[index].split()[-1]
-                    break
+            found = re.findall(r'x\[(\d*)\] = \d*\.\d*', output_lines[index]) # find id in last line of the form "x[id] = #.#"
+            if(found):
+                num_source = found[0]
+                break
             index -= 1
         print(num_source)    
 
         html_fluence_dist=''
         html_pow_alloc=''
         num_material = int(num_material)
-        num_source = int(num_source)
+        num_source = int(num_source) + 1    # index + 1
 
         output_info = output_lines[-8:-5]
         time_simu = output_info[0].split()[8]
