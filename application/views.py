@@ -302,9 +302,7 @@ def fmSimulatorMaterial(request):
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        # transfer input mesh to Ec2 instance
         conn = DbConnection()
-        meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
         text_obj = request.session['text_obj']
         private_key_file = io.StringIO(text_obj)
         privkey = paramiko.RSAKey.from_private_key(private_key_file)
@@ -314,33 +312,6 @@ def fmSimulatorMaterial(request):
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
             return HttpResponseRedirect('/application/aws')
-        
-        ftp = client.open_sftp()
-        try:
-            ftp.chdir('docker_sims/')
-            # transfer mesh in chunks to save memory
-            need_transfer = True
-            if not request.session['overwrite_on_ec2']:
-                need_transfer = False
-                try:
-                    ftp.stat(meshFilePath)
-                except:
-                    need_transfer = True
-
-            if not need_transfer:
-                print("skipped mesh file transfer")
-                sys.stdout.flush()
-            
-            if need_transfer:
-                print("starting mesh file transfer")
-                with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
-                    with default_storage.open(meshFilePath) as mesh_file:
-                        for piece in mesh_file.chunks(chunk_size=32*1024*1024):
-                            ftp_file.write(piece)
-                print("finished mesh file transfer")
-                sys.stdout.flush()
-        finally:
-            ftp.close()
 
         # Skip rest of setup if user uploaded their own TCL script
         if '_skip' in request.POST:
@@ -365,6 +336,11 @@ def fmSimulatorMaterial(request):
 
         # Get all entries from materials formset and check whether it's valid
         else:
+            client.close()
+            connections.close_all()
+            # transfer all necessary files to run simulation
+            p = Process(target=transfer_files_for_input_mesh_visualization, args=(request, ))
+            p.start()
             formset1 = materialSetSet(request.POST)
 
             if formset1.is_valid():
@@ -422,6 +398,49 @@ def ajaxrequests_view(request):
         return HttpResponse(ser_data, content_type="application/json")
     else:
         return HttpResponse(None, content_type="application/json")
+
+# ajax requests to ransfer mesh file when button is clicked
+def transfer_files_for_input_mesh_visualization(request):
+    # transfer input mesh to Ec2 instance
+    conn = DbConnection()
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    try:
+        client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='transfer_files_for_input_mesh_visualization')
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+    
+    ftp = client.open_sftp()
+    try:
+        ftp.chdir('docker_sims/')
+        # transfer mesh in chunks to save memory
+        need_transfer = True
+        if not request.session['overwrite_on_ec2']:
+            need_transfer = False
+            try:
+                ftp.stat(meshFilePath)
+            except:
+                need_transfer = True
+
+        if not need_transfer:
+            print("skipped mesh file transfer")
+            sys.stdout.flush()
+        
+        if need_transfer:
+            print("starting mesh file transfer")
+            with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
+                with default_storage.open(meshFilePath) as mesh_file:
+                    for piece in mesh_file.chunks(chunk_size=32*1024*1024):
+                        ftp_file.write(piece)
+            print("finished mesh file transfer")
+            sys.stdout.flush()
+    finally:
+        ftp.close()
+        client.close()
 
 # developer page for creating new preset materials
 def createPresetMaterial(request):
