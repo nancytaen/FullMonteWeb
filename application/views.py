@@ -97,7 +97,7 @@ class SshConnection:
         self._client = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         print ('>>> connecting to remote server in ' + self._id + '...')
-        self._client.connect(hostname=hostname, username='ubuntu', pkey=privkey, timeout=30)
+        self._client.connect(hostname=hostname, username='ubuntu', pkey=privkey, timeout=10)
         print ('>>> connected to remote server in ' + self._id + '.')
     
     def __del__(self):
