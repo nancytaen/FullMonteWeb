@@ -1589,7 +1589,7 @@ def populate_simulation_history(request):
     output_vtk_name = tcl_name[:-4]
     output_vtk_name = output_vtk_name.replace(".", "_") + '_out_vtk.zip'
     output_txt_name = tcl_name[:-4]
-    output_txt_name = output_txt_name.replace(".", "_") + '_phi_v_txt.zip'
+    output_txt_name = output_txt_name.replace(".", "_") + '_out_txt.zip'
 
     # command to identify files after simulation
     cd_cmd = 'cd ~/docker_sims;'

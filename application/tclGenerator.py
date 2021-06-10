@@ -100,8 +100,8 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write('MS append examplematerial\n\n')
 
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
-        f.write('VolumeCellInRegionPredicate vol\n')
-        f.write('vol setRegion '+ str(scoredVolumeRegionID) + '\n\n')
+        f.write('VolumeCellInRegionPredicate vol' + str(scoredVolumeRegionID) + '\n')
+        f.write('vol'+ str(scoredVolumeRegionID) + ' setRegion '+ str(scoredVolumeRegionID) + '\n\n')
 
     #append source to tcl script
     f.write('#====================================================================================================================\n')
@@ -133,9 +133,9 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write(indent + 'k isEnergy_or_Power "' + energy_unit + '"\n')
     f.write(indent + 'k energyPowerValue ' + str(energy) + '\n')
     if kernelType == "TetraInternalKernel":
-        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n')
+        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol' + str(scoredVolumeRegionID) + '\n')
     elif kernelType == "TetraCUDAInternalKernel":
-        f.write(indent + 'k addScoringRegionBoundary vol\n')
+        f.write(indent + 'k addScoringRegionBoundary vol' + str(scoredVolumeRegionID) + '\n')
     f.write(indent + 'k source P1\n\n')
 
     #run and wait
@@ -152,11 +152,20 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write('#====================================================================================================================\n')
     f.write('set ODC [k results]\n\n')
 
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        #get photon weight results
+        f.write('# use DirectedSurfaceSum class to get the total photon weight entering the detector \n')
+        f.write('DirectedSurfaceSum dss\n')
+        f.write(indent + 'dss input $ODC\n')
+        f.write(indent + 'dss update\n\n')
+        f.write('# put result into variable \n')
+        f.write('set region' + str(scoredVolumeRegionID) + '_res [dss totalEnteringWeight 0]\n\n')
+
     #convert photon weight from simulation raw results to energy absorbed per volume element
     f.write('#====================================================================================================================\n')
     f.write('#                                           Energy to Fluence Converter                                              \n')
-    f.write('# This template converts the simulation results to Fluence (Energy/area, such as J/mm^2). You may modify for your    \n')
-    f.write('# different conversion needs. The choices for                                                                        \n')
+    f.write('# This section of the template converts the simulation results of volume energy to fluence values (Energy/area, such \n')
+    f.write('# as J/mm^2). You may modify for your different conversion needs. The choices for                                    \n')
     f.write('# Input include: inputPhotonWeight (raw results from simulation - unit-less),                                        \n')
     f.write('#                 inputEnergy (PhotonWeight*TotalEnergy/TotalPackets - in Joules (J) or Watt (W)),                   \n')
     f.write('#                 inputFluence (Energy/Area or Energy/Volume/muA - in W/mm^2, W/cm^2, J/mm^2, or J/cm^2), and        \n')
@@ -176,16 +185,18 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
-    dvhResult = '/sims/' + name + '.dvh.txt'
+    # dvhResult = '/sims/' + name + '.dvh.txt'
     comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
     
     #write the mesh with fluence appended
     f.write('#====================================================================================================================\n')
     f.write('#                                               Output Mesh Writer                                                   \n')
-    f.write('# This template generates one output VTK with the same name as the input mesh and a ".out.vtk" extension. You may    \n')
-    f.write('# modify this path or generate multiple output VTKs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('# This section of the template generates an output VTK that contains fluence values of the volume. By default, it is \n')
+    f.write('# named after the input mesh with a ".out.vtk" extension. You may modify this path or generate multiple output VTKs  \n')
+    f.write('# as long as you start the path names with "/sims/" directory and no subdirectories.                                 \n')
     f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
-    f.write('#    Example 3: "example_subdir/example_output_mesh.vtk" is NOT ok                                                   \n')
+    f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
     f.write('# Please note that the DVH generator only looks for the default path, so you would not be able to automatically view \n')
     f.write('# the DVH if you modify the file paths here. However, you can still manually download the output VTKs and upload them\n')
     f.write('# back to the Visualization page to view their DVH. You can also use the 3D Visualizor in any case: if the default   \n')
@@ -202,15 +213,63 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     #write the fluence values only to a text file
     f.write('#====================================================================================================================\n')
     f.write('#                                              Fluence Matrix Writer                                                 \n')
-    f.write('# This template generates one output TXT with the same name as the input mesh and a ".phi_v.txt" extension. You may  \n')
-    f.write('# modify this path or generate multiple output TXTs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('# This section of the template writes fluence values of the volume into a simple text file. By default, it is named  \n')
+    f.write('# after the input mesh with a ".phi_v.txt" extension. You may modify its path or generate multiple output TXTs as    \n')
+    f.write('# long as you start the path names with "/sims/" directory and no subdirectories. You may also discard this section. \n')
     f.write('#    Example 1: "/sims/example_output_fluence.txt" is ok                                                             \n')
-    f.write('#    Example 3: "example_subdir/example_output_fluence.txt" is NOT ok                                                \n')
+    f.write('#    Example 2: "example_output_fluence.txt" is NOT ok                                                               \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_fluence.txt" is NOT ok                                          \n')
     f.write('#====================================================================================================================\n')
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n\n')
+
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        surfaceMeshResult = '/sims/' + name + '.surf.out.vtk'
+        photonWeightResult = '/sims/' + name + '.phweights.txt'
+        #convert photon weight from simulation raw results to energy absorbed per volume element
+        f.write('#====================================================================================================================\n')
+        f.write('#                                             Energy to Fluence Converter                                            \n')
+        f.write('# This section of the template converts the simulation results of directed surface to fluence values (Energy/area,   \n')
+        f.write('# such as J/mm^2). You may modify for your different conversion needs. Choices for input & output are same as above. \n')
+        f.write('#====================================================================================================================\n')
+        f.write('EnergyToFluence EFsurf\n')
+        f.write(indent + 'EFsurf kernel k\n')
+        f.write(indent + 'EFsurf inputPhotonWeight\n')
+        f.write(indent + 'EFsurf data [$ODC getByType "DirectedSurface" 0]\n')
+        f.write(indent + 'EFsurf outputFluence\n')
+        f.write(indent + 'EFsurf update\n\n')
+
+        #write the surface exit energy into the mesh file
+        f.write('#====================================================================================================================\n')
+        f.write('#                                             Output Surface Writer                                                  \n')
+        f.write('# This section of the template generates an output VTK that contains surface exit energy for the selected region. By \n')
+        f.write('# default, it is named after the input mesh with a ".surf.out.vtk" extension. You may modify this path or generate   \n')
+        f.write('# multiple output VTKs as long as you start the path names with "/sims/" directory and no subdirectories.            \n')
+        f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+        f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
+        f.write('#====================================================================================================================\n')
+        f.write('VTKSurfaceWriter SW\n')
+        f.write(indent + 'SW filename "' + surfaceMeshResult + '"\n')
+        f.write(indent + 'SW addData "Fluence" [EFsurf result]\n')
+        f.write(indent + 'SW mesh $M\n')
+        f.write(indent + 'SW write\n\n')
+
+        # write photon weights of selected region to a TXT file
+        f.write('#====================================================================================================================\n')
+        f.write('#                                          Output Photon Weight Writer                                               \n')
+        f.write('# This section of the template writes photon weights of the selected region into a text file. By default, it is      \n')
+        f.write('# named after the input mesh with a ".phweights.txt" extension. You may modify this path or generate multiple output \n')
+        f.write('# TXTs as long as you start the path names with "/sims/" directory and no subdirectories.                            \n')
+        f.write('#    Example 1: "/sims/example_output_photon_weights.txt" is ok                                                      \n')
+        f.write('#    Example 2: "example_output_photon_weights.txt" is NOT ok                                                        \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_photon_weights.txt" is NOT ok                                   \n')
+        f.write('#====================================================================================================================\n')
+        f.write('set fileId [open "' + photonWeightResult + '" "w"]\n')
+        f.write('puts -nonewline $fileId "$region' + str(scoredVolumeRegionID) + '_res "\n')
+        f.write('close $fileId\n\n')
 
     #copy and save script to AWS
     f = open(source, 'r')
@@ -353,8 +412,8 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('\n')
 
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
-        f.write('VolumeCellInRegionPredicate vol\n')
-        f.write('vol setRegion '+ str(scoredVolumeRegionID) + '\n\n')
+        f.write('VolumeCellInRegionPredicate vol' + str(scoredVolumeRegionID) + '\n')
+        f.write('vol'+ str(scoredVolumeRegionID) + ' setRegion '+ str(scoredVolumeRegionID) + '\n\n')
 
     #append sources to tcl script
     f.write('#====================================================================================================================\n')
@@ -463,9 +522,9 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + 'k isEnergy_or_Power "' + energy_unit + '"\n')
     f.write(indent + 'k energyPowerValue ' + str(energy) + '\n')
     if kernelType == "TetraInternalKernel":
-        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol\n')
+        f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol' + str(scoredVolumeRegionID) + '\n')
     elif kernelType == "TetraCUDAInternalKernel":
-        f.write(indent + 'k addScoringRegionBoundary vol\n')
+        f.write(indent + 'k addScoringRegionBoundary vol' + str(scoredVolumeRegionID) + '\n')
 
     index = 1
     for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
@@ -497,11 +556,20 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('#====================================================================================================================\n')
     f.write('set ODC [k results]\n\n')
 
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        #get photon weight results
+        f.write('# use DirectedSurfaceSum class to get the total photon weight entering the detector \n')
+        f.write('DirectedSurfaceSum dss\n')
+        f.write(indent + 'dss input $ODC\n')
+        f.write(indent + 'dss update\n\n')
+        f.write('# put result into variable \n')
+        f.write('set region' + str(scoredVolumeRegionID) + '_res [dss totalEnteringWeight 0]\n\n')
+
     #convert photon weight from simulation raw results to energy absorbed per volume element
     f.write('#====================================================================================================================\n')
     f.write('#                                           Energy to Fluence Converter                                              \n')
-    f.write('# This template converts the simulation results to Fluence (Energy/area, such as J/mm^2). You may modify for your    \n')
-    f.write('# different conversion needs. The choices for                                                                        \n')
+    f.write('# This section of the template converts the simulation results of volume energy to fluence values (Energy/area, such \n')
+    f.write('# as J/mm^2). You may modify for your different conversion needs. The choices for                                    \n')
     f.write('# Input include: inputPhotonWeight (raw results from simulation - unit-less),                                        \n')
     f.write('#                 inputEnergy (PhotonWeight*TotalEnergy/TotalPackets - in Joules (J) or Watt (W)),                   \n')
     f.write('#                 inputFluence (Energy/Area or Energy/Volume/muA - in W/mm^2, W/cm^2, J/mm^2, or J/cm^2), and        \n')
@@ -522,16 +590,18 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
-    dvhResult = '/sims/' + name + '.dvh.txt'
+    # dvhResult = '/sims/' + name + '.dvh.txt'
     comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
     
     #write the mesh with fluence appended
     f.write('#====================================================================================================================\n')
     f.write('#                                               Output Mesh Writer                                                   \n')
-    f.write('# This template generates one output VTK with the same name as the input mesh and a ".out.vtk" extension. You may    \n')
-    f.write('# modify this path or generate multiple output VTKs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('# This section of the template generates an output VTK that contains fluence values of the volume. By default, it is \n')
+    f.write('# named after the input mesh with a ".out.vtk" extension. You may modify this path or generate multiple output VTKs  \n')
+    f.write('# as long as you start the path names with "/sims/" directory and no subdirectories.                                 \n')
     f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
-    f.write('#    Example 3: "example_subdir/example_output_mesh.vtk" is NOT ok                                                   \n')
+    f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
     f.write('# Please note that the DVH generator only looks for the default path, so you would not be able to automatically view \n')
     f.write('# the DVH if you modify the file paths here. However, you can still manually download the output VTKs and upload them\n')
     f.write('# back to the Visualization page to view their DVH. You can also use the 3D Visualizor in any case: if the default   \n')
@@ -548,15 +618,63 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     #write the fluence values only to a text file
     f.write('#====================================================================================================================\n')
     f.write('#                                              Fluence Matrix Writer                                                 \n')
-    f.write('# This template generates one output TXT with the same name as the input mesh and a ".phi_v.txt" extension. You may  \n')
-    f.write('# modify this path or generate multiple output TXTs as long as you start the path names with "/sims/" directory.     \n')
+    f.write('# This section of the template writes fluence values of the volume into a simple text file. By default, it is named  \n')
+    f.write('# after the input mesh with a ".phi_v.txt" extension. You may modify its path or generate multiple output TXTs as    \n')
+    f.write('# long as you start the path names with "/sims/" directory and no subdirectories. You may also discard this section. \n')
     f.write('#    Example 1: "/sims/example_output_fluence.txt" is ok                                                             \n')
-    f.write('#    Example 3: "example_subdir/example_output_fluence.txt" is NOT ok                                                \n')
+    f.write('#    Example 2: "example_output_fluence.txt" is NOT ok                                                               \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_fluence.txt" is NOT ok                                          \n')
     f.write('#====================================================================================================================\n')
     f.write('TextFileMatrixWriter TW\n')
     f.write(indent + 'TW filename "' + fluenceResult + '"\n')
     f.write(indent + 'TW source [EF result]\n')
     f.write(indent + 'TW write\n\n')
+
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        surfaceMeshResult = '/sims/' + name + '.surf.out.vtk'
+        photonWeightResult = '/sims/' + name + '.phweights.txt'
+        #convert photon weight from simulation raw results to energy absorbed per volume element
+        f.write('#====================================================================================================================\n')
+        f.write('#                                             Energy to Fluence Converter                                            \n')
+        f.write('# This section of the template converts the simulation results of directed surface to fluence values (Energy/area,   \n')
+        f.write('# such as J/mm^2). You may modify for your different conversion needs. Choices for input & output are same as above. \n')
+        f.write('#====================================================================================================================\n')
+        f.write('EnergyToFluence EFsurf\n')
+        f.write(indent + 'EFsurf kernel k\n')
+        f.write(indent + 'EFsurf inputPhotonWeight\n')
+        f.write(indent + 'EFsurf data [$ODC getByType "DirectedSurface" 0]\n')
+        f.write(indent + 'EFsurf outputFluence\n')
+        f.write(indent + 'EFsurf update\n\n')
+
+        #write the surface exit energy into the mesh file
+        f.write('#====================================================================================================================\n')
+        f.write('#                                             Output Surface Writer                                                  \n')
+        f.write('# This section of the template generates an output VTK that contains surface exit energy for the selected region. By \n')
+        f.write('# default, it is named after the input mesh with a ".surf.out.vtk" extension. You may modify this path or generate   \n')
+        f.write('# multiple output VTKs as long as you start the path names with "/sims/" directory and no subdirectories.            \n')
+        f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+        f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
+        f.write('#====================================================================================================================\n')
+        f.write('VTKSurfaceWriter SW\n')
+        f.write(indent + 'SW filename "' + surfaceMeshResult + '"\n')
+        f.write(indent + 'SW addData "Fluence" [EFsurf result]\n')
+        f.write(indent + 'SW mesh $M\n')
+        f.write(indent + 'SW write\n\n')
+
+        # write photon weights of selected region to a TXT file
+        f.write('#====================================================================================================================\n')
+        f.write('#                                          Output Photon Weight Writer                                               \n')
+        f.write('# This section of the template writes photon weights of the selected region into a text file. By default, it is      \n')
+        f.write('# named after the input mesh with a ".phweights.txt" extension. You may modify this path or generate multiple output \n')
+        f.write('# TXTs as long as you start the path names with "/sims/" directory and no subdirectories.                            \n')
+        f.write('#    Example 1: "/sims/example_output_photon_weights.txt" is ok                                                      \n')
+        f.write('#    Example 2: "example_output_photon_weights.txt" is NOT ok                                                        \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_photon_weights.txt" is NOT ok                                   \n')
+        f.write('#====================================================================================================================\n')
+        f.write('set fileId [open "' + photonWeightResult + '" "w"]\n')
+        f.write('puts -nonewline $fileId "$region' + str(scoredVolumeRegionID) + '_res "\n')
+        f.write('close $fileId\n\n')
 
     # #generate dose volume histogram
     # f.write('DoseVolumeHistogramGenerator DVHG\n')
