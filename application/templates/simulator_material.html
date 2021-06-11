@@ -24,7 +24,7 @@
         <div class="d-flex justify-content-center ">
             <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
                 <h6>Upload your TCL script to run the simulation (please make sure to follow the instructions in the template and keep the filename unmodified):</h6>
-                <table class='no_error'>
+                <table>
                     {% csrf_token %}
                     <tr>
                         <th>{{ tcl_form.tcl_file.label_tag }}</th>

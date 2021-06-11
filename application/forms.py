@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'meshUnit', 'kernelType', 'scoredVolumeRegionID', 'packetCount', 'totalEnergy', 'energyUnit' )
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -23,7 +23,6 @@ class tclInputForm(forms.ModelForm):
 
     def __init__(self, CUDA=False, *args, **kwargs):
         initial = kwargs.get('initial', {})
-        initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
         initial['totalEnergy'] = 10
         kwargs['initial'] = initial
@@ -50,6 +49,10 @@ class tclInputForm(forms.ModelForm):
         energy_unit_choices = (('J','Joules (J)'),
                          ('W','Watts (W)'))
         self.fields['energyUnit'].widget = forms.RadioSelect(choices=energy_unit_choices)
+
+class regionIDEntry(forms.Form):
+    # for region in VolumeCellInRegionPredicate
+    scoredVolumeRegionID = forms.IntegerField(label='scoredVolumeRegionID', required=False, initial=1)
 
 class presetForm(forms.ModelForm):
     class Meta:
@@ -208,3 +211,4 @@ class visualizeMeshForm(forms.ModelForm):
 
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
+regionIDSet = formset_factory(regionIDEntry, formset=RequiredFormSet)

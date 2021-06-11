@@ -26,7 +26,6 @@ class tclInput(models.Model):
                              )
     meshUnit = models.CharField(max_length=255)
     kernelType = models.CharField(max_length=255)
-    scoredVolumeRegionID = models.IntegerField(null=True, blank=True) # for region in VolumeCellInRegionPredicate
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     totalEnergy = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     energyUnit = models.CharField(max_length=255)

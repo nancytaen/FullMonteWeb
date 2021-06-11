@@ -180,11 +180,13 @@ def fmSimulator(request):
         #print(request.FILES)
         sys.stdout.flush()
         form = tclInputForm(data=request.POST, files=request.FILES)
+        formset3 = regionIDSet(request.POST)
 
         # check whether it's valid:
-        if form.is_valid():
+        if form.is_valid() and formset3.is_valid():
             print(form.cleaned_data)
             sys.stdout.flush()
+            request.session['scoredVolumeRegionID'] = []
             if request.POST['selected_existing_meshes'] != "":
                 print("This is 1")
                 # selected a mesh from database
@@ -253,7 +255,10 @@ def fmSimulator(request):
 
             sys.stdout.flush()
             request.session['meshUnit'] = form.cleaned_data['meshUnit']
-            request.session['scoredVolumeRegionID'] = form.cleaned_data['scoredVolumeRegionID']
+            for regionID in formset3:
+                print(regionID.cleaned_data)
+                request.session['scoredVolumeRegionID'].append(regionID.cleaned_data['scoredVolumeRegionID'])
+            sys.stdout.flush()
             request.session['packetCount'] = form.cleaned_data['packetCount']
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
             request.session['energyUnit'] = form.cleaned_data['energyUnit']
@@ -275,11 +280,13 @@ def fmSimulator(request):
     # If this is a GET (or any other method) create the default form.
     else:
         form = tclInputForm(CUDA=request.session['GPU_instance'])
+        formset3 = regionIDSet(request.GET or None)
 
     uploaded_meshes = meshFiles.objects.filter(user=request.user)
 
     context = {
         'form': form,
+        'formset3': formset3,
         'aws_path': request.session['DNS'],
         'port': request.session['tcpPort'],
         'uploaded_meshes': uploaded_meshes,
