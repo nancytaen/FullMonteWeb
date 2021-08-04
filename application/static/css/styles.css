@@ -236,6 +236,9 @@ footer .img-thumbnail {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid #444;
     margin-bottom: 5px;
+    width: 150px;
+    height: 100px;
+    object-fit:cover;
 }
 
 footer .copyright {
