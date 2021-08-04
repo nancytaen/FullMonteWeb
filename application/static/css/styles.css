@@ -249,6 +249,12 @@ footer .copyright span {
     color: #0894d1;
 }
 
+.media-object {
+     height: 100%;
+     width: 64px;
+     object-fit:cover;
+}
+
 /* progress bar */
 
 .progress-outer{
