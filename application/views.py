@@ -709,6 +709,11 @@ def transfer_files_and_run_simulation(request):
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
     
+    # delete all old files
+    stdin, stdout, stderr = client.exec_command('cd ~/docker_sims; find . ! -name "*.sh" -exec rm -r {} \;')
+    sys.stdout.flush()
+
+    # check if files need to be transfered
     ftp = client.open_sftp()
     try:
         ftp.chdir('docker_sims/')

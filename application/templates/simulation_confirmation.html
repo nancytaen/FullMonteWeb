@@ -122,7 +122,7 @@
                         var blnValid = (filename === tcl_script_name);
                         
                         if(blnValid) {
-                            return confirm('This will run the Full Monte Simulator and will take some time. Please wait.'); 
+                            return confirm('This run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
                         }
                         
                         if (!blnValid) {
@@ -133,7 +133,7 @@
                 }
             }
         
-            return confirm('This will run the FullMonte Simulator and will take some time. Please wait.'); 
+            return confirm('This will run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
     }
 </script>
 
