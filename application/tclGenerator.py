@@ -198,6 +198,24 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
             f.write(indent + 'set C' + str(index) + ' [SSB' + str(index) + ' output]\n\n')
         index += 1
 
+    index = 1
+    if len(sourceType) > 1:
+        f.write('Composite CompositeSource\n')
+        for st in sourceType:
+            if st == 'Point':
+                f.write(indent + 'CompositeSource add P' + str(index) + '\n\n')
+            if st == 'PencilBeam':
+                f.write(indent + 'CompositeSource add PB' + str(index) + '\n\n')
+            if st == 'Volume':
+                f.write(indent + 'CompositeSource add V' + str(index) + '\n\n')
+            if st == 'Ball':
+                f.write(indent + 'CompositeSource add B' + str(index) + '\n\n')
+            if st == 'Cylinder':
+                f.write(indent + 'CompositeSource add CY' + str(index) + '\n\n')
+            if st == 'SurfaceSourceBuilder':
+                f.write(indent + 'CompositeSource add $C' + str(index) + '\n\n')
+            index += 1
+
     #append kernel to tcl script
     f.write(kernelType + ' k\n')
     f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
@@ -210,20 +228,24 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
         f.write(indent + 'k addScoringRegionBoundary vol\n')
 
     index = 1
-    for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
-        if st == 'Point':
-            f.write(indent + 'k source P' + str(index) + '\n\n')
-        if st == 'PencilBeam':
-            f.write(indent + 'k source PB' + str(index) + '\n\n')
-        if st == 'Volume':
-            f.write(indent + 'k source V' + str(index) + '\n\n')
-        if st == 'Ball':
-            f.write(indent + 'k source B' + str(index) + '\n\n')
-        if st == 'Cylinder':
-            f.write(indent + 'k source CY' + str(index) + '\n\n')
-        if st == 'SurfaceSourceBuilder':
-            f.write(indent + 'k source $C' + str(index) + '\n\n')
-        index += 1
+    if len(sourceType) > 1:
+        f.write(indent + 'k source CompositeSource' + str(index) + '\n\n')
+    else:
+        for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, \
+            vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
+            if st == 'Point':
+                f.write(indent + 'k source P' + str(index) + '\n\n')
+            if st == 'PencilBeam':
+                f.write(indent + 'k source PB' + str(index) + '\n\n')
+            if st == 'Volume':
+                f.write(indent + 'k source V' + str(index) + '\n\n')
+            if st == 'Ball':
+                f.write(indent + 'k source B' + str(index) + '\n\n')
+            if st == 'Cylinder':
+                f.write(indent + 'k source CY' + str(index) + '\n\n')
+            if st == 'SurfaceSourceBuilder':
+                f.write(indent + 'k source $C' + str(index) + '\n\n')
+            index += 1
 
     #run and wait
     f.write(indent + 'k startAsync\n')
