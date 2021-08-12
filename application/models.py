@@ -26,7 +26,6 @@ class tclInput(models.Model):
                              )
     meshUnit = models.CharField(max_length=255)
     kernelType = models.CharField(max_length=255)
-    scoredVolumeRegionID = models.IntegerField(null=True, blank=True) # for region in VolumeCellInRegionPredicate
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     totalEnergy = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     energyUnit = models.CharField(max_length=255)
@@ -122,10 +121,10 @@ class visualizeMesh(models.Model):
                             )
 
 class pdtPresetData(models.Model):
-    opt_list = models.CharField(max_length=1024)
-    mesh_list = models.CharField(max_length=1024)
-    opt_addr = models.CharField(max_length=1024)
-    mesh_addr = models.CharField(max_length=1024)
+    opt_list = models.CharField(max_length=10240)
+    mesh_list = models.CharField(max_length=10240)
+    opt_addr = models.CharField(max_length=10240)
+    mesh_addr = models.CharField(max_length=10240)
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,

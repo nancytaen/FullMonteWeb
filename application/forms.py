@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'meshUnit', 'kernelType', 'scoredVolumeRegionID', 'packetCount', 'totalEnergy', 'energyUnit' )
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -23,7 +23,6 @@ class tclInputForm(forms.ModelForm):
 
     def __init__(self, CUDA=False, *args, **kwargs):
         initial = kwargs.get('initial', {})
-        initial['scoredVolumeRegionID'] = 1
         initial['packetCount'] = 1000000
         initial['totalEnergy'] = 10
         kwargs['initial'] = initial
@@ -50,6 +49,10 @@ class tclInputForm(forms.ModelForm):
         energy_unit_choices = (('J','Joules (J)'),
                          ('W','Watts (W)'))
         self.fields['energyUnit'].widget = forms.RadioSelect(choices=energy_unit_choices)
+
+class regionIDEntry(forms.Form):
+    # for region in VolumeCellInRegionPredicate
+    scoredVolumeRegionID = forms.IntegerField(label='scoredVolumeRegionID', required=False, initial=1)
 
 class presetForm(forms.ModelForm):
     class Meta:
@@ -86,14 +89,14 @@ class pdtForm(forms.Form):
                             help_text="Available optical files.")
     mesh = forms.ChoiceField(label="Mesh File", 
                             help_text="Available mesh files.")
-    total_energy = forms.CharField( label='Total Energy', required = True, max_length=255, 
-                                    help_text="Used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 1e11.")
+    total_energy = forms.CharField( label='PNF', required = False, max_length=255, initial="1e11",
+                                    help_text="Stands for 'Pruning Normalization Factor. Used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 4e11.")
     num_packets = forms.CharField(label='Num Packets', required = True, max_length=255, 
                                     help_text="The number of photon packets to launch in the light simulator FullMonte. Typically it is around 1e5 to 1e6.")
     wave_length = forms.CharField(label='Wave Length', required = True, max_length=255, 
                                     help_text="Activation wavelength of the Photosensitizer.")
     tumor_weight = forms.CharField(label='Tumor Weight', required = True, max_length=255, 
-                                    help_text="Weight of the tumor tissue.")
+                                    help_text="An importance weight given to the tumor tissue to give it a priority in the optimization.")
     
     # light_placement_file = forms.FileField(label='light_placement_file')
 
@@ -107,10 +110,13 @@ class pdtForm(forms.Form):
             self.fields['mesh'].choices = choice_mesh
         
 class pdtPlaceFile(forms.Form):
+    # placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed_point','fixed_point'),
+    #                                                                     ('fixed_line','fixed_line'),
+    #                                                                     ('virtual_point', 'virtual_point'),),
+    #                                     help_text="Specifies the type of placement for the sources. <br />If it is fixed point and line, please place sources at fixed position in placement file(below). <br />If it is virtual point source, the tool will fill the mesh with candidate point sources.")
     placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed_point','fixed_point'),
-                                                                        ('fixed_line','fixed_line'),
-                                                                        ('virtual_point', 'virtual_point'),),
-                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed point and line, please place sources at fixed position in placement file(below). <br />If it is virtual point source, the tool will fill the mesh with candidate point sources.")
+                                                                        ('fixed_line','fixed_line'),),
+                                        help_text="Specifies the type of placement for the sources. <br />If it is fixed point and line, please place sources at fixed position in placement file(below).")                                    
     light_placement_file = forms.FileField(
         label='Placement File',
         help_text="Placement of intial light sources."
@@ -205,3 +211,4 @@ class visualizeMeshForm(forms.ModelForm):
 
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
+regionIDSet = formset_factory(regionIDEntry, formset=RequiredFormSet)

@@ -84,7 +84,7 @@
                         {% endif %}
                         <!-- AWS button -->
                         {% if request.path == '/application/aws' or request.path == '/application/AWSsetup' %}
-                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'aws' %}">AWS</a></li><br/>
+                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'aws' %}">AWS Setup</a></li><br/>
                         {% else %}
                             <li><a class="btn btn-primary btn-block" href="{% url 'aws' %}">AWS</a></li><br/>
                         {% endif %}
@@ -126,28 +126,23 @@
               <div class="col-lg-4 col-md-6">
                 <h3>Site Map</h3>
                 <ul class="list-unstyled three-column">
-                  <li>Home</li>
-                  <li>Tutorial</li>
-                  <li>Account</li>
-                  <li>About</li>
-                  <li>Code</li>
-                  <li>Contact</li>
-                </ul>
-                <ul class="list-unstyled socila-list">
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
-                  <li><img src="http://placehold.it/48x48" alt="" /></li>
+                  <li><a href="{% url 'home' %}">Home</a></li>
+                  <li><a href="{% url 'tutorial' %}">Tutorial</a></li>
+                  <li><a href="{% url 'account' %}">Account</a></li>
+                  <li><a href="https://github.com/jishengx97/FullMonteWeb" target="_blank">Code</a></li>
+                  <li><a href="{% url 'aws' %}">AWS Setup</a></li>
+                  <li><a href="{% url 'simulator' %}">Simulation</a></li>
+                  <li><a href="{% url 'visualization' %}">Visualization</a></li>
+                  <li><a href="{% url 'pdt_space' %}">PDT-SPACE</a></li>
+                  <li><a href="{% url 'simulation_history' %}">History</a></li>
                 </ul>
               </div>
               
               <div class="col-lg-4 col-md-6">
                 <h3>More Information</h3>
                 <div class="media">
-                  <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5332935/" class="pull-left">
-                    <img src="{% static 'images/ipdt_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5332935/"  target="_blank" class="pull-left">
+                    <img src="{% static 'images/ipdt_thumbnail.png' %}" alt="" class="media-object"/>
                   </a>
                   <div class="media-body">
                     <h4 class="media-heading">I-PDT Background</h4>
@@ -156,8 +151,8 @@
                 </div>
                 
                 <div class="media">
-                  <a href="https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-08/085001/High-performance-robustly-verified-Monte-Carlo-simulation-with-FullMonte/10.1117/1.JBO.23.8.085001.full?SSO=1" class="pull-left">
-                    <img src="{% static 'images/paper_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  <a href="https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-23/issue-08/085001/High-performance-robustly-verified-Monte-Carlo-simulation-with-FullMonte/10.1117/1.JBO.23.8.085001.full?SSO=1"  target="_blank" class="pull-left">
+                    <img src="{% static 'images/paper_thumbnail.png' %}" alt="" class="media-object"/>
                   </a>
                   <div class="media-body">
                     <h4 class="media-heading">FullMonte Paper</h4>
@@ -166,8 +161,8 @@
                 </div>
                 
                 <div class="media">
-                  <a href="https://fullmonte.gitlab.io/" class="pull-left">
-                    <img src="{% static 'images/fullmonte_thumbnail.png' %}" alt="" class="media-object" width="64" />
+                  <a href="https://fullmonte.gitlab.io/"  target="_blank" class="pull-left">
+                    <img src="{% static 'images/fullmonte_thumbnail.png' %}" alt="" class="media-object"/>
                   </a>
                   <div class="media-body">
                     <h4 class="media-heading">FullMonte Project</h4>
@@ -179,10 +174,18 @@
               
               <div class="col-lg-4">
                 <h3>Our Work</h3>
-                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
-                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
-                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
-                <img class="img-thumbnail" src="http://placehold.it/150x100" alt="" />
+                <a href="{% static 'images/system_context_diagram.png' %}"  target="_blank">
+                    <img class="img-thumbnail" src="{% static 'images/system_context_diagram.png' %}" alt="" />
+                </a>
+                <a href="{% static 'images/user_flow.png' %}"  target="_blank">
+                    <img class="img-thumbnail" src="{% static 'images/user_flow.png' %}" alt="" />
+                </a>
+                <a href="{% static 'images/3d_visualizer_diagram.png' %}"  target="_blank">
+                    <img class="img-thumbnail" src="{% static 'images/3d_visualizer_diagram.png' %}" alt="" />
+                </a>
+                <a href="{% static 'images/visual_main.png' %}"  target="_blank">
+                    <img class="img-thumbnail" src="{% static 'images/visual_main.png' %}" alt="" />
+                </a>
               </div>
               
             </div>
