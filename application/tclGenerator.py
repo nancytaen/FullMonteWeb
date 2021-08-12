@@ -554,7 +554,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
 
     index = 1
     if len(sourceType) > 1:
-        f.write(indent + 'k source CompositeSource' + str(index) + '\n\n')
+        f.write(indent + 'k source CompositeSource\n\n')
     else:
         for st, x, y, z, xD, yD, zD, vE, ra, po, vr, ehs, hsed, na, cd in zip(sourceType, xPos, yPos, zPos, xDir, yDir, zDir, \
             vElement, rad, power, volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection):
