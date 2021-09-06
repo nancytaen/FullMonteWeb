@@ -1494,6 +1494,32 @@ def running(request):
         status = stdout_line[0]
         status = "".join(status.split())
     
+    stdin, stdout, stderr = client.exec_command('pgrep tclsh')
+    stdout_pid = stdout.readlines()
+    sys.stdout.flush()
+    peak_mem_usage = '0 GB'
+    if len(stdout_pid) > 0:
+        print("tclsh pid is:", stdout_pid[0])
+        stdin, stdout, stderr = client.exec_command('grep ^VmPeak /proc/' + stdout_pid[0].strip() + '/status')
+        stdout_mem = stdout.readlines()
+        sys.stdout.flush()
+        if len(stdout_mem):
+            stdout_mem_list = stdout_mem[0].split()
+            if stdout_mem_list[-1] == 'kB':
+                peak_mem_usage = str(int(stdout_mem_list[1].strip()) / 1000000.0) + ' GB'
+            else:
+                peak_mem_usage = stdout_mem_list[1].strip() + ' ' + stdout_mem_list[-1].strip()
+            print("peak memory usage is:", peak_mem_usage)
+
+    # command to check remaining disk space
+    stdin, stdout, stderr = client.exec_command('df -hT ~ | awk \'$NF == "/" { print $6 }\'')
+    stdout_disk_space = stdout.readlines()
+    sys.stdout.flush()
+    disk_used = 0
+    if len(stdout_disk_space):
+        disk_used = stdout_disk_space[0]
+        print("disk space is:", disk_used)
+    
     print("status:",status)
     sys.stdout.flush()
     if status == "[info]Simulationrunfinished":
@@ -1504,7 +1530,7 @@ def running(request):
     else:
         print("tclsh not finished")
         sys.stdout.flush()
-        return render(request, "running.html", {'time':running_time, 'progress':progress})
+        return render(request, "running.html", {'time':running_time, 'progress':progress, 'disk_space':disk_used, 'peak_mem':peak_mem_usage})
 
 # page for failed simulation
 # def simulation_fail(request):
