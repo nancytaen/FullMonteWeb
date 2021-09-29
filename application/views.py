@@ -1549,6 +1549,11 @@ def simulation_finish(request):
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
 
+    command = "echo \"Your FullMonteWeb simulation run has finished. \
+        If you are not planning to run more simulations, please stop your AWS \
+        instance to avoid excessive charges.\" | \
+        sudo mail -s \"Your FullMonteWeb run has finished\" -r \'<fullmonteweb@outlook.com>\' " + str(request.user.email)
+    stdin, stdout, stderr = client.exec_command(command)
     ftp = client.open_sftp()
     try:
         # ftp.chdir('docker_sims/')
