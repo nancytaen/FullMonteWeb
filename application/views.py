@@ -2151,7 +2151,7 @@ def pdt_space_running(request):
             print(status)
             print(progress)
             print(running_time)
-            print(request.session['source_type'])
+            # print(request.session['source_type'])
             print(request.session['started'])
             sys.stdout.flush()
         finally:
