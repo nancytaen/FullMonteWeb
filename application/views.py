@@ -1969,6 +1969,7 @@ def pdt_space_material(request):
             op_file.total_energy = form.cleaned_data['total_energy']
             op_file.num_packets = form.cleaned_data['num_packets']
             op_file.wave_length = form.cleaned_data['wave_length']
+            request.session['wave_length'] = op_file.wave_length
             
             op_file.tumor_weight = form.cleaned_data['tumor_weight']
             
@@ -2266,22 +2267,6 @@ def launch_pdt_space(request):
     finally:
         ftp.close()
     f.close()
-    request.session['source_type'] = opfile.placement_type
-    ##get tissue type name
-    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat " + data_dir + "/tissue_properties_" + wavelength + "nm.txt\" 0"
-    print(command)
-    stdin, stdout, stderr = client.exec_command(command)
-    stdout_line = stdout.readlines()
-    stderr_line = stderr.readlines()
-    request.session['region_name']= []
-    for line in stdout_line:
-        print(line)
-
-    for line in stdout_line:
-        if len(line.split(',')) == 3:
-            request.session['region_name'].append(line.split(',')[0])
-    print(request.session['region_name'])
-    sys.stdout.flush()
 
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
     stdin, stdout, stderr = client.exec_command(command)
@@ -2472,6 +2457,22 @@ def pdt_space_visualization(request):
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
+
+    ##get tissue type name
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat /sims/tissue_properties_" + str(request.session['wave_length']) + "nm.txt\" 0"
+    print(command)
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    request.session['region_name']= []
+    for line in stdout_line:
+        print(line)
+
+    for line in stdout_line:
+        if len(line.split(',')) == 3:
+            request.session['region_name'].append(line.split(',')[0])
+    print(request.session['region_name'])
+    sys.stdout.flush()
     
     ftp = client.open_sftp()
     try:
@@ -2491,7 +2492,6 @@ def pdt_space_visualization(request):
     finally:
         ftp.close()
     client.close()
-    pdvh(request.user, request.session['num_material'], request.session['region_name'])
 
     print('before')
     current_process = psutil.Process()
