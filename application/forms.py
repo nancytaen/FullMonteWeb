@@ -85,10 +85,14 @@ class materialForm(forms.ModelForm):
         self.fields['material_unit'].widget = forms.RadioSelect(choices=unit_choices)
 
 class pdtForm(forms.Form):
-    opt = forms.ChoiceField(label="Optical File", 
-                            help_text="Available optical files.")
-    mesh = forms.ChoiceField(label="Mesh File", 
-                            help_text="Available mesh files.")
+    opt = forms.FileField(label="Optical File", 
+                            help_text="Optical file.")
+    mesh = forms.FileField(label="Mesh File", 
+                            help_text="Mesh file")
+    tissue_property = forms.FileField(label="Tissue Property File", 
+                            help_text="Tissue Property file with filename tissue_properties_<wave_length>nm.txt.")
+    tissue_type = forms.FileField(label="Tissue Types File", 
+                            help_text="Tissue Types file.")
     total_energy = forms.CharField( label='PNF', required = False, max_length=255, initial="1e11",
                                     help_text="Stands for 'Pruning Normalization Factor. Used by the simulator to scale the light dose thresholds to match the unit of the light-simulator output. <br />Typically in the range of 1e6 to 4e11.")
     num_packets = forms.CharField(label='Num Packets', required = True, max_length=255, 
@@ -100,14 +104,14 @@ class pdtForm(forms.Form):
     
     # light_placement_file = forms.FileField(label='light_placement_file')
 
-    def __init__(self, opt_list=None, mesh_list=None, *args, **kwargs):
-        super(pdtForm, self).__init__(*args, **kwargs)
-        choice_opt = [(opt_name, opt_name) for opt_name in opt_list]
-        if opt_list:
-            self.fields['opt'].choices = choice_opt
-        choice_mesh = [(mesh_name, mesh_name) for mesh_name in mesh_list]
-        if mesh_list:
-            self.fields['mesh'].choices = choice_mesh
+    # def __init__(self, *args, **kwargs):
+    #     super(pdtForm, self).__init__(*args, **kwargs)
+        # choice_opt = [(opt_name, opt_name) for opt_name in opt_list]
+        # if opt_list:
+        #     self.fields['opt'].choices = choice_opt
+        # choice_mesh = [(mesh_name, mesh_name) for mesh_name in mesh_list]
+        # if mesh_list:
+        #     self.fields['mesh'].choices = choice_mesh
         
 class pdtPlaceFile(forms.Form):
     # placement_type = forms.ChoiceField(label='Placement Type', choices=(('fixed_point','fixed_point'),

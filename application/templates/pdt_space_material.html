@@ -6,7 +6,7 @@
     <p><b>Please specify required input parameters for PDT-SPACE run.</b></p>
     <p>You can view the complete list of input parameters and detailed explaination <a href="https://gitlab.com/FullMonte/pdt-space/-/wikis/user-guide#input-parameters" target="_blank" rel="noopener noreferrer">here</a>.</p>
     <div class="d-flex justify-content-center ">
-        <form class = 'card p-3 bg-light' action="" method="post">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data">
             <b><p>Input parameters for PDT-SPACE</p></b>
             <div class='table'>
                 <table class='no_error'>
@@ -24,7 +24,7 @@
                     </tr>
                     <tr>
                         <th>{{ form.opt.label_tag }}</th>
-                        <td>
+                        <td style="text-align-last: center; vertical-align: middle;">
                             {{ form.opt.errors }}
                             {{ form.opt }}
                         </td>
@@ -34,12 +34,34 @@
                     </tr>
                     <tr>
                         <th>{{ form.mesh.label_tag }}</th>
-                        <td>
+                        <td style="text-align-last: center; vertical-align: middle;">
                             {{ form.mesh.errors }}
                             {{ form.mesh }}
                         </td>
                         <td style="text-align:left">
                             {{ form.mesh.help_text }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.tissue_property.label_tag }}</th>
+                        
+                        <td style="text-align-last: center; vertical-align: middle;">
+                            {{ form.tissue_property.errors }}
+                            {{ form.tissue_property }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.tissue_property.help_text }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.tissue_type.label_tag }}</th>
+                        
+                        <td style="text-align-last: center; vertical-align: middle;">
+                            {{ form.tissue_type.errors }}
+                            {{ form.tissue_type }}
+                        </td>
+                        <td style="text-align:left">
+                            {{ form.tissue_type.help_text }}
                         </td>
                     </tr>
                     <tr>

@@ -1735,26 +1735,26 @@ def pdt_space(request):
         return HttpResponseRedirect('/application/aws')
     
     #lanuch job to search all preset mesh and optical files in the PDT-SPACE repo
-    print('before')
-    current_process = psutil.Process()
-    children = current_process.children(recursive=True)
-    for child in children:
-        print('Child pid is {}'.format(child.pid))
-    connections.close_all()
-    p = Process(target=search_pdt_space, args=(request, ))
-    p.start()
-    print('after')
-    current_process = psutil.Process()
-    children = current_process.children(recursive=True)
-    form = processRunning()
-    form.user=request.user
-    for child in children:
-        form.pid = child.pid
-        form.running = True
-        print('Child pid is {}'.format(child.pid))
-    conn = DbConnection()
-    form.save()
-    sys.stdout.flush()
+    # print('before')
+    # current_process = psutil.Process()
+    # children = current_process.children(recursive=True)
+    # for child in children:
+    #     print('Child pid is {}'.format(child.pid))
+    # connections.close_all()
+    # p = Process(target=search_pdt_space, args=(request, ))
+    # p.start()
+    # print('after')
+    # current_process = psutil.Process()
+    # children = current_process.children(recursive=True)
+    # form = processRunning()
+    # form.user=request.user
+    # for child in children:
+    #     form.pid = child.pid
+    #     form.running = True
+    #     print('Child pid is {}'.format(child.pid))
+    # conn = DbConnection()
+    # form.save()
+    # sys.stdout.flush()
     return HttpResponseRedirect('/application/pdt_spcae_wait')
 
 
@@ -1768,6 +1768,7 @@ def pdt_spcae_wait(request):
     # privkey = paramiko.RSAKey.from_private_key(private_key_file)
     # client.connect(hostname=request.session['DNS'], username='ubuntu', pkey=privkey)
     if running_process.running:
+    # if False:
         print("get current progress")
         sys.stdout.flush()
         return render(request, "pdt_spcae_wait.html")
@@ -1933,34 +1934,34 @@ def pdt_space_material(request):
     sys.stdout.flush()
 
     conn = DbConnection()
-    pdt_info = pdtPresetData.objects.filter(user = request.user).latest('id')
-    opt_str = pdt_info.opt_list
-    mesh_str = pdt_info.mesh_list
+    # pdt_info = pdtPresetData.objects.filter(user = request.user).latest('id')
+    # opt_str = pdt_info.opt_list
+    # mesh_str = pdt_info.mesh_list
 
-    opt_addr = pdt_info.opt_addr
-    mesh_addr = pdt_info.mesh_addr
+    # opt_addr = pdt_info.opt_addr
+    # mesh_addr = pdt_info.mesh_addr
     # opt_str = request.session['opt_list']
     # mesh_str = request.session['mesh_list']
 
-    print("the opt str is ",opt_str)
-    print("the mesh str is ",mesh_str)
+    # print("the opt str is ",opt_str)
+    # print("the mesh str is ",mesh_str)
 
-    print("the opt addr is ",opt_addr)
-    print("the mesh addr is ",mesh_addr)
-    sys.stdout.flush()
+    # print("the opt addr is ",opt_addr)
+    # print("the mesh addr is ",mesh_addr)
+    # sys.stdout.flush()
     # sys.stdout.flush()
 
-    _opt_list=[]
-    _mesh_list=[]
-    for sinlge in opt_str.split(','):
-        _opt_list.append(sinlge)
+    # _opt_list=[]
+    # _mesh_list=[]
+    # for sinlge in opt_str.split(','):
+    #     _opt_list.append(sinlge)
     
-    for sinlge in mesh_str.split(','):
-        _mesh_list.append(sinlge)
+    # for sinlge in mesh_str.split(','):
+    #     _mesh_list.append(sinlge)
         
     if request.method == 'POST':
         
-        form = pdtForm(opt_list =_opt_list, mesh_list=_mesh_list, data = request.POST)
+        form = pdtForm(request.POST, request.FILES)
         if form.is_valid():
             print(form.cleaned_data)
             op_file = opFileInput()
@@ -1971,20 +1972,24 @@ def pdt_space_material(request):
             
             op_file.tumor_weight = form.cleaned_data['tumor_weight']
             
-            mesh_name = form.cleaned_data['mesh']
-            opt_name = form.cleaned_data['opt']
+            mesh_name = request.FILES['mesh'].name
+            opt_name = request.FILES['opt'].name
             op_file.data_name = mesh_name.split('.')[0]
+            op_file.opt_file_storage = request.FILES['opt']
+            op_file.mesh_file_storage = request.FILES['mesh']
+            op_file.tissue_property_file_storage = request.FILES['tissue_property']
+            op_file.tissue_types_file_storage = request.FILES['tissue_type']
             # op_file.placement_file = request.FILES['light_placement_file']
             # print("light file name is ", op_file.placement_file.name)
             # sys.stdout.flush()
-            for sub in mesh_addr.split(','):
-                if sub.split('/')[-1] == mesh_name:
-                    op_file.data_dir = "/".join(sub.split('/')[:-1])
+            # for sub in mesh_addr.split(','):
+            #     if sub.split('/')[-1] == mesh_name:
+            #         op_file.data_dir = "/".join(sub.split('/')[:-1])
 
-            for sub in opt_addr.split(','):
-                if sub.split('/')[-1] == opt_name:
-                    op_file.opt_file = sub
-
+            # for sub in opt_addr.split(','):
+            #     if sub.split('/')[-1] == opt_name:
+            #         op_file.opt_file = sub
+            op_file.opt_file = "/sims/"+op_file.opt_file_storage.name
             op_file.save()
         else:
             print(" pdt_space_material form not valid")
@@ -1993,7 +1998,7 @@ def pdt_space_material(request):
         return HttpResponseRedirect('/application/pdt_space_lightsource')
     else:
         
-        form = pdtForm(opt_list=_opt_list, mesh_list=_mesh_list)
+        form = pdtForm()
     context = {
         'form': form,
     }
@@ -2014,6 +2019,7 @@ def pdt_space_lightsource(request):
             
             opfile.save()
             opfile.light_source_file = "/sims/" + str(opfile.placement_file.name)
+            opfile.save()
 
             print("check data")
             print(opfile.total_energy)
@@ -2027,87 +2033,6 @@ def pdt_space_lightsource(request):
             print(opfile.opt_file)
             print(opfile.light_source_file)
             print(opfile.placement_file.name)
-            sys.stdout.flush()
-
-            #generate .op file
-            dir_path = os.path.dirname(os.path.abspath(__file__))
-            source = dir_path + '/pdtOp/pdt_space.op'
-
-            #start by wiping script template
-            with open(source, 'r') as f:
-                lines = f.readlines()
-            
-            f = open(source, 'w')
-            for line in lines[::-1]:
-                del lines[-1]
-            
-            f = open(source, 'a')
-            f.write('RUN_TESTS = false\n\n')
-            f.write('PNF = ' + opfile.total_energy + '\n\n')
-            f.write('NUM_PACKETS = ' + opfile.num_packets + '\n\n')
-            f.write('WAVELENGTH = ' + opfile.wave_length + '\n\n')
-            wavelength = opfile.wave_length
-            f.write('DATA_DIR = ' + opfile.data_dir + '\n\n')
-            data_dir = opfile.data_dir
-            f.write('DATA_NAME = ' + opfile.data_name + '\n\n')
-            f.write('READ_VTK = false\n\n')
-            if opfile.placement_type == 'fixed_point':
-                f.write('source_type = ' + 'point' + '\n\n')
-                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
-                f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
-            if opfile.placement_type == 'fixed_line':
-                f.write('source_type = ' + 'line' + '\n\n')
-                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
-                f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
-            if opfile.placement_type == 'virtual_point':
-                f.write('source_type = ' + 'point' + '\n\n')
-                f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
-                f.write('PLACEMENT_TYPE = ' + 'virtual' + '\n\n')
-
-            # f.write('TAILORED = false\n\n')
-            f.write('OPTICAL_FILE = ' + opfile.opt_file + '\n\n')
-            f.write('INIT_PLACEMENT_FILE = ' + opfile.light_source_file + '\n\n')
-            f.close()
-            f = open(source, 'r')
-            ##transfer files
-            text_obj = request.session['text_obj']
-            private_key_file = io.StringIO(text_obj)
-            privkey = paramiko.RSAKey.from_private_key(private_key_file)
-            try:
-                client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='pdt_space_lightsource')
-            except:
-                sys.stdout.flush()
-                messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
-            ftp = client.open_sftp()
-            try:
-                ftp.chdir('docker_pdt/')
-                file=ftp.file('docker.sh', "w")
-                file.write('#!/bin/bash\nexport MOSEKLM_LICENSE_FILE=/sims/mosek.lic\ncd sims/\npdt_space pdt_space.op v100_dvh.m')
-                file.flush()
-                ftp.chmod('docker.sh', 700)
-                ftp.putfo(f,'./pdt_space.op')
-                ftp.putfo(opfile.placement_file, './'+opfile.placement_file.name)
-            finally:
-                ftp.close()
-            f.close()
-            request.session['source_type'] = opfile.placement_type
-            ##get tissue type name
-            command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat " + data_dir + "/tissue_properties_" + wavelength + "nm.txt\" 0"
-            print(command)
-            stdin, stdout, stderr = client.exec_command(command)
-            stdout_line = stdout.readlines()
-            stderr_line = stderr.readlines()
-            request.session['region_name']= []
-            for line in stdout_line:
-                print(line)
-            
-            client.close()
-
-            for line in stdout_line:
-                if len(line.split(',')) == 3:
-                    request.session['region_name'].append(line.split(',')[0])
-            print(request.session['region_name'])
             sys.stdout.flush()
 
             # lanuch pdt-space with a use process
@@ -2271,6 +2196,7 @@ def pdt_space_running(request):
 
 def launch_pdt_space(request):
     time.sleep(3)
+    conn = DbConnection()
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
@@ -2280,6 +2206,82 @@ def launch_pdt_space(request):
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
         return HttpResponseRedirect('/application/aws')
+
+    opfile = opFileInput.objects.filter(user = request.user).latest('id')
+
+    #generate .op file
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    source = dir_path + '/pdtOp/pdt_space.op'
+
+    #start by wiping script template
+    with open(source, 'r') as f:
+        lines = f.readlines()
+    
+    f = open(source, 'w')
+    for line in lines[::-1]:
+        del lines[-1]
+    
+    f = open(source, 'a')
+    f.write('RUN_TESTS = false\n\n')
+    f.write('PNF = ' + opfile.total_energy + '\n\n')
+    f.write('NUM_PACKETS = ' + opfile.num_packets + '\n\n')
+    f.write('WAVELENGTH = ' + opfile.wave_length + '\n\n')
+    wavelength = opfile.wave_length
+    f.write('DATA_DIR = /sims/\n\n')
+    data_dir = "/sims"
+    f.write('DATA_NAME = ' + opfile.mesh_file_storage.name.split('.')[0] + '\n\n')
+    f.write('READ_VTK = false\n\n')
+    if opfile.placement_type == 'fixed_point':
+        f.write('source_type = ' + 'point' + '\n\n')
+        f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+        f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
+    if opfile.placement_type == 'fixed_line':
+        f.write('source_type = ' + 'line' + '\n\n')
+        f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+        f.write('PLACEMENT_TYPE = ' + 'fixed' + '\n\n')
+    if opfile.placement_type == 'virtual_point':
+        f.write('source_type = ' + 'point' + '\n\n')
+        f.write('tumor_weight = ' + opfile.tumor_weight + '\n\n')
+        f.write('PLACEMENT_TYPE = ' + 'virtual' + '\n\n')
+
+    # f.write('TAILORED = false\n\n')
+    f.write('OPTICAL_FILE = ' + opfile.opt_file_storage.name + '\n\n')
+    f.write('INIT_PLACEMENT_FILE = ' + opfile.light_source_file + '\n\n')
+    f.close()
+    f = open(source, 'r')
+
+    ftp = client.open_sftp()
+    try:
+        ftp.chdir('docker_pdt/')
+        file=ftp.file('docker.sh', "w")
+        file.write('#!/bin/bash\nexport MOSEKLM_LICENSE_FILE=/sims/mosek.lic\ncd sims/\npdt_space pdt_space.op v100_dvh.m')
+        file.flush()
+        ftp.chmod('docker.sh', 700)
+        ftp.putfo(f,'./pdt_space.op')
+        ftp.putfo(opfile.placement_file, './'+opfile.placement_file.name)
+        ftp.putfo(opfile.opt_file_storage, './'+opfile.opt_file_storage.name)
+        ftp.putfo(opfile.mesh_file_storage, './'+opfile.mesh_file_storage.name)
+        ftp.putfo(opfile.tissue_property_file_storage, './tissue_properties_' + wavelength + 'nm.txt')
+        ftp.putfo(opfile.tissue_types_file_storage, './TissueTypes.txt')
+    finally:
+        ftp.close()
+    f.close()
+    request.session['source_type'] = opfile.placement_type
+    ##get tissue type name
+    command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat " + data_dir + "/tissue_properties_" + wavelength + "nm.txt\" 0"
+    print(command)
+    stdin, stdout, stderr = client.exec_command(command)
+    stdout_line = stdout.readlines()
+    stderr_line = stderr.readlines()
+    request.session['region_name']= []
+    for line in stdout_line:
+        print(line)
+
+    for line in stdout_line:
+        if len(line.split(',')) == 3:
+            request.session['region_name'].append(line.split(',')[0])
+    print(request.session['region_name'])
+    sys.stdout.flush()
 
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"sh /sims/docker.sh\" 1 "
     stdin, stdout, stderr = client.exec_command(command)
@@ -2295,7 +2297,7 @@ def launch_pdt_space(request):
     sys.stdout.flush() 
     client.close()
 
-    conn = DbConnection()
+    #conn = DbConnection()
     running_process = processRunning.objects.filter(user = request.user).latest('id')
     running_process.running = False
     running_process.save()
@@ -2336,7 +2338,7 @@ def pdt_space_finish(request):
     # print(check_success)
     check_success = re.sub(r'[^\w]', ' ', check_success)
     check_success = "".join(check_success.split())
-    # print(check_success)
+    print(check_success)
     if check_success != "ENDOFRUN":
         print("pdt-space fail")
         ftp.close()
@@ -2372,16 +2374,16 @@ def pdt_space_finish(request):
         num_material = int(num_material)
         num_source = int(num_source) + 1    # index + 1
 
-        output_info = output_lines[-8:-5]
+        output_info = output_lines[-21:-19]
         time_simu = output_info[0].split()[8]
         time_opt = output_info[1].split()[3]
 
-        output_info = output_lines[-13 - num_source :-13]
+        output_info = output_lines[-26 - num_source :-26]
         for e in output_info:
             html_pow_alloc += e + '<br />'
         
         request.session['material_name']= []
-        output_info = output_lines[-13 - num_source - 2 - num_material :-13 - num_source - 2]
+        output_info = output_lines[-26 - num_source - 2 - num_material :-26 - num_source - 2]
         for e in output_info:
             html_fluence_dist += e + '<br />'
             request.session['material_name'].append(e.split()[0])
@@ -2489,6 +2491,7 @@ def pdt_space_visualization(request):
     finally:
         ftp.close()
     client.close()
+    pdvh(request.user, request.session['num_material'], request.session['region_name'])
 
     print('before')
     current_process = psutil.Process()
