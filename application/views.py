@@ -1463,8 +1463,11 @@ def running(request):
     if len(stdout_word) > 0:
         # print(stdout_word[-1])
         # sys.stdout.flush()
-        if stdout_word[-1].split()[0] == "Progress":
-            progress = stdout_word[-1].split()[-1]
+        try:
+            if stdout_word[-1].split()[0] == "Progress":
+                progress = stdout_word[-1].split()[-1]
+        except:
+            pass
     if progress == '':
         if request.session['started'] == "false":
             progress = '0.00%'
