@@ -78,8 +78,6 @@ def load_dvh_data(num_material, filePath):
 def calculate_volumes(fullMonteOutputData, regionData):
 
     volumeData = {}
-    global regionVolume
-    regionVolume = {}
     numCells = regionData.size
 
     # get array of volumes for each region
@@ -94,10 +92,6 @@ def calculate_volumes(fullMonteOutputData, regionData):
             curCell = fullMonteOutputData.GetCell(n)
             volume = vtkMeshQuality.TetVolume(curCell)
             volumeData[region].append(volume)
-
-    # compute and save total volume in each region
-    for region, volumes in volumeData.items():
-        regionVolume[region] = sum(volumes)
 
     return volumeData
 
@@ -127,7 +121,6 @@ def get_doses(fluenceData, regionData):
 # and dose arrays. Now for each region, loop through all its data points, get
 # its relative dose, which will be represented by the x-axis, get its volume,
 # and add its volume to the volume that is associated with the relative dose.
-# Finally, compute the relative volume (fraction of volume against total volume).
 def calculate_DVH(doseData, volumeData, noBins):
 
     doseVolumeData = {}
@@ -149,7 +142,7 @@ def calculate_DVH(doseData, volumeData, noBins):
     return doseVolumeData
 
 # For each region, compute the total volume of region that received fluence greater than or
-# qual to the fluence values in that bin
+# equal to the fluence values in that bin
 def calculate_cumulative_DVH(doseVolumeData, noBins):
 
     cumulativeDVH = {}
@@ -175,7 +168,7 @@ def calculate_cumulative_DVH(doseVolumeData, noBins):
 # axis. The column height of each bin represents the %volume of structure receiving a
 # dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins, materials, outputMeshFileName):
+def plot_DVH(data, noBins, materials, outputMeshFileName, thresholdFluence, meshUnit):
     FIG_WIDTH = 11
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
@@ -187,20 +180,20 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
     fig.suptitle("Cumulative Dose-Volume Histogram", fontsize=30, y = 1)
     ax = fig.add_subplot(111)
-    ax.set_xlabel("% max fluence dose",fontsize = 20) # xlabel
-    ax.set_ylabel("% region volume coverage", fontsize = 20)# ylabel
+    ax.set_xlabel("% Fluence Dose Threshold",fontsize = 20) # xlabel
+    ax.set_ylabel("Region Volume Coverage (" + meshUnit + "^3)", fontsize = 20)# ylabel
     ax.grid(True)
 
     legendList = [] # legend items (region ID and material) for the interactive legend
     lines = []      # array of matplotlib objects; a line for each region for the interactive legend
     labelsList = [] # x,y labels for the interactive tooltip
 
-    xVals = (np.array(range(noBins)) / noBins * 100) # % max dose
+    xVals = (np.array(range(noBins)) / noBins * (maxFluence / thresholdFluence) * 100) # % threshold dose
 
     # Plot for each region
     # color=next(ax._get_lines.prop_cycler)['color']
     for region, cumulativeDoseVolume in data.items():
-        yVals = np.array(cumulativeDoseVolume) / regionVolume[region] * 100 # % region volume
+        yVals = np.array(cumulativeDoseVolume) # region volume
         line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
         lines.append(line)
         if(len(materials) > 0): # mesh file from simulation can use material info from simulation
@@ -212,7 +205,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName):
             label = "<table><td>Dose: "+"{:.2f}".format(xVals[i])+"%, Volume: "+"{:.2f}".format(yVals[i])+"%</td></table>"
             labels.append(label)
         labelsList.append(labels)
-        # save data to be exported (save % max fluence dose and % cumulative region volume in order)
+        # save data to be exported (save % threshold fluence dose and cumulative region volume in order)
         export_data[region][3] = xVals
         export_data[region][4] = yVals
 
@@ -322,7 +315,7 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.SetExtent(regionBoundaries)
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
-def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence):
     conn = create_connection()
     conn.ensure_connection()
     info = meshFileInfo.objects.filter(user = user).latest('id')
@@ -387,8 +380,8 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
                 generation_success = False
 
         if generation_success == False:
-            info.maxFluence = 0
-            info.save()
+            # info.maxFluence = 0
+            # info.save()
             # update process status
             running_process = processRunning.objects.filter(user = user).latest('id')
             running_process.running = False
@@ -406,8 +399,9 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
         DVHdata = calculate_DVH(doseData,volumeData,noBins)
         cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
         # save the figure's html string to session
-        info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName)
-        info.maxFluence = maxFluence
+        info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName,thresholdFluence,meshUnit)
+        # info.maxFluence = maxFluence
+        info.thresholdFluence = thresholdFluence
         info.save()
         # export the data to csv if mesh file comes from simulation
         localFilePath = os.path.dirname(__file__) + "/temp/" + outputMeshFileName[:-8] + '.dvh.png'

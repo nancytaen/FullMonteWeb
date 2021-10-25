@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit' )
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit', 'thresholdFluence' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
