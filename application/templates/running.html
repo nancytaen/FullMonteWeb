@@ -7,8 +7,8 @@
     <p>Click refresh to update status or auto-fresh every 5 seconds.</p>
     <p>You will be automatically redirected when the simulation is finished</p>
     <p><b>Status:</b> running {{time}}</p>
-    <p><b>Disk space used:</b> {{disk_space}}</p>
-    <p><b>Peak memory used:</b> {{peak_mem}}</p>
+    <p><b>Disk space used:</b> {{disk_space}} out of {{disk_size}}B</p>
+    <p><b>Physical peak memory (RAM) usage:</b> {{peak_mem}}</p>
     <p style="color: coral;"><i>Note: if your disk space is full or if the peak memory exceeds the memory limit of your EC2 instance, the simulation will hang. In such cases, please switch to a larger EC2 instance and re-launch the simulation.</i></p>
     <label for="file">Simulation progress: <b>{{progress}}%<b> </label>
     <progress id="file" value="{{progress}}" max="100"> 32% </progress>

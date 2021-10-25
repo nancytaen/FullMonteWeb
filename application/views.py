@@ -1529,10 +1529,17 @@ def running(request):
     stdin, stdout, stderr = client.exec_command('df -hT ~ | awk \'$NF == "/" { print $6 }\'')
     stdout_disk_space = stdout.readlines()
     sys.stdout.flush()
+    stdin, stdout, stderr = client.exec_command('df -hT ~ | awk \'$NF == "/" { print $3 }\'')
+    stdout_disk_size = stdout.readlines()
+    sys.stdout.flush()
     disk_used = 0
+    disk_size = 0
     if len(stdout_disk_space):
         disk_used = stdout_disk_space[0]
         print("disk space is:", disk_used)
+    if len(stdout_disk_size):
+        disk_size = stdout_disk_size[0]
+        print("disk space is:", disk_size)
     
     print("status:",status)
     sys.stdout.flush()
@@ -1543,12 +1550,13 @@ def running(request):
         # save memory and disk usage
         request.session['peak_mem_usage_unit'] = mem_unit
         request.session['disk_space_usage'] = disk_used
+        request.session['disk_size'] = disk_size
         return HttpResponseRedirect('/application/simulation_finish')
     else:
         print("tclsh not finished")
         sys.stdout.flush()
-        peak_mem_usage_str = str(peak_mem_usage) + ' ' + mem_unit
-        return render(request, "running.html", {'time':running_time, 'progress':progress, 'disk_space':disk_used, 'peak_mem':peak_mem_usage_str})
+        peak_mem_usage_str = str(round(peak_mem_usage,2)) + ' ' + mem_unit
+        return render(request, "running.html", {'time':running_time, 'progress':progress, 'disk_space':disk_used, 'disk_size':disk_size, 'peak_mem':peak_mem_usage_str})
 
 # page for failed simulation
 # def simulation_fail(request):
@@ -1593,9 +1601,9 @@ def simulation_finish(request):
         ftp.close()
     client.close()
     if 'peak_mem_usage' in request.session:
-        html_string += 'Peak memory usage: ' + str(request.session['peak_mem_usage']) + ' ' + request.session['peak_mem_usage_unit'] + '<br />'
+        html_string += 'Physical peak memory (RAM) usage: ' + str(round(request.session['peak_mem_usage'],2)) + ' ' + request.session['peak_mem_usage_unit'] + '<br />'
     if 'disk_space_usage' in request.session:
-        html_string += 'Disk space usage: ' + request.session['disk_space_usage'] + '<br />'
+        html_string += 'Disk space used: ' + request.session['disk_space_usage'] + ' out of ' + request.session['disk_size'] + 'B<br />'
 
     # save output mesh file info
     # using tcl script name to identify as meshes can be reused
