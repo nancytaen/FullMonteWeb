@@ -339,6 +339,8 @@ def fmSimulatorMaterial(request):
             # redirect to run simulation
             request.session['start_time'] = str(datetime.now(timezone.utc))
             request.session['started'] = "false"
+            request.session['peak_mem_usage'] = 0
+            request.session['peak_mem_usage_unit'] = 'GB'
             return HttpResponseRedirect('/application/running')
 
         # Get all entries from materials formset and check whether it's valid
@@ -630,6 +632,8 @@ def simulation_confirmation(request):
         # redirect to run simulation
         request.session['start_time'] = str(datetime.now(timezone.utc))
         request.session['started'] = "false"
+        request.session['peak_mem_usage'] = 0
+        request.session['peak_mem_usage_unit'] = 'GB'
         return HttpResponseRedirect('/application/running')
     
     # Info to display on confirmation page
@@ -1500,7 +1504,8 @@ def running(request):
     stdin, stdout, stderr = client.exec_command('pgrep tclsh')
     stdout_pid = stdout.readlines()
     sys.stdout.flush()
-    peak_mem_usage = '0 GB'
+    peak_mem_usage = 0
+    mem_unit = 'GB'
     if len(stdout_pid) > 0:
         print("tclsh pid is:", stdout_pid[0])
         stdin, stdout, stderr = client.exec_command('grep ^VmPeak /proc/' + stdout_pid[0].strip() + '/status')
@@ -1509,10 +1514,14 @@ def running(request):
         if len(stdout_mem):
             stdout_mem_list = stdout_mem[0].split()
             if stdout_mem_list[-1] == 'kB':
-                peak_mem_usage = str(int(stdout_mem_list[1].strip()) / 1000000.0) + ' GB'
+                peak_mem_usage = int(stdout_mem_list[1].strip()) / 1000000.0
+                mem_unit = 'GB'
             else:
-                peak_mem_usage = stdout_mem_list[1].strip() + ' ' + stdout_mem_list[-1].strip()
-            print("peak memory usage is:", peak_mem_usage)
+                peak_mem_usage = int(stdout_mem_list[1].strip())
+                mem_unit = stdout_mem_list[-1].strip()
+            print("peak memory usage is:", str(peak_mem_usage) + ' ' + mem_unit)
+
+    request.session['peak_mem_usage'] = max(request.session['peak_mem_usage'], peak_mem_usage)
 
     # command to check remaining disk space
     stdin, stdout, stderr = client.exec_command('df -hT ~ | awk \'$NF == "/" { print $6 }\'')
@@ -1529,11 +1538,15 @@ def running(request):
         print("tclsh finish")
         sys.stdout.flush()
         client.close()
+        # save memory and disk usage
+        request.session['peak_mem_usage_unit'] = mem_unit
+        request.session['disk_space_usage'] = disk_used
         return HttpResponseRedirect('/application/simulation_finish')
     else:
         print("tclsh not finished")
         sys.stdout.flush()
-        return render(request, "running.html", {'time':running_time, 'progress':progress, 'disk_space':disk_used, 'peak_mem':peak_mem_usage})
+        peak_mem_usage_str = str(peak_mem_usage) + ' ' + mem_unit
+        return render(request, "running.html", {'time':running_time, 'progress':progress, 'disk_space':disk_used, 'peak_mem':peak_mem_usage_str})
 
 # page for failed simulation
 # def simulation_fail(request):
@@ -1577,6 +1590,10 @@ def simulation_finish(request):
     finally:
         ftp.close()
     client.close()
+    if 'peak_mem_usage' in request.session:
+        html_string += 'Peak memory usage: ' + str(request.session['peak_mem_usage']) + ' ' + request.session['peak_mem_usage_unit'] + '<br />'
+    if 'disk_space_usage' in request.session:
+        html_string += 'Disk space usage: ' + request.session['disk_space_usage'] + '<br />'
 
     # save output mesh file info
     # using tcl script name to identify as meshes can be reused

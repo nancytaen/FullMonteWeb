@@ -21,7 +21,7 @@ proc progressTimer {} {
 #====================================================================================================================
 #                                   Input VTK File Path (please do not modify)                                       
 #====================================================================================================================
-set fn "/sims/Bladder.mesh_BCcOhJ3.vtk"
+set fn "/sims/Bladder.mesh_QYfFiXZ.vtk"
 
 VTKMeshReader R
     R filename $fn
@@ -138,7 +138,7 @@ EnergyToFluence EF
 # mesh by browsing through the Root folder.                                                                          
 #====================================================================================================================
 VTKMeshWriter W
-    W filename "/sims/Bladder.mesh_wbblE57.out.vtk"
+    W filename "/sims/Bladder.mesh_rPTaUWx.out.vtk"
     W addData "Fluence" [EF result]
     W mesh $M
     W addHeaderComment "MeshUnit: mm EnergyUnit: J"
@@ -154,7 +154,7 @@ VTKMeshWriter W
 #    Example 3: "/sims/example_subdir/example_output_fluence.txt" is NOT ok                                          
 #====================================================================================================================
 TextFileMatrixWriter TW
-    TW filename "/sims/Bladder.mesh_wbblE57.phi_v.txt"
+    TW filename "/sims/Bladder.mesh_rPTaUWx.phi_v.txt"
     TW source [EF result]
     TW write
 
