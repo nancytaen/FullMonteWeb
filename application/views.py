@@ -262,6 +262,7 @@ def fmSimulator(request):
             request.session['packetCount'] = form.cleaned_data['packetCount']
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
             request.session['energyUnit'] = form.cleaned_data['energyUnit']
+            request.session['thresholdFluence'] = form.cleaned_data['thresholdFluence']
 
             if request.POST.get("overwrite_on_ec2") == "True":
                 request.session['overwrite_on_ec2'] = True
@@ -904,8 +905,8 @@ def fmVisualization(request):
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
             materials = request.session['region_name']
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, ))
-            # p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, dvhTxtFileName, meshUnit, energyUnit, materials, ))
+            thresholdFluence = request.session['thresholdFluence']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, ))
             p.start()
             print('after')
             current_process = psutil.Process()
@@ -930,7 +931,7 @@ def fmVisualization(request):
     
     # DVH cannot be generated
     else:
-        info.maxFluence = 0
+        # info.maxFluence = 0
         info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
         info.save()
         return HttpResponseRedirect('/application/displayVisualization')
@@ -990,7 +991,8 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
-    maxDose = info.maxFluence
+    thresholdFluence = round(info.thresholdFluence, 2)
+    # maxFluence = round(info.maxFluence, 2)
 
     # generate ParaView Visualization URL
     # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
@@ -1014,7 +1016,7 @@ def displayVisualization(request):
                 Root folder will be loaded to the ParaView application, and you can look for your desired mesh by browsing through the Root folder."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'maxDose': maxDose, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'thresholdFluence': thresholdFluence, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
