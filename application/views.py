@@ -60,6 +60,7 @@ import select
 import re
 # import scipy.io as sio
 import os
+import boto3
 # from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)
@@ -73,16 +74,29 @@ class BaseFileDownloadView(DetailView):
             raise ValueError("Found empty filename")
         
         try:
-            some_file = default_storage.open(filename)
+            session=boto3.session.Session(region_name='us-east-2')
+            conn=session.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, \
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, \
+                config=boto3.session.Config(signature_version='s3v4'))
+            response=conn.generate_presigned_url('get_object', Params= \
+                {'Bucket':'fullmontesuite-storage', 'Key':'media/public/'+filename}, ExpiresIn=600)
+            # print(response)
         except:
             return HttpResponse("The file you are requesting does not exist on the server.")
-        response = FileResponse(some_file)
-        # https://docs.djangoproject.com/en/1.11/howto/outputting-csv/#streaming-large-csv-files
-        if originalfilename is not None:
-            response['Content-Disposition'] = 'attachment; filename="%s"'%originalfilename
-        else:
-            response['Content-Disposition'] = 'attachment; filename="%s"'%filename
-        return response
+
+        return HttpResponseRedirect(response)
+
+        # try:
+        #     some_file = default_storage.open(filename)
+        # except:
+            
+        # response = FileResponse(some_file)
+        # # https://docs.djangoproject.com/en/1.11/howto/outputting-csv/#streaming-large-csv-files
+        # if originalfilename is not None:
+        #     response['Content-Disposition'] = 'attachment; filename="%s"'%originalfilename
+        # else:
+        #     response['Content-Disposition'] = 'attachment; filename="%s"'%filename
+        # return response
 
 class fileDownloadView(BaseFileDownloadView):
     pass
