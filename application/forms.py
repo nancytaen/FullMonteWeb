@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit', 'thresholdFluence' )
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -205,6 +205,9 @@ class awsFiles(forms.ModelForm):
         fields = ('DNS', 'pemfile', 'TCP_port')
     def __init__(self, *args, **kwargs):
         super(awsFiles, self).__init__(*args, **kwargs)
+
+class fmVisThresholdFluenceForm(forms.Form):
+    tissue_property = forms.FileField(label="Tissue Property File")
 
 class visualizeMeshForm(forms.ModelForm):
     class Meta:

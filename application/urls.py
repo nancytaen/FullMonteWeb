@@ -50,6 +50,9 @@ urlpatterns = [
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
 
+    # /application/threshold_fluence_upload
+    path('threshold_fluence_upload', views.visualization_threshold_fluence_upload, name='threshold_fluence_upload'),
+
     # /application/mesh_upload
     path('mesh_upload', views.visualization_mesh_upload, name='mesh_upload'),
 
