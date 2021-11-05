@@ -88,7 +88,7 @@ class pdtForm(forms.Form):
     opt = forms.FileField(label="Optical File", 
                             help_text="Optical file.")
     mesh = forms.FileField(label="Mesh File", 
-                            help_text="Mesh file")
+                            help_text="Mesh file in .mesh file format.")
     tissue_property = forms.FileField(label="Tissue Property File", 
                             help_text="Tissue Property file with filename tissue_properties_<wave_length>nm.txt.")
     tissue_type = forms.FileField(label="Tissue Types File", 
