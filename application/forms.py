@@ -180,7 +180,7 @@ class lightSource(forms.Form):
                                                                          ('true','true')), initial='true')
 
 
-    power = forms.IntegerField(label='Power', required=False, initial=1)
+    power = forms.FloatField(label='Power', required=False, initial=1.0)
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):

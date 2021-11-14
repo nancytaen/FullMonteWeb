@@ -55,12 +55,12 @@ def load_dvh_data(num_material, filePath):
     # temp = dvh_data[0].split('=')[1].split(';')
 
     dic = {}
-    for x in range(0, num_material):
+    for x in range(1, num_material+1):
         dic[x]=[]
     
     # print(dic)
     # print(len(dvh_data))
-    index = 0
+    index = 1
     for d in dvh_data:
         temp = d.split('=')[1].split(';')
         for it in temp:
@@ -70,7 +70,7 @@ def load_dvh_data(num_material, filePath):
                 
                 dic[index].append(float(it))
                 index += 1
-        index = 0
+        index = 1
     # print(dic)
     return dic
     
@@ -78,6 +78,8 @@ def load_dvh_data(num_material, filePath):
 def calculate_volumes(fullMonteOutputData, regionData):
 
     volumeData = {}
+    global regionVolume
+    regionVolume = {}
     numCells = regionData.size
 
     # get array of volumes for each region
@@ -92,6 +94,10 @@ def calculate_volumes(fullMonteOutputData, regionData):
             curCell = fullMonteOutputData.GetCell(n)
             volume = vtkMeshQuality.TetVolume(curCell)
             volumeData[region].append(volume)
+
+    # compute and save total volume in each region
+    for region, volumes in volumeData.items():
+        regionVolume[region] = sum(volumes)
 
     return volumeData
 
@@ -121,6 +127,7 @@ def get_doses(fluenceData, regionData, thresholdFluenceArray):
 # and dose arrays. Now for each region, loop through all its data points, get
 # its relative dose, which will be represented by the x-axis, get its volume,
 # and add its volume to the volume that is associated with the relative dose.
+# Finally, compute the relative volume (fraction of volume against total volume).
 def calculate_DVH(doseData, volumeData, noBins):
 
     doseVolumeData = {}
@@ -181,7 +188,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit):
     fig.suptitle("Cumulative Dose-Volume Histogram", fontsize=30, y = 1)
     ax = fig.add_subplot(111)
     ax.set_xlabel("% Fluence Threshold",fontsize = 20) # xlabel
-    ax.set_ylabel("Region Volume Coverage (" + meshUnit + "^3)", fontsize = 20)# ylabel
+    ax.set_ylabel("% region volume coverage", fontsize = 20)# ylabel
     ax.grid(True)
 
     legendList = [] # legend items (region ID and material) for the interactive legend
@@ -193,7 +200,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit):
     # Plot for each region
     # color=next(ax._get_lines.prop_cycler)['color']
     for region, cumulativeDoseVolume in data.items():
-        yVals = np.array(cumulativeDoseVolume) # region volume
+        yVals = np.array(cumulativeDoseVolume) / regionVolume[region] * 100 # % region volume
         line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
         lines.append(line)
         if(len(materials) == len(data) + 1): # mesh file from simulation can use material info from simulation
@@ -264,8 +271,8 @@ def plot_PDVH(data, noBins, materials, outputMeshFileName):
         yVals = np.array(cumulativeDoseVolume) 
         line = ax.plot(xVals[1:-1], yVals[1:-1], lw=LINE_WIDTH, ls='-', marker='o', ms=8, alpha=0.7)
         lines.append(line)
-        if(len(materials) > len(data) + 1): # mesh file from simulation can use material info from simulation
-            legendList.append(str(region) + " (" + materials[region] + ")")
+        if(len(materials) == len(data)):
+            legendList.append(str(region) + " (" + materials[region-1] + ")")
         else: # uploaded mesh files cannot be associated with material info
             legendList.append(str(region) + " (No material info)")
         labels = []
@@ -454,6 +461,7 @@ def pdt_dose_volume_histogram(user, num_material, materials):
         localFilePath = os.path.dirname(__file__) + "/temp/v100.m"
         dvh_data = load_dvh_data(int(num_material), localFilePath)
         noBins = 500
+        print(materials)
         info.dvhFig = plot_PDVH(dvh_data,noBins,materials,"pdt_space_dvh")
         info.save()
         # update process status

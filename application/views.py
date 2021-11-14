@@ -2421,7 +2421,7 @@ def pdt_space_finish(request):
         return HttpResponseRedirect('/application/pdt_space_fail')
         
     # get num_material and num_source by reading the log file
-    # num_material: number of materials in input mesh
+    # num_material: number of materials in input mesh (excluding air)
     # num_source: number of light source placement
     try:
         num_material = 0

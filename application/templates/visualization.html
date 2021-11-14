@@ -21,7 +21,7 @@
     <h2>Cumulative Dose-Volume Histogram</h2>
     <p>The threshold fluence specified for each material is as follows:</p>
     {% for material, thresholdFluence in materialToThreshold.items %}
-        <p>{{ material|safe }}: {{thresholdFluence|safe }} {{ fluenceEnergyUnit }}<sup>2</sup></p>
+        <p style="padding: 0; margin: 0;">{{ material|safe }}: {{thresholdFluence|safe }} {{ fluenceEnergyUnit }}<sup>2</sup></p>
     {% endfor %}
     <p> {{ dvhFig|safe }} </p>
 </div>
