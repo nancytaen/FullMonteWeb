@@ -20,7 +20,7 @@
                 <tbody>
                     {% for preset in presetObjects %}
                     <tr>
-                        <td><a href="{{ preset.presetMesh.url }}" target="_blank">{{ preset.presetMesh }}</a></td>
+                        <td><a href="download/{{preset.presetMesh.name}}" target="_blank">{{ preset.presetMesh }}</a></td>
                         <td>{{ preset.presetMesh.size|filesizeformat }}</td>
                         <td>{{ preset.layerDesc|linebreaks }}</td>
                     </tr>
