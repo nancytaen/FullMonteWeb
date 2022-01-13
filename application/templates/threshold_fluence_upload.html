@@ -1,0 +1,72 @@
+{% extends "base_generic.html" %}
+{% load static %}
+
+{% block content %}
+<div class="txt_container">
+    <h1>Upload Tissue Property File for Visualization</h1>
+
+    <!-- form for user to upload a tissue property file -->
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <h3>Upload Tissue Property file Here (with filename tissue_properties_<wave_length>nm.txt)</h3>
+            <p>If you are unsure of what this is, please see detailed explaination <a href="https://gitlab.com/FullMonte/pdt-space/-/wikis/User-guide#pdt-dose-thresholds" target="_blank" rel="noopener noreferrer">here</a>.</p>
+
+            <div class='table'>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>{{ form.tissue_property.label_tag }}</th>
+                        <td>
+                            {{ form.tissue_property.errors }}
+                            {{ form.tissue_property }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p><br/><input type="submit" value="Sumbit"></p>
+
+        </form>
+    </div>
+
+    <form>
+        <input type="button" value="Back" onclick="history.back()">
+    </form>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    var _validFileExtensions = [".txt"];
+    function Validate(oForm) {
+        var arrInputs = oForm.getElementsByTagName("input");
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var blnValid = false;
+                        for (var j = 0; j < _validFileExtensions.length; j++) {
+                            var sCurExtension = _validFileExtensions[j];
+                            if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                                blnValid = true;
+                                break;
+                            }
+                        }
+                        if(blnValid) {
+                            alert("Loading your file will take some time. Please wait.");
+                        }
+                        else {
+                            alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
+                            return false;
+                        }
+                    }
+                }
+            }
+        
+            return true;
+    }
+</script>
+
+
+{% endblock %}

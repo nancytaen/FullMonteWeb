@@ -276,7 +276,6 @@ def fmSimulator(request):
             request.session['packetCount'] = form.cleaned_data['packetCount']
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
             request.session['energyUnit'] = form.cleaned_data['energyUnit']
-            request.session['thresholdFluence'] = form.cleaned_data['thresholdFluence']
 
             if request.POST.get("overwrite_on_ec2") == "True":
                 request.session['overwrite_on_ec2'] = True
@@ -840,6 +839,7 @@ def visualization_mesh_upload(request):
             info = meshFileInfo.objects.filter(user = request.user).latest('id')
             info.fileName = outputMeshFileName
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.thresholdFluence = "" # reset for uploaded mesh
             info.save()
 
             # save units
@@ -859,19 +859,40 @@ def visualization_mesh_upload(request):
     }
     return render(request, "mesh_upload.html", context)
 
+# Threshold fluence upload page
+def visualization_threshold_fluence_upload(request):
+    if request.method == 'POST':
+        print(request)
+        form = fmVisThresholdFluenceForm(request.POST, request.FILES)
+        if form.is_valid():
+            thresholdFluence = ""
+            tissuePropertyFile = request.FILES['tissue_property']
+            for line in tissuePropertyFile:
+                line = line.decode('ascii')
+                print(line)
+                columns = line.split(",")
+                if len(columns) != 3 or isinstance(columns[1], (float, int)):
+                    messages.error(request, 'Error - file format is wrong. Please upload a valid tissue properties file.')
+                    return HttpResponseRedirect('/application/threshold_fluence_upload')
+                thresholdFluence = thresholdFluence + " " + columns[1]
+            print(">>>>>>>>>>>>>>>>", thresholdFluence)
+            # save threshold fluence info for visualization
+            info = meshFileInfo.objects.filter(user = request.user).latest('id')
+            info.thresholdFluence = thresholdFluence
+            info.save()
+            return HttpResponseRedirect('/application/visualization')
+    else:
+        form = fmVisThresholdFluenceForm(request.GET or None)
+    context = {
+        'form': form,
+    }
+    return render(request, "threshold_fluence_upload.html", context)
+
 # FullMonte output Visualization - generate DVH
 def fmVisualization(request):
     # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
-
-    try:
-        dns = request.session['DNS']
-        text_obj = request.session['text_obj']
-        tcpPort = request.session['tcpPort']
-    except:
-        messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
-        return HttpResponseRedirect('/application/aws')
 
     # Check if current session has simulation completed/mesh file uploaded
     info = meshFileInfo.objects.filter(user = request.user).latest('id')
@@ -879,6 +900,20 @@ def fmVisualization(request):
     if len(outputMeshFileName) == 0:
         messages.error(request, 'Error - please run simulation or upload a mesh before trying to visualize')
         return HttpResponseRedirect('/application/mesh_upload')
+
+    # check if current session has threshold fluence provided
+    thresholdFluence = info.thresholdFluence
+    if len(thresholdFluence) == 0:
+        return HttpResponseRedirect('/application/threshold_fluence_upload')
+
+    # check if user is connected to AWS
+    try:
+        dns = request.session['DNS']
+        text_obj = request.session['text_obj']
+        tcpPort = request.session['tcpPort']
+    except:
+        messages.error(request, 'Error - please connect to an AWS remote server before trying to visualize')
+        return HttpResponseRedirect('/application/aws')
 
     # Try to connect to remote server
     private_key_file = io.StringIO(text_obj)
@@ -919,7 +954,7 @@ def fmVisualization(request):
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
             materials = request.session['region_name']
-            thresholdFluence = request.session['thresholdFluence']
+            thresholdFluence = info.thresholdFluence
             p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, ))
             p.start()
             print('after')
@@ -1005,7 +1040,7 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
-    thresholdFluence = round(info.thresholdFluence, 2)
+    thresholdFluence = info.thresholdFluence
     # maxFluence = round(info.maxFluence, 2)
 
     # generate ParaView Visualization URL
@@ -1030,7 +1065,16 @@ def displayVisualization(request):
                 Root folder will be loaded to the ParaView application, and you can look for your desired mesh by browsing through the Root folder."
     
     # pass message, DVH figure, and 3D visualizer link to the HTML
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'thresholdFluence': thresholdFluence, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
+    materials = request.session['region_name']
+    thresholdFluenceArray = thresholdFluence.split()
+    thresholdFluenceArray.insert(0, "0")
+    materialToThreshold = {}
+    for i in range(1, len(thresholdFluenceArray)):
+        if len(materials) == len(thresholdFluenceArray):
+            materialToThreshold[materials[i]] = thresholdFluenceArray[i]
+        else:
+            materialToThreshold["Region" + str(i)] = thresholdFluenceArray[i]
+    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'materialToThreshold': materialToThreshold, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -1627,6 +1671,7 @@ def simulation_finish(request):
     if(simulation_failed):
         info.fileName = ""
         info.dvhFig = ""
+        info.thresholdFluence = ""
         info.save()
         return render(request, "simulation_fail.html", {'output':html_string})
     
@@ -1636,6 +1681,7 @@ def simulation_finish(request):
     outputMeshFileName = outputMeshFile.script.name
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.thresholdFluence = ""
     info.save()
     # save fluence energy unit
     meshUnit = request.session['meshUnit']
@@ -2375,7 +2421,7 @@ def pdt_space_finish(request):
         return HttpResponseRedirect('/application/pdt_space_fail')
         
     # get num_material and num_source by reading the log file
-    # num_material: number of materials in input mesh
+    # num_material: number of materials in input mesh (excluding air)
     # num_source: number of light source placement
     try:
         num_material = 0

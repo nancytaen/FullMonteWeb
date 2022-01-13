@@ -10,7 +10,7 @@ import sys
 class tclInputForm(forms.ModelForm):
     class Meta:
         model = tclInput
-        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit', 'thresholdFluence' )
+        fields = ('meshFile', 'meshUnit', 'kernelType', 'packetCount', 'totalEnergy', 'energyUnit' )
         """
         kernel_choices = (('TetraSVKernel','TetraSVKernel'),
                          ('TetraSurfaceKernel','TetraSurfaceKernel'),
@@ -88,7 +88,7 @@ class pdtForm(forms.Form):
     opt = forms.FileField(label="Optical File", 
                             help_text="Optical file.")
     mesh = forms.FileField(label="Mesh File", 
-                            help_text="Mesh file")
+                            help_text="Mesh file in .mesh file format.")
     tissue_property = forms.FileField(label="Tissue Property File", 
                             help_text="Tissue Property file with filename tissue_properties_<wave_length>nm.txt.")
     tissue_type = forms.FileField(label="Tissue Types File", 
@@ -180,7 +180,7 @@ class lightSource(forms.Form):
                                                                          ('true','true')), initial='true')
 
 
-    power = forms.IntegerField(label='Power', required=False, initial=1)
+    power = forms.FloatField(label='Power', required=False, initial=1.0)
 
 class RequiredFormSet(BaseFormSet):
     def __init__(self, *args, **kwargs):
@@ -205,6 +205,9 @@ class awsFiles(forms.ModelForm):
         fields = ('DNS', 'pemfile', 'TCP_port')
     def __init__(self, *args, **kwargs):
         super(awsFiles, self).__init__(*args, **kwargs)
+
+class fmVisThresholdFluenceForm(forms.Form):
+    tissue_property = forms.FileField(label="Tissue Property File")
 
 class visualizeMeshForm(forms.ModelForm):
     class Meta:

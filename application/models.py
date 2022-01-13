@@ -29,7 +29,6 @@ class tclInput(models.Model):
     packetCount = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
     totalEnergy = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     energyUnit = models.CharField(max_length=255)
-    thresholdFluence = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0)])
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
@@ -61,7 +60,7 @@ class meshFileInfo(models.Model):
     remoteFileExists = models.BooleanField(default = False)
     dvhFig = models.TextField(blank=True, null=True)
     # maxFluence = models.FloatField(null=True, blank=True)
-    thresholdFluence = models.FloatField(null=True, blank=True)
+    thresholdFluence = models.TextField(null=True, blank=True)
     user = models.ForeignKey(user_model,
                              default = 0,
                              null = True,
