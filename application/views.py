@@ -101,49 +101,116 @@ class BaseFileDownloadView(DetailView):
 class fileDownloadView(BaseFileDownloadView):
     pass
 
-class BaseEC2FileDownloadView(DetailView):
-    def get(self, request, *args, **kwargs):
-        filepath=self.kwargs.get('filepath', None)
-        if filepath is None:
-            raise ValueError("Found empty filepath")
+def transfer_output_file(request, filepath):
+    print(">>>>>>>>>>> in transfer")
+    filename = filepath.rsplit('/', 1)[-1]
+    local_root = os.path.dirname(__file__) + "/temp/" + request.user.username
+    local_path = local_root + "/" + filename
 
-        # Upload file from EC2 to website server
+    print(">>>>>>>>>>> connecting to client")
+    text_obj = request.session['text_obj']
+    private_key_file = io.StringIO(text_obj)
+    privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    try:
+        client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='simulation_finish')
+    except:
+        sys.stdout.flush()
+        messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        return HttpResponseRedirect('/application/aws')
+    print(">>>>>>>>>>> connected to client")
+    paramiko.sftp_file.SFTPFile.MAX_REQUEST_SIZE = pow(2, 22) # 4MB per chunk
+    ftp = client.open_sftp()
+    try:
+        # add user's username as subir
+        print(">>>>>>>>>>> creating local directory")
+        if os.path.exists(local_root):
+            for filename in os.listdir(local_root):
+                file_path = os.path.join(local_root, filename)
+                os.remove(file_path)
+        else:
+            os.makedirs(local_root)
+        remote_path = 'docker_sims/'+filepath
+        print(">>>>>>>>>>> transfering file in chunks")
+        ftp.get(remote_path, local_path)
+        print(">>>>>>>>>>> done transfering file in chunks")
+        # update process status
+        conn = DbConnection()
+        running_process = processRunning.objects.filter(user = request.user).latest('id')
+        running_process.running = False
+        running_process.save()
+    finally:
+        ftp.close()
+        client.close()
+        conn.close()
+        print ('>>> destroyed connection from remote server in dose_volume_histogram.')
+    print("done preparing for download")
+    sys.stdout.flush()
+
+def ec2fileDownloadView(request, filepath):
+    local_root = os.path.dirname(__file__) + "/temp/" + request.user.username
+    if os.path.exists(local_root):
+        for filename in os.listdir(local_root):
+            file_path = os.path.join(local_root, filename)
+            os.remove(file_path)
+
+    if filepath is None:
+        raise ValueError("Found empty filepath")
+
+    # Upload file from EC2 to website server
+    request.session['ec2_file_path'] = filepath
+
+    print('Transfering output file from EC2')
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+    for child in children:
+        print('Child pid is {}'.format(child.pid))
+    connections.close_all()
+    p = Process(target=transfer_output_file, args=(request, filepath, ))
+    p.start()
+    current_process = psutil.Process()
+    children = current_process.children(recursive=True)
+
+    form = processRunning()
+    form.user=request.user
+
+    for child in children:
+        form.pid = child.pid
+        form.running = True
+        print('Child pid is {}'.format(child.pid))
+
+    conn = DbConnection()
+    form.save()
+    sys.stdout.flush()
+    return HttpResponseRedirect('/application/preparing_download')
+
+def preparing_download(request):
+    running_process = processRunning.objects.filter(user = request.user).latest('id')
+    if running_process.running:
+        start_time = running_process.start_time
+        current_time = datetime.now(timezone.utc)
+        time_diff = current_time - start_time
+        running_time = str(time_diff)
+        running_time = running_time.split('.')[0]
+        return render(request, "preparing_download.html", {'time':running_time})
+    else:
+        filepath = request.session['ec2_file_path']
         filename = filepath.rsplit('/', 1)[-1]
-        text_obj = request.session['text_obj']
-        private_key_file = io.StringIO(text_obj)
-        privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        try:
-            client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='simulation_finish')
-        except:
-            sys.stdout.flush()
-            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-            return HttpResponseRedirect('/application/aws')
-        paramiko.sftp_file.SFTPFile.MAX_REQUEST_SIZE = pow(2, 22) # 4MB per chunk
-        ftp = client.open_sftp()
-        try:
-            remote_path = 'docker_sims/'+filepath
-            local_root = os.path.dirname(__file__) + "/temp/" + request.user.username
-            # add user's username as subir
-            if not os.path.exists(local_root):
-                os.makedirs(local_root)
-            local_path = local_root + "/" + filename
-            ftp.get(remote_path, local_path)
-        finally:
-            ftp.close()
-        
-        # Open the file for reading content
-        path = open(local_path, 'r')
-        # Set the return value of the HttpResponse
-        response = HttpResponse(path)
-        # Set the HTTP header for sending to browser
-        response['Content-Disposition'] = "attachment; filename=%s" % filename
-        # Return the response value
-        os.remove(local_path)
-        os.rmdir(local_root)
-        return response
+        local_root = os.path.dirname(__file__) + "/temp/" + request.user.username
+        local_path = local_root + "/" + filename
 
-class ec2fileDownloadView(BaseEC2FileDownloadView):
-    pass
+        # Open the file for reading content
+        if os.path.exists(local_path):
+            path = open(local_path, 'r')
+            # Set the return value of the HttpResponse
+            response = HttpResponse(path)
+            # Set the HTTP header for sending to browser
+            response['Content-Disposition'] = "attachment; filename=%s" % filename
+            # Return the response value
+            os.remove(local_path)
+            os.rmdir(local_root)
+            return response
+        else:
+            return HttpResponseRedirect('/application/simulation_finish')
 
 # Object finalizer implementation for safe paramiko client connection & destruction
 # https://extsoft.pro/safely-destroying-connections-in-python/

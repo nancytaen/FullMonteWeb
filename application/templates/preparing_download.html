@@ -1,0 +1,26 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<head>
+<meta http-equiv="refresh" content="5"/>
+<div class="txt_container" style="text-align: center;">
+    <h1>Preparing your file for download</h1>
+    <p>For larger files, this will take a few minutes. Please wait.</p>
+    <p>Click refresh to update status or auto-fresh every 5 seconds.</p>
+    <p>A dialog box will automatically appear for you to save your file when the preparation is finished.</p>
+    <p>To download other files, refresh this page after downloading the current file to be redirected to the previous page.</p>
+    <p>Status: running {{time}}</p>
+
+    <div class="d-flex justify-content-center">
+        <div class="spinner-grow text-info" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <br>
+
+    <form action="" method="get">
+        <input type="submit" value="Refresh" />
+    </form>
+</div>
+
+{% endblock %}
