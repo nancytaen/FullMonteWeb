@@ -118,6 +118,7 @@ class BaseEC2FileDownloadView(DetailView):
             sys.stdout.flush()
             messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
             return HttpResponseRedirect('/application/aws')
+        paramiko.sftp_file.SFTPFile.MAX_REQUEST_SIZE = pow(2, 22) # 4MB per chunk
         ftp = client.open_sftp()
         try:
             remote_path = 'docker_sims/'+filepath
