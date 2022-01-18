@@ -39,6 +39,7 @@ urlpatterns = [
 
     # /application/simulation_finish
     path('simulation_finish', views.simulation_finish, name='simulation_finish'),
+    url(r'download_from_ec2/(?P<filepath>.*)$', views.ec2fileDownloadView.as_view(), name='ec2_file_download'),
 
     # /application/simulation_confirmation
     path('simulation_confirmation', views.simulation_confirmation, name='simulation_confirmation'),

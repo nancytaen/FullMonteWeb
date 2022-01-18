@@ -101,6 +101,49 @@ class BaseFileDownloadView(DetailView):
 class fileDownloadView(BaseFileDownloadView):
     pass
 
+class BaseEC2FileDownloadView(DetailView):
+    def get(self, request, *args, **kwargs):
+        filepath=self.kwargs.get('filepath', None)
+        if filepath is None:
+            raise ValueError("Found empty filepath")
+
+        # Upload file from EC2 to website server
+        filename = filepath.rsplit('/', 1)[-1]
+        text_obj = request.session['text_obj']
+        private_key_file = io.StringIO(text_obj)
+        privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        try:
+            client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='simulation_finish')
+        except:
+            sys.stdout.flush()
+            messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+            return HttpResponseRedirect('/application/aws')
+        ftp = client.open_sftp()
+        try:
+            remote_path = 'docker_sims/'+filepath
+            local_root = os.path.dirname(__file__) + "/temp/" + request.user.username
+            # add user's username as subir
+            if not os.path.exists(local_root):
+                os.makedirs(local_root)
+            local_path = local_root + "/" + filename
+            ftp.get(remote_path, local_path)
+        finally:
+            ftp.close()
+        
+        # Open the file for reading content
+        path = open(local_path, 'r')
+        # Set the return value of the HttpResponse
+        response = HttpResponse(path)
+        # Set the HTTP header for sending to browser
+        response['Content-Disposition'] = "attachment; filename=%s" % filename
+        # Return the response value
+        os.remove(local_path)
+        os.rmdir(local_root)
+        return response
+
+class ec2fileDownloadView(BaseEC2FileDownloadView):
+    pass
+
 # Object finalizer implementation for safe paramiko client connection & destruction
 # https://extsoft.pro/safely-destroying-connections-in-python/
 class SshConnection:
@@ -200,6 +243,7 @@ def fmSimulator(request):
         if form.is_valid() and formset3.is_valid():
             print(form.cleaned_data)
             sys.stdout.flush()
+            request.session['ec2_file_paths'] = []
             request.session['scoredVolumeRegionID'] = []
             if request.POST['selected_existing_meshes'] != "":
                 print("This is 1")
@@ -1638,6 +1682,24 @@ def simulation_finish(request):
         instance to avoid excessive charges.\" | \
         sudo mail -s \"Your FullMonteWeb run has finished\" -r \'<fullmonteweb@outlook.com>\' " + str(request.user.email)
     stdin, stdout, stderr = client.exec_command(command)
+
+    # identify local output files to display
+    file_paths = request.session['ec2_file_paths']
+    if not file_paths:
+        # command to identify files after simulation
+        cd_cmd = 'cd ~/docker_sims;'
+        find_cmd = 'find * ! -name "files_before.txt" ! -name "files_after.txt" ! -name "*.sh" ! -name "*.tcl" ! -name "*.csv" ! -name "*.png" -type f >> files_after.txt;'
+        # command to diff directory for newly created files and determine the number of new files created
+        diff_cmd = 'comm -13 files_before.txt files_after.txt >> files_diff.txt'
+        # execute commands in order
+        stdin, stdout, stderr = client.exec_command(cd_cmd + find_cmd + diff_cmd)
+        exit_status = stdout.channel.recv_exit_status()          # Blocking call
+        if exit_status == 0:
+            print ("Output files successfully diffed")
+        else:
+            print("Error", exit_status)
+        sys.stdout.flush()
+
     ftp = client.open_sftp()
     try:
         # ftp.chdir('docker_sims/')
@@ -1655,8 +1717,23 @@ def simulation_finish(request):
         print(output)
         sys.stdout.flush()
         stdin, stdout, stderr = client.exec_command('sudo rm -f ~/cleaned.log')
+        # get files for view
+        if not file_paths:
+            with ftp.open('docker_sims/files_diff.txt') as output_vtk_files:
+                for line in output_vtk_files:
+                    output_vtk_path = line.rstrip()
+                    file_paths.append(output_vtk_path)
+            request.session['ec2_file_paths'] = file_paths
     finally:
         ftp.close()
+    # remove temporary file
+    stdin, stdout, stderr = client.exec_command('cd ~/docker_sims; rm -rf files_diff.txt')
+    exit_status = stdout.channel.recv_exit_status()          # Blocking call
+    if exit_status == 0:
+        print ("Temporary file successfully deleted")
+    else:
+        print("Error", exit_status)
+    sys.stdout.flush()
     client.close()
     if 'peak_mem_usage' in request.session:
         html_string += 'Physical peak memory (RAM) usage: ' + str(round(request.session['peak_mem_usage'],2)) + ' ' + request.session['peak_mem_usage_unit'] + '<br />'
@@ -1687,11 +1764,12 @@ def simulation_finish(request):
     meshUnit = request.session['meshUnit']
     energyUnit = request.session['energyUnit']
     request.session['fluenceEnergyUnit'] = energyUnit + "/" + meshUnit
+
     # populate history
     connections.close_all()
     p = Process(target=populate_simulation_history, args=(request, ))
     p.start()
-    return render(request, "simulation_finish.html", {'output':html_string})
+    return render(request, "simulation_finish.html", {'output':html_string, 'output_file_paths':file_paths})
 
 def populate_simulation_history(request):
     conn = DbConnection()
