@@ -155,24 +155,30 @@ def calculate_cumulative_DVH(doseData, volumeData):
         
     return doseVolumeData
 
-def calculate_cdvh_for_v100(doseVolumeData, noBins, thresholdFluenceArray, cutoff):
+def calculate_cdvh_for_v100(doseVolumeData, noBins, thresholdFluenceArray, normalization, cutoff, tumorRegion, v100):
 
     cumulativeDVH = {}
+    normalized = False
+
+    print(">>>>>>>>>> Debugging in calculate_cdvh_for_v100:", normalization, cutoff, tumorRegion, v100)
 
     # Find 100% threshold fluence at xx% volume for speciied tumor region
-    n = len(doseVolumeData[5][0])
     hundred_percent_theshold_fluence = 0
     factor = 1
-    for i in range(n - 1): #can be improved by binary searh instead
-        if doseVolumeData[5][1][i+1] / regionVolume[5] < 0.98:
-            hundred_percent_theshold_fluence = doseVolumeData[5][0][i]
-            break
-    if hundred_percent_theshold_fluence > 0:
-        factor = thresholdFluenceArray[5] / hundred_percent_theshold_fluence
+    if normalization:
+        n = len(doseVolumeData[tumorRegion][0])
+        for i in range(n - 1): #can be improved by binary searh instead
+            if doseVolumeData[tumorRegion][1][i+1] / regionVolume[tumorRegion] < v100:
+                hundred_percent_theshold_fluence = doseVolumeData[tumorRegion][0][i]
+                break
+        if hundred_percent_theshold_fluence > 0:
+            factor = thresholdFluenceArray[tumorRegion] / hundred_percent_theshold_fluence
+            normalized = True
 
     for region, doseVolume in doseVolumeData.items():
         cumulativeDVH[region] = [-1] * noBins
         # adjust fluence by factor, compute %threshold fluence, and group them into bins
+        n = len(doseVolume[0])
         lastID = n-1
         for i in range(n):
             dose = doseVolume[0][i] * factor
@@ -190,13 +196,13 @@ def calculate_cdvh_for_v100(doseVolumeData, noBins, thresholdFluenceArray, cutof
             if cumulativeDVH[region][i] == -1:
                 cumulativeDVH[region][i] = cumulativeDVH[region][i+1]
 
-    return cumulativeDVH, factor
+    return cumulativeDVH, factor, normalized
 
 # The cumulative DVH is plotted with bin doses (% threshold fluence) along the horizontal
 # axis. The column height of each bin represents the volume of structure receiving a
 # dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit, cutoffPercentage = 500):
+def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit, cutoffPercentage):
     global export_data # for exporting to excel
     export_data = {}
 
@@ -206,6 +212,8 @@ def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit, cutoffPercen
 
     # Plot style
     plt.style.use("bmh")
+
+    print(">>>>>>>>>> Debugging in plot_DVH:", cutoffPercentage / 100)
 
     # Set up figure and plot
     fig = plt.figure(linewidth=10, edgecolor="#04253a", frameon=True)
@@ -347,7 +355,7 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.SetExtent(regionBoundaries)
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
-def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100):
     conn = create_connection()
     conn.ensure_connection()
     info = meshFileInfo.objects.filter(user = user).latest('id')
@@ -434,13 +442,24 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
             conn.close()
             sys.stdout.flush()
             return(-1)
-        cutoff = [i * 5 for i in thresholdFluenceArray] # 500%
+        cutoff = [i * cutoffPercentage / 100 for i in thresholdFluenceArray] # 500%
         doseData = get_doses(fluenceData,regionData)
         DVHdata = calculate_cumulative_DVH(doseData,volumeData)
-        cumulativeDVH_v100, scalingFactor = calculate_cdvh_for_v100(DVHdata, noBins, thresholdFluenceArray, cutoff)
+        cumulativeDVH_v100, scalingFactor, normalized = calculate_cdvh_for_v100(DVHdata, noBins, thresholdFluenceArray, normalization, cutoff, tumorRegion, v100/100)
         # save the figure's html string to session
-        info.dvhFig = plot_DVH(cumulativeDVH_v100,noBins,materials,outputMeshFileName,meshUnit)
-        info.powerAndScaling = "Simulation power used is " + "{:.2f}".format(power) + "\nScaled power to " + "{:.2f}".format(scalingFactor * power) + " to achieve V100 of 98%."
+        info.dvhFig = plot_DVH(cumulativeDVH_v100,noBins,materials,outputMeshFileName,meshUnit,cutoffPercentage)
+        if normalized:
+            if power != -1:
+                info.powerAndScaling = "Simulation total energy used is " + "{:.2f}".format(power) + energyUnit + ". Scaled energy to " + "{:.2f}".format(scalingFactor * power) + energyUnit + " to achieve the requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ")."
+            else:
+                info.powerAndScaling = "Scaled energy to achieve the requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ")."
+        elif normalization == False:
+            info.powerAndScaling = ""
+        else:
+            if(len(materials) == len(cumulativeDVH_v100) + 1):
+                info.powerAndScaling = "The requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ") cannot be achieved with the input parameters through power allocation -- check that you have sufficient light sources and their placement covers the tumour volume."
+            else:
+                info.powerAndScaling = "The requested coverage (" + str(v100) + "% of Region " + str(tumorRegion) + ") cannot be achieved with the input parameters through power allocation -- check that you have sufficient light sources and their placement covers the tumour volume."
         # info.maxFluence = maxFluence
         info.save()
         # export the data to csv if mesh file comes from simulation

@@ -207,7 +207,15 @@ class awsFiles(forms.ModelForm):
         super(awsFiles, self).__init__(*args, **kwargs)
 
 class fmVisThresholdFluenceForm(forms.Form):
+    YESNO= [
+        ('noNormalize', 'Do not normalize fluence to V100'),
+        ('normalize', 'Normalize fluence to V100'),
+    ]
     tissue_property = forms.FileField(label="Tissue Property File")
+    cutoffPercentage = forms.FloatField(label='Cutoff Percentage of Fluence Threshold', required=False, initial=500)
+    normalization = forms.ChoiceField(widget=forms.RadioSelect, choices=YESNO, initial='noNormalize')
+    tumorRegion = forms.IntegerField(label='Tumor Region Number', required=False, initial=1)
+    v100 = forms.FloatField(label='Desired V100', required=False, initial=98)
 
 class visualizeMeshForm(forms.ModelForm):
     class Meta:

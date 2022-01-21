@@ -21,6 +21,46 @@
                             {{ form.tissue_property }}
                         </td>
                     </tr>
+                    <tr>
+                        <th>{{ form.cutoffPercentage.label_tag }}</th>
+                        <td>
+                            {{ form.cutoffPercentage.errors }}
+                            {{ form.cutoffPercentage }}
+                            &nbsp; %
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.normalization.label_tag }}</th>
+                        <td>
+                            {{ form.normalization.errors }}
+                            {% for checkbox in form.normalization %}
+                            <label>
+                                {{ checkbox.tag }} {{ checkbox.choice_label }}
+                            </label>
+                            <br>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </table>
+                <table class='no_error'>
+                    {% csrf_token %}
+                    <p>The following are used for normalization if you checked the option above. Please ignore otherwise.</p>
+                    <tr>
+                        <th>{{ form.tumorRegion.label_tag }}</th>
+                        <td>
+                            {{ form.tumorRegion.errors }}
+                            {{ form.tumorRegion }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>{{ form.v100.label_tag }}</th>
+                        <td>
+                            {{ form.v100.errors }}
+                            {{ form.v100 }}
+                            &nbsp; %
+                            <br>(This is the % volume coverage under 100% threshold dose)
+                        </td>
+                    </tr>
                 </table>
             </div>
             

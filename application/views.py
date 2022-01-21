@@ -454,6 +454,15 @@ def fmSimulatorMaterial(request):
             request.session['absorptionCoeff'] = []
             request.session['refractiveIndex'] = []
             request.session['anisotropy'] = []
+
+            # get power
+            indicator = b' energyPowerValue '
+            tcl_file = request.FILES['tcl_file']
+            for line in tcl_file:
+                if indicator in line:
+                    request.session['totalEnergy'] = float(line.split()[2])
+                    break
+
             # file uploaded and "Submit and Run" button clicked
             form = Optional_Tcl(request.POST, request.FILES)
             default_storage.delete(request.FILES['tcl_file'].name)
@@ -986,6 +995,8 @@ def visualization_threshold_fluence_upload(request):
         if form.is_valid():
             thresholdFluence = ""
             tissuePropertyFile = request.FILES['tissue_property']
+            namesFromTissuePropertiesFile = []
+            namesFromTissuePropertiesFile.append("Air")
             for line in tissuePropertyFile:
                 line = line.decode('ascii')
                 print(line)
@@ -994,7 +1005,20 @@ def visualization_threshold_fluence_upload(request):
                     messages.error(request, 'Error - file format is wrong. Please upload a valid tissue properties file.')
                     return HttpResponseRedirect('/application/threshold_fluence_upload')
                 thresholdFluence = thresholdFluence + " " + columns[1]
+                namesFromTissuePropertiesFile.append(columns[0])
             print(">>>>>>>>>>>>>>>>", thresholdFluence)
+            normalizeOrNot = form.cleaned_data['normalization']
+            if normalizeOrNot == 'normalize':
+                request.session['normalization'] = True
+            else:
+                request.session['normalization'] = False
+            request.session['cutoffPercentage'] = form.cleaned_data['cutoffPercentage']
+            request.session['tumorRegion'] = form.cleaned_data['tumorRegion']
+            request.session['v100'] = form.cleaned_data['v100']
+            if len(request.session['region_name']) == 0:
+                request.session['totalEnergy'] = -1
+            if(len(namesFromTissuePropertiesFile) > len(request.session['region_name'])):
+                request.session['region_name'] = namesFromTissuePropertiesFile
             # save threshold fluence info for visualization
             info = meshFileInfo.objects.filter(user = request.user).latest('id')
             info.thresholdFluence = thresholdFluence
@@ -1075,7 +1099,11 @@ def fmVisualization(request):
             materials = request.session['region_name']
             thresholdFluence = info.thresholdFluence
             power = request.session['totalEnergy']
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, ))
+            normalization = request.session['normalization']
+            cutoffPercentage = request.session['cutoffPercentage']
+            tumorRegion = request.session['tumorRegion']
+            v100 = request.session['v100']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100, ))
             p.start()
             print('after')
             current_process = psutil.Process()
