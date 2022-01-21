@@ -101,12 +101,10 @@ def calculate_volumes(fullMonteOutputData, regionData):
 
     return volumeData
 
-# map each region to its % threshold doses (fluence)
-def get_doses(fluenceData, regionData, thresholdFluenceArray):
+# map each region to its fluence
+def get_doses(fluenceData, regionData):
 
     doseData = {}
-    global maxPercentThresholdFluence
-    maxPercentThresholdFluence = 0
 
     # get array of % threshold fluence for each region, also save the maximum % threshold fluence across all regions
     for region, dose in zip(regionData, fluenceData):
@@ -116,10 +114,8 @@ def get_doses(fluenceData, regionData, thresholdFluenceArray):
             if region not in doseData:
                 doseData[region] = []
 
-            percentThresholdFluence = dose / thresholdFluenceArray[region] * 100
-            doseData[region].append(percentThresholdFluence)
-            if(percentThresholdFluence > maxPercentThresholdFluence):
-                maxPercentThresholdFluence = percentThresholdFluence
+            doseData[region].append(dose)
+
     return doseData
 
 # compute relative dose to relative volume mapping
@@ -127,55 +123,83 @@ def get_doses(fluenceData, regionData, thresholdFluenceArray):
 # and dose arrays. Now for each region, loop through all its data points, get
 # its relative dose, which will be represented by the x-axis, get its volume,
 # and add its volume to the volume that is associated with the relative dose.
-# Finally, compute the relative volume (fraction of volume against total volume).
-def calculate_DVH(doseData, volumeData, noBins):
+# Finally, or each region, compute the total volume of region that received
+# fluence greater than or equal to each fluence value. Returns an 2D array
+# [dose array, volume array, umulative volume array]
+def calculate_cumulative_DVH(doseData, volumeData):
 
     doseVolumeData = {}
-    global export_data # for exporting to excel
-    export_data = {}
+    doseVolumeDataTemp = {}
 
-    # map region volume to its corresponding dose bin for all regions
+    # map region volume to its corresponding dose for all regions
     for region, doses in doseData.items():
-        doseVolumeData[region] = [0] * noBins
-        export_data[region] = np.zeros((5, noBins))
-        # for each point n on the region, cumulate volume to the total volume at dose_n
+        doseVolumeDataTemp[region] = {}
+        # for each point n on the region, cumulate volume to the total volume at dose
         for n in range(len(doses)):
-            # 500 (noBins) bins, so the dose bin ID on the x-axis is %threshold_dose/max_%threshold_dose * noBins
-            bin_id = floor(doses[n] / maxPercentThresholdFluence * (noBins-1))
-            doseVolumeData[region][bin_id] += volumeData[region][n]
-            # save data to be exported (save % threshold fluence values in order)
-            export_data[region][0][bin_id] = doses[n]
+            if doses[n] not in doseVolumeDataTemp[region]:
+                doseVolumeDataTemp[region][doses[n]] = volumeData[region][n]
+            else:
+                doseVolumeDataTemp[region][doses[n]] += volumeData[region][n]
 
+    # sort doses in order and split dictionary into key and value arrays
+    for region, doseVol in doseVolumeDataTemp.items():
+        doseVolumeData[region] = [[], []]
+        for dose in sorted (doseVol):
+            doseVolumeData[region][0].append(dose)
+            doseVolumeData[region][1].append(doseVol[dose]) # volume
+
+        # compute cumulative DVH
+        n = len(doseVol)
+        for i in range(n-2, -1, -1):
+            doseVolumeData[region][1][i] += doseVolumeData[region][1][i+1]
+        
     return doseVolumeData
 
-# For each region, compute the total volume of region that received fluence greater than or
-# equal to the fluence values in that bin
-def calculate_cumulative_DVH(doseVolumeData, noBins):
+def calculate_cdvh_for_v100(doseVolumeData, noBins, thresholdFluenceArray, cutoff):
 
     cumulativeDVH = {}
 
-    # for each dose interval
+    # Find 100% threshold fluence at xx% volume for speciied tumor region
+    n = len(doseVolumeData[5][0])
+    hundred_percent_theshold_fluence = 0
+    factor = 1
+    for i in range(n - 1): #can be improved by binary searh instead
+        if doseVolumeData[5][1][i+1] / regionVolume[5] < 0.98:
+            hundred_percent_theshold_fluence = doseVolumeData[5][0][i]
+            break
+    if hundred_percent_theshold_fluence > 0:
+        factor = thresholdFluenceArray[5] / hundred_percent_theshold_fluence
+
     for region, doseVolume in doseVolumeData.items():
+        cumulativeDVH[region] = [-1] * noBins
+        # adjust fluence by factor, compute %threshold fluence, and group them into bins
+        lastID = n-1
+        for i in range(n):
+            dose = doseVolume[0][i] * factor
+            if dose > cutoff[region]:
+                lastID = i
+                break
+            bin_id = floor(dose / cutoff[region] * (noBins-1))
+            if cumulativeDVH[region][bin_id] == -1:
+                cumulativeDVH[region][bin_id] = doseVolume[1][i]
 
-        if region not in cumulativeDVH:
-            cumulativeDVH[region] = [0] * noBins
+        # fill in gaps
+        if cumulativeDVH[region][noBins-1] == -1:
+            cumulativeDVH[region][noBins-1] = doseVolume[1][lastID]
+        for i in range(noBins-2, -1, -1):
+            if cumulativeDVH[region][i] == -1:
+                cumulativeDVH[region][i] = cumulativeDVH[region][i+1]
 
-        cumulativeTotal = 0
-
-        for n in range(noBins-1, -1, -1):
-            cumulativeTotal += doseVolume[n]
-            cumulativeDVH[region][n] = cumulativeTotal
-            # save data to be exported (save region volume and cumulative volume in order)
-            export_data[region][1][n] = doseVolume[n]
-            export_data[region][2][n] = cumulativeTotal
-
-    return cumulativeDVH
+    return cumulativeDVH, factor
 
 # The cumulative DVH is plotted with bin doses (% threshold fluence) along the horizontal
 # axis. The column height of each bin represents the volume of structure receiving a
 # dose greater than or equal to that dose.
 # plot using matplotlib and convert to html string
-def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit):
+def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit, cutoffPercentage = 500):
+    global export_data # for exporting to excel
+    export_data = {}
+
     FIG_WIDTH = 11
     FIG_HEIGHT = 6
     LINE_WIDTH = 4
@@ -195,7 +219,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit):
     lines = []      # array of matplotlib objects; a line for each region for the interactive legend
     labelsList = [] # x,y labels for the interactive tooltip
 
-    xVals = np.array(range(noBins)) / noBins * maxPercentThresholdFluence # % threshold dose
+    xVals = np.array(range(noBins)) / noBins * cutoffPercentage # % threshold dose
 
     # Plot for each region
     # color=next(ax._get_lines.prop_cycler)['color']
@@ -213,6 +237,7 @@ def plot_DVH(data, noBins, materials, outputMeshFileName, meshUnit):
             labels.append(label)
         labelsList.append(labels)
         # save data to be exported (save % threshold fluence dose and cumulative region volume in order)
+        export_data[region] = np.zeros((5, noBins))
         export_data[region][3] = xVals
         export_data[region][4] = yVals
 
@@ -322,7 +347,7 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.SetExtent(regionBoundaries)
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
-def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power):
     conn = create_connection()
     conn.ensure_connection()
     info = meshFileInfo.objects.filter(user = user).latest('id')
@@ -409,12 +434,13 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
             conn.close()
             sys.stdout.flush()
             return(-1)
-
-        doseData = get_doses(fluenceData,regionData,thresholdFluenceArray)
-        DVHdata = calculate_DVH(doseData,volumeData,noBins)
-        cumulativeDVH = calculate_cumulative_DVH(DVHdata, noBins)
+        cutoff = [i * 5 for i in thresholdFluenceArray] # 500%
+        doseData = get_doses(fluenceData,regionData)
+        DVHdata = calculate_cumulative_DVH(doseData,volumeData)
+        cumulativeDVH_v100, scalingFactor = calculate_cdvh_for_v100(DVHdata, noBins, thresholdFluenceArray, cutoff)
         # save the figure's html string to session
-        info.dvhFig = plot_DVH(cumulativeDVH,noBins,materials,outputMeshFileName,meshUnit)
+        info.dvhFig = plot_DVH(cumulativeDVH_v100,noBins,materials,outputMeshFileName,meshUnit)
+        info.powerAndScaling = "Simulation power used is " + "{:.2f}".format(power) + "\nScaled power to " + "{:.2f}".format(scalingFactor * power) + " to achieve V100 of 98%."
         # info.maxFluence = maxFluence
         info.save()
         # export the data to csv if mesh file comes from simulation

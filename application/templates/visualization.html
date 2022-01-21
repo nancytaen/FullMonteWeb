@@ -23,6 +23,7 @@
     {% for material, thresholdFluence in materialToThreshold.items %}
         <p style="padding: 0; margin: 0;">{{ material|safe }}: {{thresholdFluence|safe }} {{ fluenceEnergyUnit }}<sup>2</sup></p>
     {% endfor %}
+    <p> {{ powerAndScaling|safe }} </p>
     <p> {{ dvhFig|safe }} </p>
 </div>
 <div class="txt_container">

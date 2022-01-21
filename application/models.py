@@ -59,6 +59,7 @@ class meshFileInfo(models.Model):
     fileName = models.CharField(max_length=255)
     remoteFileExists = models.BooleanField(default = False)
     dvhFig = models.TextField(blank=True, null=True)
+    powerAndScaling = models.TextField(blank=True, null=True)
     # maxFluence = models.FloatField(null=True, blank=True)
     thresholdFluence = models.TextField(null=True, blank=True)
     user = models.ForeignKey(user_model,

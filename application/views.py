@@ -448,6 +448,12 @@ def fmSimulatorMaterial(request):
 
         # Skip rest of setup if user uploaded their own TCL script
         if '_skip' in request.POST:
+            request.session['material'] = []
+            request.session['region_name'] = [] # for visualization legend
+            request.session['scatteringCoeff'] = []
+            request.session['absorptionCoeff'] = []
+            request.session['refractiveIndex'] = []
+            request.session['anisotropy'] = []
             # file uploaded and "Submit and Run" button clicked
             form = Optional_Tcl(request.POST, request.FILES)
             default_storage.delete(request.FILES['tcl_file'].name)
@@ -951,6 +957,7 @@ def visualization_mesh_upload(request):
             info = meshFileInfo.objects.filter(user = request.user).latest('id')
             info.fileName = outputMeshFileName
             info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+            info.powerAndScaling = ""
             info.thresholdFluence = "" # reset for uploaded mesh
             info.save()
 
@@ -1067,7 +1074,8 @@ def fmVisualization(request):
             energyUnit = request.session['energyUnit']
             materials = request.session['region_name']
             thresholdFluence = info.thresholdFluence
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, ))
+            power = request.session['totalEnergy']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, ))
             p.start()
             print('after')
             current_process = psutil.Process()
@@ -1094,6 +1102,7 @@ def fmVisualization(request):
     else:
         # info.maxFluence = 0
         info.dvhFig = "<p>Could not generate Dose Volume Histogram</p>"
+        info.powerAndScaling = ""
         info.save()
         return HttpResponseRedirect('/application/displayVisualization')
 
@@ -1152,6 +1161,7 @@ def displayVisualization(request):
     outputMeshFileName = info.fileName
     fileExists = info.remoteFileExists
     dvhFig = info.dvhFig
+    powerAndScaling = info.powerAndScaling
     thresholdFluence = info.thresholdFluence
     # maxFluence = round(info.maxFluence, 2)
 
@@ -1186,7 +1196,7 @@ def displayVisualization(request):
             materialToThreshold[materials[i]] = thresholdFluenceArray[i]
         else:
             materialToThreshold["Region" + str(i)] = thresholdFluenceArray[i]
-    context = {'message': msg, 'dvhFig': dvhFig, 'visURL': visURL, 'materialToThreshold': materialToThreshold, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
+    context = {'message': msg, 'dvhFig': dvhFig, 'powerAndScaling':powerAndScaling, 'visURL': visURL, 'materialToThreshold': materialToThreshold, 'fluenceEnergyUnit': request.session['fluenceEnergyUnit']}
     return render(request, "visualization.html", context)
 
 # page for diplaying info about kernel type
@@ -1816,6 +1826,7 @@ def simulation_finish(request):
     if(simulation_failed):
         info.fileName = ""
         info.dvhFig = ""
+        info.powerAndScaling = ""
         info.thresholdFluence = ""
         info.save()
         return render(request, "simulation_fail.html", {'output':html_string})
@@ -1826,6 +1837,7 @@ def simulation_finish(request):
     outputMeshFileName = outputMeshFile.script.name
     info.fileName = outputMeshFileName[:-4] + ".out.vtk"
     info.dvhFig = "<p>Dose Volume Histogram not yet generated</p>"
+    info.powerAndScaling = ""
     info.thresholdFluence = ""
     info.save()
     # save fluence energy unit
