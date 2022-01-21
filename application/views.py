@@ -979,6 +979,7 @@ def visualization_mesh_upload(request):
             # set material list to empty because the list is only used for mesh visualizaition from simulation.
             # uploaded mesh files do not have material information provided, so they will not have material names in legend
             request.session['region_name'] = []
+            request.session['uploaded_output_mesh'] = True
             return HttpResponseRedirect('/application/visualization')
     else:
         form = visualizeMeshForm(request.GET or None)
@@ -1015,8 +1016,6 @@ def visualization_threshold_fluence_upload(request):
             request.session['cutoffPercentage'] = form.cleaned_data['cutoffPercentage']
             request.session['tumorRegion'] = form.cleaned_data['tumorRegion']
             request.session['v100'] = form.cleaned_data['v100']
-            if len(request.session['region_name']) == 0:
-                request.session['totalEnergy'] = -1
             if(len(namesFromTissuePropertiesFile) > len(request.session['region_name'])):
                 request.session['region_name'] = namesFromTissuePropertiesFile
             # save threshold fluence info for visualization
@@ -1103,7 +1102,8 @@ def fmVisualization(request):
             cutoffPercentage = request.session['cutoffPercentage']
             tumorRegion = request.session['tumorRegion']
             v100 = request.session['v100']
-            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100, ))
+            uploaded = request.session['uploaded_output_mesh']
+            p = Process(target=dvh, args=(request.user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100, uploaded, ))
             p.start()
             print('after')
             current_process = psutil.Process()

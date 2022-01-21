@@ -355,7 +355,7 @@ def create_connection(alias=DEFAULT_DB_ALIAS):
 #     subregionAlgorithm.SetExtent(regionBoundaries)
 #     subregionAlgorithm.Update()
 #     return subregionAlgorithm.GetOutput()
-def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100):
+def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, materials, thresholdFluence, power, normalization, cutoffPercentage, tumorRegion, v100, uploaded):
     conn = create_connection()
     conn.ensure_connection()
     info = meshFileInfo.objects.filter(user = user).latest('id')
@@ -449,10 +449,10 @@ def dose_volume_histogram(user, dns, tcpPort, text_obj, meshUnit, energyUnit, ma
         # save the figure's html string to session
         info.dvhFig = plot_DVH(cumulativeDVH_v100,noBins,materials,outputMeshFileName,meshUnit,cutoffPercentage)
         if normalized:
-            if power != -1:
-                info.powerAndScaling = "Simulation total energy used is " + "{:.2f}".format(power) + energyUnit + ". Scaled energy to " + "{:.2f}".format(scalingFactor * power) + energyUnit + " to achieve the requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ")."
-            else:
+            if uploaded:
                 info.powerAndScaling = "Scaled energy to achieve the requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ")."
+            else:
+                info.powerAndScaling = "Simulation total energy used is " + "{:.2f}".format(power) + energyUnit + ". Scaled energy to " + "{:.2f}".format(scalingFactor * power) + energyUnit + " to achieve the requested coverage (" + str(v100) + "% of tissue " + materials[tumorRegion] + ")."
         elif normalization == False:
             info.powerAndScaling = ""
         else:
