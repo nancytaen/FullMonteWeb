@@ -1773,6 +1773,7 @@ def running(request):
 # Response for finished simulation
 def simulation_finish(request):
     # display simulation outputs
+    request.session['uploaded_output_mesh'] = False
     text_obj = request.session['text_obj']
     private_key_file = io.StringIO(text_obj)
     privkey = paramiko.RSAKey.from_private_key(private_key_file)
