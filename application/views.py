@@ -882,10 +882,15 @@ def transfer_files_and_run_simulation(request):
         
         if need_transfer:
             print("starting mesh file transfer")
-            with ftp.open('./'+meshFilePath, 'wb') as ftp_file:
-                with default_storage.open(meshFilePath) as mesh_file:
-                    for piece in mesh_file.chunks(chunk_size=32*1024*1024):
-                        ftp_file.write(piece)
+            session=boto3.session.Session(region_name='us-east-2')
+            conn=session.client('s3', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, \
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY, \
+                config=boto3.session.Config(signature_version='s3v4'))
+            response=conn.generate_presigned_url('get_object', Params= \
+                {'Bucket':'fullmontesuite-storage', 'Key':'media/public/'+meshFilePath}, ExpiresIn=600)
+
+            download_command = "wget \"" +response + "\" -O ~/docker_sims/" + meshFilePath
+            stdin, stdout, stderr = client.exec_command(download_command)
             print("finished mesh file transfer")
             sys.stdout.flush()
 
