@@ -61,7 +61,7 @@ class presetForm(forms.ModelForm):
 
 class materialSet(forms.Form):
     layer = forms.CharField(label='Layer', required = False, max_length=255)
-    custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all(), required = False)
+    custom = forms.ModelChoiceField(label='Preset', queryset=Material.objects.all().order_by('id'), required = False)
     material = forms.CharField(label='Material',
                                widget=forms.TextInput(attrs={
                                                       'class': 'form-control',
