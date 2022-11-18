@@ -147,6 +147,11 @@ STATIC_URL = '/static/'
 django_heroku.settings(locals())
 
 #AWS settings
+# Vaughn settings below.  Change them all at once, but users will lose access to their old data.
+# Have moved the preset meshes over.  Can change whenever Lothar says he has his data downloaded.
+#AWS_ACCESS_KEY_ID = 'AKIAQK3FRJJWFNMDFGTX'
+#AWS_SECRET_ACCESS_KEY:  change the config setting in Heroku to Vaughn's secret key
+#AWS_STORAGE_BUCKET_NAME = 'fullmonteweb'
 AWS_ACCESS_KEY_ID = 'AKIAJR332PLI7L4HSPNA'
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = 'fullmontesuite-storage'
