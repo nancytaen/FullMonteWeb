@@ -50,6 +50,9 @@ urlpatterns = [
     # /application/kernel_info
     path('kernel_info', views.kernelInfo, name='kernel_info'),
 
+    # /application/recommendation
+    path('recommendation', views.instance_recommendation, name='recommendation'),
+
     ####################### visualization #######################
     # /application/visualization
     path('visualization', views.fmVisualization, name='visualization'),
