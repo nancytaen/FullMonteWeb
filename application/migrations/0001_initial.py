@@ -114,4 +114,11 @@ class Migration(migrations.Migration):
                 ('user', models.ForeignKey(default=0, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
+        migrations.CreateModel(
+            name='serverlessInput',
+            fields=[
+                ('meshFile', models.FileField(storage=application.storage_backends.PublicMediaStorage(), upload_to='')),
+                ('script', models.FileField(storage=application.storage_backends.PublicMediaStorage(), upload_to='')),
+            ],
+        ),
     ]

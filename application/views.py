@@ -58,9 +58,9 @@ from multiprocessing import Process, Event
 import threading
 import select
 import re
-# import scipy.io as sio
 import os
 import boto3
+
 # from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
  #        ['to@example.com'], fail_silently=False)

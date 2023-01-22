@@ -161,6 +161,15 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 AWS_S3_MAX_MEMORY_SIZE = 32768
 
+# Constants for IBM COS values
+COS_ENDPOINT = "https://control.cloud-object-storage.cloud.ibm.com/v2/endpoints"
+COS_AUTH_ENDPOINT = "https://iam.cloud.ibm.com/oidc/token"
+COS_API_KEY_ID = "ngeVzp8CkY4_jaxUOWgrbt7TpxDkKaObaYrm_4fErr70"
+COS_SERVICE_INSTANCE_CRN = "crn:v1:bluemix:public:cloud-object-storage:global:a/4ac282c95fef467dbe169f294d4cba3e:c808f05d-ec28-4333-ac0a-43d44843e1ef::"
+COS_TCL_BUCKET_NAME = "ece496-fullmonteweb-tcl" # test bucket
+COS_MESH_BUCKET_NAME = "insert-mesh-bucket-name-here"
+COS_OUTPUT_BUCKET_NAME = "insert-output-bucket-name-here"
+
 STATICFILES_DIRS = [
                     os.path.join(BASE_DIR, 'application/static'),
                     ]

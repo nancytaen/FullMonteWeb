@@ -6,6 +6,7 @@ from django.conf.urls import url
 from django.conf.urls import url
 
 from . import views
+from . import serverless_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -24,7 +25,7 @@ urlpatterns = [
     # /application/AWSsetup
     path('AWSsetup', views.AWSsetup, name='AWSsetup'),
 
-    ####################### simulator #######################
+    ####################### AWS simulator #######################
     # /application/simulator
     path('simulator', views.fmSimulator, name='simulator'),
 
@@ -49,6 +50,13 @@ urlpatterns = [
 
     # /application/kernel_info
     path('kernel_info', views.kernelInfo, name='kernel_info'),
+
+    ####################### serverless simulator #######################
+    # /application/serverless_simulator
+    path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
+
+    # /application/serverless_running
+    path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
 
     ####################### visualization #######################
     # /application/visualization

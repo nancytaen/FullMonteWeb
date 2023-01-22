@@ -50,6 +50,11 @@ class tclInputForm(forms.ModelForm):
                          ('W','Watts (W)'))
         self.fields['energyUnit'].widget = forms.RadioSelect(choices=energy_unit_choices)
 
+class serverlessForm(forms.ModelForm):
+    class Meta:
+        model = serverlessInput
+        fields = ('meshFile', 'script')
+
 class regionIDEntry(forms.Form):
     # for region in VolumeCellInRegionPredicate
     scoredVolumeRegionID = forms.IntegerField(label='scoredVolumeRegionID', required=False, initial=1)

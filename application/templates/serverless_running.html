@@ -1,0 +1,17 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="txt_container">
+    <h1>[beta] Running FullMonte Serverless Simulator...</h1>
+    <div class="txt_container" style="text-align: center;">
+        <p>Please go to IBM Cloud Object Storage to view your output files.
+            (The progress bar and output file download buttons are under development.)
+        </p>
+        <br/>
+        <b><a href="{% url 'serverless_simulator' %}">
+            Click here to launch another serverless simulation.
+        </a></b>
+
+    </div>
+
+{% endblock %}
