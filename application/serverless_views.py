@@ -48,6 +48,7 @@ def transfer_files_and_run_serverless_simulation(request):
     # test uploading all files to janelle's test tcl bucket
     upload_large_file(settings.COS_TCL_BUCKET_NAME, meshFilePath, meshFilePath)
     upload_large_file(settings.COS_TCL_BUCKET_NAME, tcl_script, tcl_script)
+    # TODO upload yaml config file with instance specs
 
 def upload_large_file(bucket_name, item_name, file_path):
     print("Starting large file upload for {0} to bucket: {1}".format(item_name, bucket_name))
