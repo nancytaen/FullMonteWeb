@@ -16,4 +16,4 @@ fullmonteuser='fullmontesuite@gmail.com'
 fullmontepassword='capstone2020'
 IBM_COS_SERVICE_INSTANCE_CRN = <your IBM_COS_SERVICE_INSTANCE_CRN/secret accress key>
 ```
-
+- remember to run python manage.py makemgiration + migrate
