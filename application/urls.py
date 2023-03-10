@@ -6,7 +6,6 @@ from django.conf.urls import url
 from django.conf.urls import url
 
 from . import views
-from . import serverless_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -53,10 +52,19 @@ urlpatterns = [
 
     ####################### serverless simulator #######################
     # /application/serverless_simulator
-    path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
+    # path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
+    path('serverless_simulator', views.fmServerlessSimulator, name='serverless_simulator'),
+
+    # /application/simulator_material
+    path('serverless_simulator_material', views.fmServerlessSimulatorMaterial, name='serverless_simulator_material'),
+
+    # /application/simulator_source
+    path('serverless_simulator_source', views.fmServerlessSimulatorSource, name='serverless_simulator_source'),
 
     # /application/serverless_running
-    path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
+    # path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
+    path('serverless_running', views.serverless_running, name='serverless_running'),
+
 
     ####################### visualization #######################
     # /application/visualization

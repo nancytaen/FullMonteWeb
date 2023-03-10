@@ -161,7 +161,3 @@ class pdtOuputLogFile(models.Model):
                              on_delete=models.CASCADE
                              )
     pdt_space_log = models.FileField(storage=PublicMediaStorage())
-
-class serverlessInput(models.Model):
-    meshFile = models.FileField(storage=PublicMediaStorage())
-    script = models.FileField(storage=PublicMediaStorage())

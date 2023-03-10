@@ -3,7 +3,9 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from .models import *
+from .models import tclInput
 from .forms import *
+from .forms import tclInputForm
 from django.core.files.base import ContentFile
 import sys
 import socket
@@ -18,7 +20,6 @@ try:
     initSrc = "./application/scripts/__init__.py"
     initDst = ".heroku/python/lib/python3.7/site-packages/vtk/__init__.py"
     copyfile(initSrc, initDst)
-
 except OSError:
     pass
 
@@ -60,6 +61,9 @@ import select
 import re
 import os
 import boto3
+
+import ibm_boto3
+from ibm_botocore.client import Config, ClientError
 
 # from django.template import loader
 #send_mail('Subject here', 'Here is the message.', settings.EMAIL_HOST_USER,
@@ -2845,3 +2849,507 @@ def pdt_space_visualize(request):
             cmd = "Visualizer --paraview /home/ubuntu/ParaView-5.8.1-osmesa-MPI-Linux-Python2.7-64bit/ --data /home/ubuntu/docker_pdt/ --port " + tcpPort
     """
     return HttpResponseRedirect('/application/displayVisualization')
+
+### Serverless Simulator Stuff
+
+# FullMonte Simulator light source page
+def fmServerlessSimulatorSource(request):
+    # # First check if user is logged-in
+    # if not request.user.is_authenticated:
+    #     return redirect('please_login')
+
+    # # visualize input mesh
+    # inputMeshFileName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    # text_obj = request.session['text_obj']
+    # private_key_file = io.StringIO(text_obj)
+    # privkey = paramiko.RSAKey.from_private_key(private_key_file)
+
+    # # generate ParaView Visualization URL
+    # # e.g. http://ec2-35-183-12-167.ca-central-1.compute.amazonaws.com:8080/
+    # dns = request.session['DNS']
+    # tcpPort = request.session['tcpPort']
+    # visURL = "http://" + dns + ":" + tcpPort + "/"
+    # # render 3D visualizer
+    # p = Process(target=visualizer, args=(inputMeshFileName, True, dns, tcpPort, text_obj, ))
+    # p.start()
+
+    # # if this is a POST request we need to process the form data
+    # if request.method == 'POST':
+    #     formset2 = lightSourceSet(request.POST)
+    #     print(request.POST)
+    #     sys.stdout.flush()
+
+
+    #     # check whether it's valid:
+    #     if formset2.is_valid():
+    #         # process cleaned data from formsets
+
+    #         request.session['sourceType'] = []
+    #         request.session['xPos'] = []
+    #         request.session['yPos'] = []
+    #         request.session['zPos'] = []
+    #         request.session['xDir'] = []
+    #         request.session['yDir'] = []
+    #         request.session['zDir'] = []
+    #         request.session['vElement'] = []
+    #         request.session['rad'] = []
+    #         request.session['power'] = []
+    #         request.session['volumeRegion'] = []
+    #         request.session['emitHemiSphere'] = []
+    #         request.session['hemiSphereEmitDistribution'] = []
+    #         request.session['numericalAperture'] = []
+    #         request.session['checkDirection'] = []
+    #         request.session['xDir1'] = []
+    #         request.session['yDir1'] = []
+    #         request.session['zDir1'] = []
+    #         request.session['xPos0'] = []
+    #         request.session['yPos0'] = []
+    #         request.session['zPos0'] = []
+    #         request.session['xPos1'] = []
+    #         request.session['yPos1'] = []
+    #         request.session['zPos1'] = []
+    #         request.session['emitVolume'] = []
+
+    #         for form in formset2:
+    #             print(form.cleaned_data)
+    #             request.session['sourceType'].append(form.cleaned_data['sourceType'])
+    #             request.session['xPos'].append(form.cleaned_data['xPos'])
+    #             request.session['yPos'].append(form.cleaned_data['yPos'])
+    #             request.session['zPos'].append(form.cleaned_data['zPos'])
+    #             request.session['xDir'].append(form.cleaned_data['xDir'])
+    #             request.session['yDir'].append(form.cleaned_data['yDir'])
+    #             request.session['zDir'].append(form.cleaned_data['zDir'])
+    #             request.session['vElement'].append(form.cleaned_data['vElement'])
+    #             request.session['rad'].append(form.cleaned_data['rad'])
+    #             request.session['power'].append(form.cleaned_data['power'])
+    #             request.session['volumeRegion'].append(form.cleaned_data['volumeRegion'])
+    #             request.session['emitHemiSphere'].append(form.cleaned_data['emitHemiSphere'])
+    #             request.session['hemiSphereEmitDistribution'].append(form.cleaned_data['hemiSphereEmitDistribution'])
+    #             request.session['numericalAperture'].append(form.cleaned_data['numericalAperture'])
+    #             request.session['checkDirection'].append(form.cleaned_data['checkDirection'])
+    #             request.session['xDir1'].append(form.cleaned_data['xDir1'])
+    #             request.session['yDir1'].append(form.cleaned_data['yDir1'])
+    #             request.session['zDir1'].append(form.cleaned_data['zDir1'])
+    #             request.session['xPos0'].append(form.cleaned_data['xPos0'])
+    #             request.session['yPos0'].append(form.cleaned_data['yPos0'])
+    #             request.session['zPos0'].append(form.cleaned_data['zPos0'])
+    #             request.session['xPos1'].append(form.cleaned_data['xPos1'])
+    #             request.session['yPos1'].append(form.cleaned_data['yPos1'])
+    #             request.session['zPos1'].append(form.cleaned_data['zPos1'])
+    #             request.session['emitVolume'].append(form.cleaned_data['emitVolume'])
+            
+    #         mesh = tclInput.objects.filter(user = request.user).latest('id')
+    #         energy  = request.session['totalEnergy']
+    #         meshUnit = request.session['meshUnit']
+    #         energyUnit = request.session['energyUnit']
+
+    #         script_path = tclGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
+    #         return HttpResponseRedirect('/application/serverless_simulation_confirmation')
+
+    # # If this is a GET (or any other method) create the default form.
+    # else:
+    #     formset2 = lightSourceSet(request.GET or None)
+
+    # context = {
+    #     'formset2': formset2,
+    #     'unit': request.session['meshUnit'],
+    #     'visURL': visURL,
+    # }
+
+    return render(request, "serverless_simulator_source.html", context)
+
+# FullMonte Serverless Simulator input confirmation page
+def serverless_simulation_confirmation(request):
+    # TO DO: migrate to serverless
+    # # Info about the generated TCL and mesh file
+    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    # meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+
+    # # Form for user-uploaded TCL
+    class Optional_Tcl(forms.Form):
+        tcl_file = forms.FileField(required=False)
+    
+    # if request.method == 'POST':
+    #     # Check if user uploaded their own TCL script
+    #     form = Optional_Tcl(request.POST, request.FILES)
+    #     if not request.POST.__contains__('tcl_file'):
+    #         # there is a file uploaded
+    #         default_storage.delete(request.FILES['tcl_file'].name)
+    #         default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # replace the TCL file in S3
+
+    #     text_obj = request.session['text_obj']
+    #     private_key_file = io.StringIO(text_obj)
+    #     privkey = paramiko.RSAKey.from_private_key(private_key_file)
+    #     try:
+    #         client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='simulation_confirmation')
+    #     except:
+    #         sys.stdout.flush()
+    #         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+    #         return HttpResponseRedirect('/application/aws')
+    #     client.exec_command('> ~/sim_run.log')
+    #     sys.stdout.flush()
+    #     client.close()
+    #     connections.close_all()
+
+    #     # Transfer all neccessary files for simulation
+    #     p = Process(target=transfer_files_and_run_simulation, args=(request, ))
+    #     p.start()
+        
+    #     # redirect to run simulation
+    #     request.session['start_time'] = str(datetime.now(timezone.utc))
+    #     request.session['started'] = "false"
+    #     request.session['peak_mem_usage'] = 0
+    #     request.session['peak_mem_usage_unit'] = 'GB'
+    #     return HttpResponseRedirect('/application/serverless_running')
+    
+    # # Info to display on confirmation page
+    # class Material_Class:
+    #     pass
+    # class Light_Source_Class:
+    #     pass
+
+    # materials = []
+    # for i in range(len(request.session['material'])):
+    #     temp = Material_Class()
+    #     temp.layer = i
+    #     temp.material = request.session['material'][i]
+    #     temp.scatteringCoeff = request.session['scatteringCoeff'][i]
+    #     temp.absorptionCoeff = request.session['absorptionCoeff'][i]
+    #     temp.refractiveIndex = request.session['refractiveIndex'][i]
+    #     temp.anisotropy = request.session['anisotropy'][i]
+    #     materials.append(temp)
+
+    # light_sources = []
+    # for i in range(len(request.session['sourceType'])):
+    #     temp = Light_Source_Class()
+    #     temp.source = i + 1
+    #     temp.sourceType = request.session['sourceType'][i]
+    #     temp.xPos = request.session['xPos'][i]
+    #     temp.yPos = request.session['yPos'][i]
+    #     temp.zPos = request.session['zPos'][i]
+    #     temp.xDir = request.session['xDir'][i]
+    #     temp.yDir = request.session['yDir'][i]
+    #     temp.zDir = request.session['zDir'][i]
+    #     temp.vElement = request.session['vElement'][i]
+    #     temp.rad = request.session['rad'][i]
+    #     temp.power = request.session['power'][i]
+    #     temp.volumeRegion = request.session['volumeRegion'][i]
+    #     temp.emitHemiSphere = request.session['emitHemiSphere'][i]
+    #     temp.hemiSphereEmitDistribution = request.session['hemiSphereEmitDistribution'][i]
+    #     temp.numericalAperture = request.session['numericalAperture'][i]
+    #     temp.checkDirection = request.session['checkDirection'][i]
+    #     temp.xDir1 = request.session['xDir1'][i]
+    #     temp.yDir1 = request.session['yDir1'][i]
+    #     temp.zDir1 = request.session['zDir1'][i]
+    #     temp.xPos0 = request.session['xPos0'][i]
+    #     temp.yPos0 = request.session['yPos0'][i]
+    #     temp.zPos0 = request.session['zPos0'][i]
+    #     temp.xPos1 = request.session['xPos1'][i]
+    #     temp.yPos1 = request.session['yPos1'][i]
+    #     temp.zPos1 = request.session['zPos1'][i]
+    #     temp.emitVolume = request.session['emitVolume'][i]
+    #     light_sources.append(temp)
+    
+    # tcl_form = Optional_Tcl()
+
+    # context = {
+    #     'mesh_name': meshFilePath, 
+    #     'materials': materials,
+    #     'light_sources': light_sources,
+    #     'tcl_script_name': generated_tcl.script.name,
+    #     'tcl_form': tcl_form,
+    #     'unit': request.session['meshUnit'],
+    # }
+
+    return render(request, 'serverless_simulation_confirmation.html', context)
+
+# FullMonte Simulator material page
+def fmServerlessSimulatorMaterial(request):
+    # First check if user is logged-in
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+
+    # Info about the generated TCL
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+
+    # Form for user-uploaded TCL
+    class Optional_Tcl(forms.Form):
+        tcl_file = forms.FileField(required=False)
+    
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # conn = DbConnection()
+        # text_obj = request.session['text_obj']
+        # private_key_file = io.StringIO(text_obj)
+        # privkey = paramiko.RSAKey.from_private_key(private_key_file)
+        # # try:
+        #     client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='fmSimulatorMaterial')
+        # except:
+        #     sys.stdout.flush()
+        #     messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
+        #     return HttpResponseRedirect('/application/aws')
+
+        # Skip rest of setup if user uploaded their own TCL script
+        if '_skip' in request.POST:
+            request.session['material'] = []
+            request.session['region_name'] = [] # for visualization legend
+            request.session['scatteringCoeff'] = []
+            request.session['absorptionCoeff'] = []
+            request.session['refractiveIndex'] = []
+            request.session['anisotropy'] = []
+
+            # get power
+            indicator = b' energyPowerValue '
+            tcl_file = request.FILES['tcl_file']
+            for line in tcl_file:
+                if indicator in line:
+                    request.session['totalEnergy'] = float(line.split()[2])
+                    break
+
+            # file uploaded and "Submit and Run" button clicked
+            form = Optional_Tcl(request.POST, request.FILES)
+            default_storage.delete(request.FILES['tcl_file'].name)
+            default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
+
+            # client.exec_command('> ~/sim_run.log')
+            # sys.stdout.flush()
+            # client.close()
+            # connections.close_all()
+
+            # transfer all necessary files to run simulation
+            # p = Process(target=transfer_files_and_run_simulation, args=(request, ))
+            # p.start()
+            
+            # # redirect to run simulation
+            # request.session['start_time'] = str(datetime.now(timezone.utc))
+            # request.session['started'] = "false"
+            # request.session['peak_mem_usage'] = 0
+            # request.session['peak_mem_usage_unit'] = 'GB'
+            # return HttpResponseRedirect('/application/running')
+
+        # # Get all entries from materials formset and check whether it's valid
+        else:
+        #     client.close()
+        #     connections.close_all()
+        #     # transfer all necessary files to run simulation
+        #     p = Process(target=transfer_files_for_input_mesh_visualization, args=(request, ))
+        #     p.start()
+            formset1 = materialSetSet(request.POST)
+
+        #     if formset1.is_valid():
+        #         # process cleaned data from formsets
+
+        #         request.session['material'] = []
+        #         request.session['region_name'] = [] # for visualization legend
+        #         request.session['scatteringCoeff'] = []
+        #         request.session['absorptionCoeff'] = []
+        #         request.session['refractiveIndex'] = []
+        #         request.session['anisotropy'] = []
+
+        #         for form in formset1:
+        #             #print(form.cleaned_data)
+        #             request.session['material'].append(form.cleaned_data['material'])
+        #             request.session['region_name'].append(form.cleaned_data['material'])  # for visualization legend
+        #             request.session['scatteringCoeff'].append(form.cleaned_data['scatteringCoeff'])
+        #             request.session['absorptionCoeff'].append(form.cleaned_data['absorptionCoeff'])
+        #             request.session['refractiveIndex'].append(form.cleaned_data['refractiveIndex'])
+        #             request.session['anisotropy'].append(form.cleaned_data['anisotropy'])
+
+                # return HttpResponseRedirect('/application/simulator_source')
+            return HttpResponseRedirect('/application/serverless_running')
+
+
+    # # If this is a GET (or any other method) create the default form.
+    # else:
+    #     formset1 = materialSetSet(request.GET or None)
+    #     tcl_form = Optional_Tcl()
+
+    context = {
+        # 'formset1': formset1,
+        # 'unit': request.session['meshUnit'],
+        # 'tcl_script_name': generated_tcl.script.name,
+        # 'tcl_form': tcl_form,
+    }
+
+    return render(request, "simulator_material.html", context)
+
+# FullMonte Serverless Simulator start page
+def fmServerlessSimulator(request):
+    # First check if user is logged-in
+    if not request.user.is_authenticated:
+        return redirect('please_login')
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        print(request.POST)
+        print(request.FILES)
+        sys.stdout.flush()
+        form = tclInputForm(data=request.POST, files=request.FILES)
+        formset3 = regionIDSet(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            print(form.cleaned_data)
+            sys.stdout.flush()
+            request.session['ec2_file_paths'] = []
+            request.session['scoredVolumeRegionID'] = []
+            if request.POST['selected_existing_meshes'] != "":
+                # to do trigger run of fullmonte vsi by uploading a file to a cos
+                print("This is 1")
+                # selected a mesh from database
+                mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
+
+                obj = form.save(commit = False)
+                obj.meshFile = mesh_from_database.meshFile
+                obj.originalMeshFileName = mesh_from_database.originalMeshFileName
+                obj.meshFileID = mesh_from_database
+                obj.user = request.user
+                obj.save()
+            else:
+                print("This is 2")
+                # uploaded a new mesh
+                # process cleaned data from formsets
+                obj = form.save(commit = False)
+                obj.user = request.user
+                obj.originalMeshFileName = obj.meshFile.name
+                obj.save()
+                print(obj)
+                sys.stdout.flush()
+
+                # create entry for the newly uploaded meshfile
+                new_mesh_entry = meshFiles()
+                new_mesh_entry.meshFile = obj.meshFile
+                new_mesh_entry.originalMeshFileName = obj.originalMeshFileName
+                new_mesh_entry.user = request.user
+                new_mesh_entry.save()
+
+                # update meshfile id
+                obj.meshFileID = new_mesh_entry
+                obj.save()
+                meshname = tclInput.objects.filter(user = request.user).latest('id').meshFile.file.name
+                print("default_storage.path(meshname)", meshname)
+
+                # print(request.FILES['meshFile'].file.name)
+                # upload random mesh
+                upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, request.FILES['meshFile'].file.name, request.FILES['meshFile'].file.name)
+                print(form.cleaned_data['kernelType'])
+            selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
+            selected_leaving = 'Leaving' in form.cleaned_data['kernelType']
+            selected_internal = 'Internal' in form.cleaned_data['kernelType']
+
+            # using_gpu = request.session['GPU_instance'] # set up cudo on instances
+            using_gpu = False
+            if selected_internal:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+            elif selected_leaving and selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASVKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSVKernel'
+            elif selected_leaving:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDASurfaceKernel'
+                else:
+                    request.session['kernelType'] = 'TetraSurfaceKernel'
+            elif selected_abosrbed:
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAVolumeKernel'
+                else:
+                    request.session['kernelType'] = 'TetraVolumeKernel'
+            else:
+                # this should not happen, but just in case
+                if using_gpu:
+                    request.session['kernelType'] = 'TetraCUDAInternalKernel'
+                else:
+                    request.session['kernelType'] = 'TetraInternalKernel'
+
+            sys.stdout.flush()
+            request.session['meshUnit'] = form.cleaned_data['meshUnit']
+            for regionID in formset3:
+                print(regionID.cleaned_data)
+                request.session['scoredVolumeRegionID'].append(regionID.cleaned_data['scoredVolumeRegionID'])
+            sys.stdout.flush()
+            request.session['packetCount'] = form.cleaned_data['packetCount']
+            request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
+            request.session['energyUnit'] = form.cleaned_data['energyUnit']
+
+            # if request.POST.get("overwrite_on_ec2") == "True":
+            #     request.session['overwrite_on_ec2'] = True
+            # else:
+            #     request.session['overwrite_on_ec2'] = False
+
+            # generate empty TCL template
+            mesh = tclInput.objects.filter(user = request.user).latest('id')
+            energy  = request.session['totalEnergy']
+            meshUnit = request.session['meshUnit']
+            energyUnit = request.session['energyUnit']
+            script_path = emptyTclTemplateGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
+
+            return HttpResponseRedirect('/application/serverless_simulator_material')
+
+    # If this is a GET (or any other method) create the default form.
+    else:
+        form = tclInputForm()
+        # formset3 = regionIDSet(request.GET or None)
+
+    uploaded_meshes = meshFiles.objects.filter(user=request.user)
+
+    context = {
+        'form': form,
+        # 'formset3': formset3,
+        'uploaded_meshes': uploaded_meshes,
+    }
+
+    return render(request, "simulator.html", context)
+
+# FullMonte serverless simulation running page
+def serverless_running(request):
+    context = {
+
+    }
+    return render(request, 'serverless_running.html', context)
+
+
+def upload_large_file(bucket_name, item_name, file_path):
+    print("Starting large file upload for {0} to bucket: {1}".format(item_name, bucket_name))
+
+    # # set the chunk size to 5 MB
+    # part_size = 1024 * 1024 * 5
+
+    # # set threadhold to 5 MB
+    # file_threshold = 1024 * 1024 * 5
+
+    # Create client connection
+    cos_cli = ibm_boto3.client("s3",
+        ibm_api_key_id=settings.IBM_COS_API_KEY_ID,
+        ibm_service_instance_id= settings.IBM_COS_SERVICE_INSTANCE_CRN,
+        ibm_auth_endpoint=settings.IBM_COS_AUTH_ENDPOINT,
+        config=Config(signature_version="oauth"),
+        endpoint_url=settings.IBM_COS_ENDPOINT_URL
+    )
+    # res=cos_cli.upload_file(file_path, bucket_name, item_name)
+
+    # # set the transfer threshold and chunk size in config settings
+    # transfer_config = ibm_boto3.s3.transfer.TransferConfig(
+    #     multipart_threshold=file_threshold,
+    #     multipart_chunksize=part_size
+    # )
+
+    # create transfer manager
+    # transfer_mgr = ibm_boto3.s3.transfer.TransferManager(cos_cli, config=transfer_config)
+
+    try:
+        # initiate file upload
+        res=cos_cli.upload_file(file_path, bucket_name, item_name)
+        # future = transfer_mgr.upload(file_path, bucket_name, item_name)
+
+        # wait for upload to complete
+        # future.result()
+
+        print ("File upload complete!")
+    except Exception as e:
+        print("Unable to complete large file upload: {0}".format(e))
+    finally:
+        print("completed file transfer")
+        # transfer_mgr.shutdown()
