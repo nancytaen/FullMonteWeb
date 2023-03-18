@@ -175,3 +175,4 @@ IBM_COS_SERVICE_INSTANCE_CRN=config('IBM_COS_SERVICE_INSTANCE_CRN')
 IBM_COS_AUTH_ENDPOINT="https://iam.bluemix.net/oidc/token"
 IBM_COS_ENDPOINT_URL="https://s3.ca-tor.cloud-object-storage.appdomain.cloud"
 IBM_COS_MESH_BUCKET_NAME='ece496-fullmontesw-bucket-mesh'
+IBM_COS_TCL_BUCKET_NAME='ece496-fullmontesw-bucket-tcl'

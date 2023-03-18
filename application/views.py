@@ -14,6 +14,8 @@ import codecs
 import psutil
 from datetime import datetime, timezone
 from pytz import timezone as tz
+from django.core.files import temp as tempfile 
+
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
@@ -2966,8 +2968,8 @@ def serverless_simulation_confirmation(request):
     # meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
 
     # # Form for user-uploaded TCL
-    class Optional_Tcl(forms.Form):
-        tcl_file = forms.FileField(required=False)
+    # class Optional_Tcl(forms.Form):
+    #     tcl_file = forms.FileField(required=True)
     
     # if request.method == 'POST':
     #     # Check if user uploaded their own TCL script
@@ -3074,10 +3076,11 @@ def fmServerlessSimulatorMaterial(request):
 
     # Form for user-uploaded TCL
     class Optional_Tcl(forms.Form):
-        tcl_file = forms.FileField(required=False)
+        tcl_file = forms.FileField(required=True)
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
+        print("hello")
         # conn = DbConnection()
         # text_obj = request.session['text_obj']
         # private_key_file = io.StringIO(text_obj)
@@ -3110,7 +3113,23 @@ def fmServerlessSimulatorMaterial(request):
             form = Optional_Tcl(request.POST, request.FILES)
             default_storage.delete(request.FILES['tcl_file'].name)
             default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
+            # print("uploading tcl", default_storage.path(request.FILES['tcl_file'].name))
 
+            # print("uploading tcl2", request.FILES['tcl_file'].temporary_file_path())
+            # print("uploading tcl2", request.FILES['tcl_file'].file_path)
+            # print("uploading tcl2", request.FILES['tcl_file'].file.name)
+
+            # tcl_file = default_storage.open(generated_tcl.script.name)
+            # print(tcl_file)
+            #  Reading file from storage
+            file = default_storage.open(request.FILES['tcl_file'].name)
+            with open("parameters.tcl", "w") as f:
+                for line in file:
+                    f.write(str(line, encoding='utf-8'))
+                    # f.write(line.encode('utf-8'))
+            f.close()
+
+            upload_large_file(settings.IBM_COS_TCL_BUCKET_NAME, '/root/FullMonteWeb/parameters.tcl', '/root/FullMonteWeb/parameters.tcl')
             # client.exec_command('> ~/sim_run.log')
             # sys.stdout.flush()
             # client.close()
@@ -3125,7 +3144,7 @@ def fmServerlessSimulatorMaterial(request):
             # request.session['started'] = "false"
             # request.session['peak_mem_usage'] = 0
             # request.session['peak_mem_usage_unit'] = 'GB'
-            # return HttpResponseRedirect('/application/running')
+            return HttpResponseRedirect('/application/serverless_running')
 
         # # Get all entries from materials formset and check whether it's valid
         else:
@@ -3159,16 +3178,16 @@ def fmServerlessSimulatorMaterial(request):
             return HttpResponseRedirect('/application/serverless_running')
 
 
-    # # If this is a GET (or any other method) create the default form.
-    # else:
-    #     formset1 = materialSetSet(request.GET or None)
-    #     tcl_form = Optional_Tcl()
+    # If this is a GET (or any other method) create the default form.
+    else:
+        formset1 = materialSetSet(request.GET or None)
+        tcl_form = Optional_Tcl()
 
     context = {
-        # 'formset1': formset1,
+        'formset1': formset1,
         # 'unit': request.session['meshUnit'],
-        # 'tcl_script_name': generated_tcl.script.name,
-        # 'tcl_form': tcl_form,
+        'tcl_script_name': generated_tcl.script.name,
+        'tcl_form': tcl_form,
     }
 
     return render(request, "simulator_material.html", context)
@@ -3229,7 +3248,8 @@ def fmServerlessSimulator(request):
 
                 # print(request.FILES['meshFile'].file.name)
                 # upload random mesh
-                upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, request.FILES['meshFile'].file.name, request.FILES['meshFile'].file.name)
+                print(request.FILES['meshFile'].file.name)
+                upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, 'simulation.mesh.vtk', request.FILES['meshFile'].file.name)
                 print(form.cleaned_data['kernelType'])
             selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
             selected_leaving = 'Leaving' in form.cleaned_data['kernelType']
