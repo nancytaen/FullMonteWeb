@@ -2964,7 +2964,7 @@ def fmServerlessSimulatorSource(request):
 def serverless_simulation_confirmation(request):
     # TO DO: migrate to serverless
     # # Info about the generated TCL and mesh file
-    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
     # meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
 
     # # Form for user-uploaded TCL
@@ -3054,14 +3054,14 @@ def serverless_simulation_confirmation(request):
     
     # tcl_form = Optional_Tcl()
 
-    # context = {
+    context = {
     #     'mesh_name': meshFilePath, 
     #     'materials': materials,
     #     'light_sources': light_sources,
-    #     'tcl_script_name': generated_tcl.script.name,
+        'tcl_script_name': generated_tcl.script.name,
     #     'tcl_form': tcl_form,
     #     'unit': request.session['meshUnit'],
-    # }
+    }
 
     return render(request, 'serverless_simulation_confirmation.html', context)
 
@@ -3114,12 +3114,11 @@ def fmServerlessSimulatorMaterial(request):
             default_storage.delete(request.FILES['tcl_file'].name)
             default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
             # print("uploading tcl", default_storage.path(request.FILES['tcl_file'].name))
-
             # print("uploading tcl2", request.FILES['tcl_file'].temporary_file_path())
             # print("uploading tcl2", request.FILES['tcl_file'].file_path)
             # print("uploading tcl2", request.FILES['tcl_file'].file.name)
 
-            # tcl_file = default_storage.open(generated_tcl.script.name)
+            tcl_file = default_storage.open(generated_tcl.script.name)
             # print(tcl_file)
             #  Reading file from storage
             file = default_storage.open(request.FILES['tcl_file'].name)
@@ -3190,7 +3189,7 @@ def fmServerlessSimulatorMaterial(request):
         'tcl_form': tcl_form,
     }
 
-    return render(request, "simulator_material.html", context)
+    return render(request, "simulator_material_serverless.html", context)
 
 # FullMonte Serverless Simulator start page
 def fmServerlessSimulator(request):
@@ -3210,47 +3209,50 @@ def fmServerlessSimulator(request):
             sys.stdout.flush()
             request.session['ec2_file_paths'] = []
             request.session['scoredVolumeRegionID'] = []
-            if request.POST['selected_existing_meshes'] != "":
-                # to do trigger run of fullmonte vsi by uploading a file to a cos
-                print("This is 1")
-                # selected a mesh from database
-                mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
+            # if request.POST['selected_existing_meshes'] != "":
+            #     # to do trigger run of fullmonte vsi by uploading a file to a cos
+            #     print("This is 1")
+            #     # selected a mesh from database
+            #     mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
 
-                obj = form.save(commit = False)
-                obj.meshFile = mesh_from_database.meshFile
-                obj.originalMeshFileName = mesh_from_database.originalMeshFileName
-                obj.meshFileID = mesh_from_database
-                obj.user = request.user
-                obj.save()
-            else:
-                print("This is 2")
-                # uploaded a new mesh
-                # process cleaned data from formsets
-                obj = form.save(commit = False)
-                obj.user = request.user
-                obj.originalMeshFileName = obj.meshFile.name
-                obj.save()
-                print(obj)
-                sys.stdout.flush()
+            #     obj = form.save(commit = False)
+            #     obj.meshFile = mesh_from_database.meshFile
+            #     obj.originalMeshFileName = mesh_from_database.originalMeshFileName
+            #     obj.meshFileID = mesh_from_database
+            #     obj.user = request.user
+            #     obj.save()
+            # else:
+            print("This is 2")
+            # uploaded a new mesh
+            # process cleaned data from formsets
+            obj = form.save(commit = False)
+            obj.user = request.user
+            obj.originalMeshFileName = obj.meshFile.name
+            print(obj.originalMeshFileName )
+            obj.save()
+            print(obj)
+            sys.stdout.flush()
 
-                # create entry for the newly uploaded meshfile
-                new_mesh_entry = meshFiles()
-                new_mesh_entry.meshFile = obj.meshFile
-                new_mesh_entry.originalMeshFileName = obj.originalMeshFileName
-                new_mesh_entry.user = request.user
-                new_mesh_entry.save()
+            # no need to save
+            # # create entry for the newly uploaded meshfile
+            # new_mesh_entry = meshFiles()
+            # new_mesh_entry.meshFile = obj.meshFile
+            # new_mesh_entry.originalMeshFileName = obj.originalMeshFileName
+            # new_mesh_entry.user = request.user
+            # new_mesh_entry.save()
 
-                # update meshfile id
-                obj.meshFileID = new_mesh_entry
-                obj.save()
-                meshname = tclInput.objects.filter(user = request.user).latest('id').meshFile.file.name
-                print("default_storage.path(meshname)", meshname)
+            # update meshfile id
+            # obj.meshFileID = new_mesh_entry
+            # obj.save()
+            # meshname = tclInput.objects.filter(user = request.user).latest('id').meshFile.file.name
+            # print("default_storage.path(meshname)", meshname)
 
-                # print(request.FILES['meshFile'].file.name)
-                # upload random mesh
-                print(request.FILES['meshFile'].file.name)
-                upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, 'simulation.mesh.vtk', request.FILES['meshFile'].file.name)
-                print(form.cleaned_data['kernelType'])
+            # print(request.FILES['meshFile'].file.name)
+            # upload random mesh
+            # print(request.FILES['meshFile'].file.name)
+            upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, obj.originalMeshFileName , request.FILES['meshFile'].file.name)
+            print(form.cleaned_data['kernelType'])
+
             selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
             selected_leaving = 'Leaving' in form.cleaned_data['kernelType']
             selected_internal = 'Internal' in form.cleaned_data['kernelType']
@@ -3299,13 +3301,24 @@ def fmServerlessSimulator(request):
             # else:
             #     request.session['overwrite_on_ec2'] = False
 
-            # generate empty TCL template
-            mesh = tclInput.objects.filter(user = request.user).latest('id')
+            # generate empty TCL template TO DO EDIT:
+            # mesh = tclInput.objects.filter(user = request.user).latest('id')
+            class meshFile:
+                def __init__(self, name):
+                    self.name = name
+            class mesh_serverless:
+                def __init__(self, name):
+                    self.originalMeshFileName = name
+                    self.meshFile = meshFile(name)
+
+                    
+            mesh_serverless = mesh_serverless(obj.originalMeshFileName)
+            print(obj.originalMeshFileName)
             energy  = request.session['totalEnergy']
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
-            script_path = emptyTclTemplateGenerator(request.session, mesh, meshUnit, energy, energyUnit, request.user)
-
+            script_path = emptyTclTemplateGenerator(request.session, mesh_serverless, meshUnit, energy, energyUnit, request.user)
+            print("script_path", script_path)
             return HttpResponseRedirect('/application/serverless_simulator_material')
 
     # If this is a GET (or any other method) create the default form.
@@ -3321,7 +3334,7 @@ def fmServerlessSimulator(request):
         'uploaded_meshes': uploaded_meshes,
     }
 
-    return render(request, "simulator.html", context)
+    return render(request, "serverless_simulator.html", context)
 
 # FullMonte serverless simulation running page
 def serverless_running(request):
