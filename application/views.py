@@ -305,7 +305,7 @@ def fmSimulator(request):
         tcpPort = request.session['tcpPort']
     except:
         messages.error(request, 'Error - please connect to an AWS remote server before trying to simulate')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
     #print(22222)
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
@@ -968,7 +968,7 @@ def visualization_mesh_upload(request):
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
+                # return HttpResponseRedirect('/application/aws')
 
             sftp = client.open_sftp()
             try:
@@ -1191,7 +1191,7 @@ def runningDVH(request):
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
+                # return HttpResponseRedirect('/application/aws')
 
             ftp = client.open_sftp()
             mesh_name = outputMeshFileName[:-8]
@@ -1393,6 +1393,14 @@ def aws(request):
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
+        # temporarily disable aws setup
+        request.session['GPU_instance'] = False
+        request.session['DNS'] = 'temp_aws_for_debugging'
+        request.session['tcpPort'] = 8800
+        request.session['text_obj'] = None
+        return render(request, "aws_setup_complete.html")
+        # end
+
         print(request)
         form = awsFiles(request.POST, request.FILES)
         print(request.POST.get("DNS"))
@@ -1434,7 +1442,7 @@ def aws(request):
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
+                # return HttpResponseRedirect('/application/aws')
             
             sftp = client.open_sftp()
             try:
@@ -1493,7 +1501,7 @@ def aws(request):
         form = awsFiles()
 
     context = {
-        'form': form,
+        'form': {},
     }
     return render(request, "aws.html", context)
 
@@ -1639,7 +1647,7 @@ def AWSsetup(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     if running_process.running:
         
@@ -1700,7 +1708,7 @@ def running(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     stdin, stdout, stderr = client.exec_command('sudo sed -e "s/\\r/\\n/g" ~/sim_run.log > ~/cleaned.log; sudo tail -1 ~/cleaned.log')
     stdout_word = stdout.readlines()
@@ -1813,7 +1821,7 @@ def simulation_finish(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     command = "echo \"Your FullMonteWeb simulation run has finished. \
         If you are not planning to run more simulations, please stop your AWS \
@@ -1922,7 +1930,7 @@ def populate_simulation_history(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     # store output files to S3, and populate simulation history
     history = simulationHistory()
@@ -2098,7 +2106,7 @@ def search_pdt_space(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     ####### check whether image cleanup is required
     need_cleanup = False
@@ -2201,7 +2209,7 @@ def pdt_space_license(request):
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-                return HttpResponseRedirect('/application/aws')
+                # return HttpResponseRedirect('/application/aws')
             sftp = client.open_sftp()
             try:
                 sftp.putfo(request.FILES['mosek_license'], 'docker_pdt/mosek.lic')
@@ -2514,7 +2522,7 @@ def launch_pdt_space(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     opfile = opFileInput.objects.filter(user = request.user).latest('id')
 
@@ -2609,7 +2617,7 @@ def pdt_space_finish(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
     
     # pdt-space output in ~/eval_result.log
     conn = DbConnection()
@@ -2723,7 +2731,7 @@ def pdt_space_fail(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
  
     ftp = client.open_sftp()
     try:
@@ -2764,7 +2772,7 @@ def pdt_space_visualization(request):
     except:
         sys.stdout.flush()
         messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        return HttpResponseRedirect('/application/aws')
+        # return HttpResponseRedirect('/application/aws')
 
     ##get tissue type name
     command = "sudo sh ~/docker_pdt/pdt_space_setup.sh \"cat /sims/tissue_properties_" + str(request.session['wave_length']) + "nm.txt\" 0"
