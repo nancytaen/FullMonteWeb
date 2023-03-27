@@ -65,6 +65,8 @@ urlpatterns = [
     # path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
     path('serverless_running', views.serverless_running, name='serverless_running'),
 
+    # /application/recommendation
+    path('recommendation', views.instance_recommendation, name='recommendation'),
 
     ####################### visualization #######################
     # /application/visualization

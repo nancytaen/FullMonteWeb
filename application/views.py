@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+
+from .ec2_instances import EC2InstanceStats
+from .estimator import TimeCostEstimator, Recommendation
 from .models import *
 from .models import tclInput
 from .forms import *
@@ -751,6 +754,8 @@ def simulation_confirmation(request):
         tcl_file = forms.FileField(required=False)
     
     if request.method == 'POST':
+        if 'recommend_btn' in request.POST:
+            return HttpResponseRedirect('/application/recommendation')
         # Check if user uploaded their own TCL script
         form = Optional_Tcl(request.POST, request.FILES)
         if not request.POST.__contains__('tcl_file'):
@@ -840,9 +845,23 @@ def simulation_confirmation(request):
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
         'unit': request.session['meshUnit'],
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
+        'recommendation': Recommendation(None).recommend(),
     }
 
     return render(request, 'simulation_confirmation.html', context)
+
+
+# recommendation page
+def instance_recommendation(request):
+    if request.method == 'POST':
+        return HttpResponseRedirect('/application/simulation_confirmation')
+    context = {
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
+        'recommendation': Recommendation(None).recommend(),
+    }
+    return render(request, 'estimation/simulation_recommendation.html', context)
+
 
 def transfer_files_and_run_simulation(request):
     conn = DbConnection()
@@ -1411,6 +1430,7 @@ def aws(request):
             request.session['text_obj'] = text_obj
             try:
                 client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='aws')
+                request.session['ec2_instance_type'] = EC2InstanceStats(client).get_current_ec2_instance_type()
             except:
                 sys.stdout.flush()
                 messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
