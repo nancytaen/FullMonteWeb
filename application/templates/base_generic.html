@@ -94,12 +94,6 @@
                         {% else %}
                             <li><a class="btn btn-primary btn-block" href="{% url 'simulator' %}">Simulation</a></li><br/>
                         {% endif %}
-                        <!-- serverless simulator button -->
-                        {% if request.path == '/application/serverless_simulator' %}
-                            <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'simulator' %}">Serverless Simulation</a></li><br/>
-                        {% else %}
-                            <li><a class="btn btn-primary btn-block" href="{% url 'serverless_simulator' %}">Serverless Simulation</a></li><br/>
-                        {% endif %}
                         <!-- visualization button -->
                         {% if request.path == '/application/visualization' or request.path == '/application/mesh_upload' or request.path == '/application/runningDVH' or request.path == '/application/displayVisualization' %}
                             <li><a class="btn btn-primary btn-block btn-focused" href="{% url 'visualization' %}">Visualization</a></li><br/>

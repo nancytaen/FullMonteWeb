@@ -147,10 +147,14 @@ STATIC_URL = '/static/'
 django_heroku.settings(locals())
 
 #AWS settings
-# Mymy's settings belows
-AWS_ACCESS_KEY_ID = 'AKIARY3JXKYCDMEVICXO'
-AWS_SECRET_ACCESS_KEY =config('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = "fullmonteweb-storage"
+# Vaughn settings below.  Change them all at once, but users will lose access to their old data.
+# Have moved the preset meshes over.  Can change whenever Lothar says he has his data downloaded.
+#AWS_ACCESS_KEY_ID = 'AKIAQK3FRJJWFNMDFGTX'
+#AWS_SECRET_ACCESS_KEY:  change the config setting in Heroku to Vaughn's secret key
+#AWS_STORAGE_BUCKET_NAME = 'fullmonteweb'
+AWS_ACCESS_KEY_ID = 'AKIAJR332PLI7L4HSPNA'
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = 'fullmontesuite-storage'
 AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
@@ -168,11 +172,3 @@ AWS_PRIVATE_MEDIA_LOCATION = 'media/private'
 PRIVATE_FILE_STORAGE = 'application.storage_backends.PrivateMediaStorage'
 
 AWS_DEFAULT_ACL = None
-
-# Constants for IBM COS values
-IBM_COS_API_KEY_ID ="9v5q4cAWMilAZhq6Iz3NVNkg_swA1E8yRGyK81QFklG0"
-IBM_COS_SERVICE_INSTANCE_CRN=config('IBM_COS_SERVICE_INSTANCE_CRN')
-IBM_COS_AUTH_ENDPOINT="https://iam.bluemix.net/oidc/token"
-IBM_COS_ENDPOINT_URL="https://s3.ca-tor.cloud-object-storage.appdomain.cloud"
-IBM_COS_MESH_BUCKET_NAME='ece496-fullmontesw-bucket-mesh'
-IBM_COS_TCL_BUCKET_NAME='ece496-fullmontesw-bucket-tcl'
