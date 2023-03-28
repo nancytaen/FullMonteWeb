@@ -6,6 +6,7 @@ from django.conf.urls import url
 from django.conf.urls import url
 
 from . import views
+from application.serverless import views as serverless_views
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -64,6 +65,10 @@ urlpatterns = [
     # /application/serverless_running
     # path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
     path('serverless_running', views.serverless_running, name='serverless_running'),
+
+    # serverless files download
+    url(r'cos_d/(?P<filename>[-\w_\\-\\.]+)&bucket=(?P<bucket>[-\w_\\-\\.]+)/$',
+        serverless_views.cos_download_view, name='serverless_cos_download'),
 
     # /application/recommendation
     path('recommendation', views.instance_recommendation, name='recommendation'),
