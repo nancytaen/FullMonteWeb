@@ -23,7 +23,7 @@
     <div id="advancedOption1">
         <div class="d-flex justify-content-center ">
             <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
-                <h6>Upload your TCL script to run the simulation (please make sure to follow the instructions in the template and keep the filename unmodified):</h6>
+                <h6>Upload your TCL script to run the simulation (please make sure to follow the instructions in the template):</h6>
                 <table>
                     {% csrf_token %}
                     <tr>
@@ -314,6 +314,7 @@
     function Validate(oForm) {
         var arrInputs = oForm.getElementsByTagName("input");
         var tcl_script_name = '{{ tcl_script_name|escapejs }}';
+        console.log(tcl_script_name)
         for (var i = 0; i < arrInputs.length; i++) {
             var oInput = arrInputs[i];
             if (oInput.type == "file") {
@@ -321,16 +322,17 @@
                     if (sFileName.length > 0) {
                         var filename = sFileName.replace(/^.*[\\\/]/, '');
                         var blnValid = (filename === tcl_script_name);
-                        
+                        console.log(filename)
+                        console.log(sFileName)
                         if(blnValid) {
                             return confirm('This will run the FullMonte Simulator with your uploaded TCL script and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
                         }
                         
                         alert("filname is"+ sFileName);
-                        if (!blnValid) {
-                            alert("Sorry, " + filename + " is invalid. Please change your uploaded TCL script to be " + tcl_script_name);
-                            return false;
-                        }
+                        // if (!blnValid) {
+                        //     alert("Sorry, " + filename + " is invalid. Please change your uploaded TCL script to be " + tcl_script_name);
+                        //     return false;
+                        // }
                     }
                     else {
                         alert("No TCl script uploaded. Please upload a TCL script before launching simulation, or set up manually by filling out the forms below.");

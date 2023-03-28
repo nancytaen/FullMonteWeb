@@ -1,0 +1,30 @@
+<div class="my-4 col-9 mx-auto">
+    <h4 style="color:#0894d1;">{{ table_title }}</h4>
+    <p>{{ description }}</p>
+    <table class="table table-bordered table-striped table-sm mb-4">
+        <thead>
+          <tr>
+            <th class="th-sm">Instance Type</th>
+            <th class="th-sm">vCPUs</th>
+            <th class="th-sm">GPUs</th>
+            <th class="th-sm">CPU RAM</th>
+            <th class="th-sm">GPU RAM</th>
+            <th class="th-sm">Estimated Compute Time (hh:mm:ss)</th>
+            <th class="th-sm">Estimated Cost Per Simulation Run (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for instance in ec2_instances %}
+          <tr>
+            <td><strong>{{ instance.type }}</strong></td>
+            <td>{{ instance.vcpu }}</td>
+            <td>{{ instance.gpu }}</td>
+            <td>{{ instance.cpu_ram }}</td>
+            <td>{{ instance.gpu_ram }}</td>
+            <td>{{ instance.time }}</td>
+            <td>{{ instance.cost }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

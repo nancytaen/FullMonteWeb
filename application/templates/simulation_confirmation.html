@@ -1,6 +1,5 @@
 {% extends 'base_generic.html' %}
 {% block content %}
-
 <div class="txt_container" style="text-align: center;">
     <h1>Please Confirm your simulation parameters</h1> 
 
@@ -83,6 +82,10 @@
     <br/>
     </br>
 
+    <div>
+        {% include "estimation/estimate.html"%}
+    </div>
+
     <div class="d-flex justify-content-center ">
         <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
             <div id="advancedOption1" class="table">
@@ -98,7 +101,12 @@
                     </tr>
                 </table>
             </div>
-            <p><input type="submit" value="Confirm and Submit"></p>
+            <b>Looking to make the simulation cheaper or faster?</b>
+            <p>NOTE: The recommendation will take approximately 2 minutes to run</p>
+            <p><input type="submit" name="recommend_btn" value="Recommend EC2 instances"></p>
+            <br>
+            <b>Satisfied with your current instance?</b>
+            <p><input type="submit" name="simulate_btn" value="Confirm and Submit"></p>
         </form>
     </div>
     <br>
@@ -110,9 +118,22 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script>
+    function confirmSubmission(btn) {
+        console.log(btn);
+        if (btn === 'recommend_btn'){
+          return confirm('This will run the EC2 Instance Recommendation tool to identify if there are instances with ' +
+              'faster or cheaper simulation times. The tool will take 2 minutes to run. ')
+        } else {
+          return confirm('This will run the FullMonte Simulator and will take some time. Please wait. Any old simulation ' +
+            'files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 ' +
+            'long-term storage, so you can still retrieve them from the Simulation History page.');
+        }
+    }
+
     function Validate(oForm) {
         var arrInputs = oForm.getElementsByTagName("input");
         var tcl_script_name = '{{ tcl_script_name|escapejs }}';
+        const clickedButton = $(document.activeElement).attr('name');
         for (var i = 0; i < arrInputs.length; i++) {
             var oInput = arrInputs[i];
             if (oInput.type == "file") {
@@ -122,7 +143,8 @@
                         var blnValid = (filename === tcl_script_name);
                         
                         if(blnValid) {
-                            return confirm('This run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
+                          return confirmSubmission(clickedButton);
+                            {#return confirm('This run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); #}
                         }
                         
                         if (!blnValid) {
@@ -132,8 +154,9 @@
                     }
                 }
             }
-        
-            return confirm('This will run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
+
+            return confirmSubmission(clickedButton);
+            {#return confirm('This will run the FullMonte Simulator and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); #}
     }
 </script>
 

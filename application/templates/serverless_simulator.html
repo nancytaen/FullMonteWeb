@@ -1,0 +1,277 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="txt_container">
+    <h1>FullMonte Serverless Simulator</h1>
+    <div class="d-flex justify-content-center ">
+        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);">
+            <!-- comment out option to download/upload pre-exisitng mesh for serverless option-->
+            <!-- 
+            <div class="center_container">
+                <b><a href="{% url 'download_preset' %}">
+                    Click here to download a preset mesh.
+                </a></b>
+            </d>
+            <br></br> -->
+            <div class='table'>
+                <!-- <div class="option-select"> -->
+                <!-- <p><b>Select an uploaded mesh file from databse:</b></p>
+                <select name="selected_existing_meshes" id='select_existing'>
+                    <option value="" selected>No mesh file chosen</option>
+                    {% for entry in uploaded_meshes %}
+                        <option value="{{ entry.id }}">{{ entry.originalMeshFileName }}</option>
+                    {% endfor %}
+                </select> -->
+                <!-- </div> -->
+                <table id='mesh_upload'>
+                    {% csrf_token %}
+                    <tr>
+                        <th>Upload a new {{ form.meshFile.label_tag }}</th>
+                        <td>
+                            {{ form.meshFile.errors }}
+                            {{ form.meshFile }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- <button id='advanced' type='button'>Advanced Options</button> -->
+            
+            <div id='advancedOptionaaa' class='table'>
+                <table>
+                    {% csrf_token %}
+                    <tbody id="meshUnit">
+                        <tr>
+                            <th>{{ form.meshUnit.label_tag }}</th>
+                            <td>
+                                {{ form.meshUnit.errors }}
+                            {% for checkbox in form.meshUnit %}
+                            <label>
+                                {{ checkbox.tag }} {{ checkbox.choice_label }}
+                            </label>
+                            &emsp;
+                            {% endfor %}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tbody id="kernelType">
+                        <tr>
+                            <th>Energies to Record to Output:</th>
+                            <td>
+                            {{ form.kernelType.errors }}
+                            {{ form.kernelType }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="selectRegionId" style="display: none">
+                    {{ formset3.management_form }}
+                    <div id="form_set" class="table">
+                        {% for form3 in formset3.forms %}
+                            <table class='no_error'>
+                                {% csrf_token %}
+                                <tbody>
+                                    <tr>
+                                        <th>Region ID to Record Energy:</th>
+                                        <td>
+                                        {{ form3.scoredVolumeRegionID.errors }}
+                                        {{ form3.scoredVolumeRegionID }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        {% endfor %}
+                    </div>
+                    <input type="button" value="Add Region ID" id="add_row">
+                    <input type="button" value="Remove Region ID" id="remove_row">
+                    <div id="empty_form" class="table" style="display:none">
+                        <table class='no_error'>
+                            {% csrf_token %}
+                            <tbody>
+                                <tr>
+                                    <th>Region ID to Record Energy:</th>
+                                    <td>
+                                    {{ formset3.empty_form.scoredVolumeRegionID.errors }}
+                                    {{ formset3.empty_form.scoredVolumeRegionID }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <table>
+                    <tbody id="packetCount">
+                        <tr>
+                            <th>{{ form.packetCount.label_tag }}</th>
+                            <td>
+                            {{ form.packetCount.errors }}
+                            {{ form.packetCount }}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tbody id="totalEnergy">
+                        <tr>
+                            <th>{{ form.totalEnergy.label_tag }}</th>
+                            <td>
+                            {{ form.totalEnergy.errors }}
+                            {{ form.totalEnergy }}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tbody id="energyUnit">
+                        <tr>
+                            <th>{{ form.energyUnit.label_tag }}</th>
+                            <td>
+                                {{ form.energyUnit.errors }}
+                            {% for checkbox in form.energyUnit %}
+                            <label>
+                                {{ checkbox.tag }} {{ checkbox.choice_label }}
+                            </label>
+                            &emsp;
+                            {% endfor %}
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody>
+                        <tr>
+                            <th></th><td>
+                            <button id='advanced' type='button'>Advanced Options</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                
+                    <tbody id='advancedOption'>
+                        <tr>
+                            <td colspan="2"><input name="overwrite_on_ec2" id='overwrite_on_ec2' type="checkbox" value="True" checked>
+                                <label for="overwrite_on_ec2" style="font-weight:normal">Overwrite the mesh file on EC2 instance&nbsp</label>
+                                <!-- https://stackoverflow.com/questions/32153973/how-to-display-popup-on-mouse-over-in-html-using-js-and-css -->
+                                <p id="p1" class="ppup"><a class="keyword" id="k1" href="glossary.xhtml#g1" onclick="return false;" style="font-weight:normal">What is this?</a>
+                                    <span style="font-weight:normal">If you have run a simulation with this mesh file before, 
+                                <span style="font-weight:normal">If you have run a simulation with this mesh file before, 
+                                    <span style="font-weight:normal">If you have run a simulation with this mesh file before, 
+                                        the website will try to skip transferring the mesh file to your EC2 instance again, 
+                                    the website will try to skip transferring the mesh file to your EC2 instance again, 
+                                        the website will try to skip transferring the mesh file to your EC2 instance again, 
+                                        to save time on file transfers. Check this checkbox if you wish to overwrite the mesh file
+                                        on your EC2 instance even if it exists.</span></p></td>
+                        <!-- <td>
+                            
+                        </td> -->
+                        </tr>
+                    </tbody>
+                </table>
+                <b><a href="{% url 'kernel_info' %}">Click here for more info about the packet count and different Energies to score.
+                </a></b>
+            </div>
+            
+            <p><br/><input type="submit" value="Next"></p>
+
+        </form>
+    </div>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    var _validFileExtensions = [".vtk"];
+    function Validate(oForm) {
+        if(!$(`[name=kernelType][value="Absorbed"]`).prop("checked") &&
+           !$(`[name=kernelType][value="Leaving"]`).prop("checked") &&
+           !$(`[name=kernelType][value="Internal"]`).prop("checked")){
+               alert("Please select at least one type of Energy to score for the simulation!");
+               return false;
+           }
+        if($(`[name=kernelType][value="Internal"]`).prop("checked")) {
+            var numRegionIds = $('#id_form-TOTAL_FORMS').val();
+            for (var i = 0; i < numRegionIds; i++) {
+                var regionID = $('#id_form-'+i+'-scoredVolumeRegionID').val();
+                if((regionID == "" || parseInt(regionID) <= 0)){
+                    alert("Please set scoredVolumeRegionID to be a positive value!");
+                    return false;
+                }
+            }
+        }
+        // if(document.getElementById("id_meshFile").files.length == 0 && $("#select_existing")[0].selectedIndex == 0){
+        if(document.getElementById("id_meshFile").files.length == 0){
+            alert("Please upload a new mesh!");
+            return false;
+        }
+        var arrInputs = oForm.getElementsByTagName("input");
+        for (var i = 0; i < arrInputs.length; i++) {
+            var oInput = arrInputs[i];
+            if (oInput.type == "file") {
+                    var sFileName = oInput.value;
+                    if (sFileName.length > 0) {
+                        var blnValid = false;
+                        for (var j = 0; j < _validFileExtensions.length; j++) {
+                            var sCurExtension = _validFileExtensions[j];
+                            if (sFileName.substr(sFileName.length - sCurExtension.length, sCurExtension.length).toLowerCase() == sCurExtension.toLowerCase()) {
+                                blnValid = true;
+                                break;
+                            }
+                        }
+                        
+                        if(blnValid) {
+                            alert("Uploading your mesh will take some time. Please wait.");
+                        }
+                        
+                        if (!blnValid) {
+                            alert("Sorry, " + sFileName + " is invalid, allowed mesh file extension is: " + _validFileExtensions.join(", "));
+                            return false;
+                        }
+                    }
+                }
+            }
+        
+            return true;
+    }
+</script>
+
+<script>
+    $(document).ready(function(){
+                    var checkboxes = document.getElementsByTagName('input');
+
+                    for (var i=0; i<checkboxes.length; i++)  {
+                        if (checkboxes[i].type == 'checkbox')   {
+                            checkboxes[i].checked = false;
+                        }
+                    }
+                    $(`[name=kernelType][value="Absorbed"]`).prop("checked", true);
+                    $(`[name=kernelType][value="Leaving"]`).prop("checked", true);
+
+                    $("#advanced").click(function(){
+                                        $("#advancedOption").toggle();
+                                        });
+                    $("#mesh_upload").click(function(){
+                        $("#select_existing")[0].selectedIndex = 0;
+                                        });
+                    // $("#select_existing").change(function(){
+                    //     document.getElementById("id_meshFile").value=null;
+                    //                     });
+                    $("[name=kernelType]").change(function() {
+                        let selectedValA = $(this).val();
+                        if(selectedValA == "Internal"){
+                            $("#selectRegionId").toggle();
+                        }
+                    });
+                    });
+</script>
+
+<script>
+    $('#add_row').click(function() {
+                    var form_idx = $('#id_form-TOTAL_FORMS').val();
+                    $('#form_set').append($('#empty_form').html().replace(/__prefix__/g, form_idx));
+                    $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                    });
+
+    $('#remove_row').click(function() {
+                    var form_idx = $('#id_form-TOTAL_FORMS').val();
+                    if (parseInt(form_idx) > 1) {
+                        $('.no_error')[parseInt(form_idx)-1].remove();
+                        $('#id_form-TOTAL_FORMS').val(parseInt(form_idx) - 1);
+                    }
+                    });
+</script>
+
+
+{% endblock %}
