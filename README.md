@@ -15,5 +15,7 @@ AWS_SECRET_ACCESS_KEY=<your AWS_SECRET_ACCESS_KEY>
 fullmonteuser='fullmontesuite@gmail.com'
 fullmontepassword='capstone2020'
 IBM_COS_SERVICE_INSTANCE_CRN = <your IBM_COS_SERVICE_INSTANCE_CRN/secret accress key>
+COS_HMAC_ACCESS_KEY_ID = <>
+COS_HMAC_SECRET_ACCESS_KEY = <>
 ```
 - remember to run python manage.py makemgiration + migrate
