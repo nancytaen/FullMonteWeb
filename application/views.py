@@ -3142,13 +3142,13 @@ def fmServerlessSimulatorMaterial(request):
             # print(tcl_file)
             #  Reading file from storage
             file = default_storage.open(request.FILES['tcl_file'].name)
-            with open("parameters.tcl", "w") as f:
+            with open(request.FILES['tcl_file'].name, "w") as f:
                 for line in file:
                     f.write(str(line, encoding='utf-8'))
                     # f.write(line.encode('utf-8'))
             f.close()
-
-            upload_large_file(settings.IBM_COS_TCL_BUCKET_NAME, '/root/FullMonteWeb/parameters.tcl', '/root/FullMonteWeb/parameters.tcl')
+            
+            upload_large_file(settings.IBM_COS_TCL_BUCKET_NAME, request.FILES['tcl_file'].name, "/root/FullMonteWeb/"+request.FILES['tcl_file'].name)
             # client.exec_command('> ~/sim_run.log')
             # sys.stdout.flush()
             # client.close()
