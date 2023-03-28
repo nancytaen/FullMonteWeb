@@ -176,3 +176,5 @@ IBM_COS_AUTH_ENDPOINT="https://iam.bluemix.net/oidc/token"
 IBM_COS_ENDPOINT_URL="https://s3.ca-tor.cloud-object-storage.appdomain.cloud"
 IBM_COS_MESH_BUCKET_NAME='ece496-fullmontesw-bucket-mesh'
 IBM_COS_TCL_BUCKET_NAME='ece496-fullmontesw-bucket-tcl'
+COS_HMAC_ACCESS_KEY_ID = config('COS_HMAC_ACCESS_KEY_ID')
+COS_HMAC_SECRET_ACCESS_KEY = config('COS_HMAC_SECRET_ACCESS_KEY')
