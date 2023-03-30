@@ -70,6 +70,9 @@ urlpatterns = [
     url(r'cos_d/(?P<filename>[-\w_\\-\\.]+)&bucket=(?P<bucket>[-\w_\\-\\.]+)/$',
         serverless_views.cos_download_view, name='serverless_cos_download'),
 
+    # /application/serverless_finish
+    # path('serverless_finish', serverless_views.serverless_finish, name='serverless_finish'),
+
     # /application/recommendation
     path('recommendation', views.instance_recommendation, name='recommendation'),
 

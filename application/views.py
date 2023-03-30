@@ -17,7 +17,10 @@ import codecs
 import psutil
 from datetime import datetime, timezone
 from pytz import timezone as tz
-from django.core.files import temp as tempfile 
+from django.core.files import temp as tempfile
+
+from .serverless.cos_storage import generate_unique_request_id, insert_id_to_filename
+from .serverless.views import serverless_finish
 
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
@@ -2012,11 +2015,16 @@ def simulation_history(request):
 
     history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time') # order by time (most present at top)
     historySize = history.count()
-    if historySize > 0:
-        return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
+
+    serverless_history = ServerlessOutput.objects.filter(request__user=request.user).order_by('-datetime')
+
+    if historySize + serverless_history.count() > 0:
+        print(serverless_history)
+        return render(request, "simulation_history.html", {
+            'history':history, 'historySize':historySize, 'serverless': serverless_history
+        })
     else:
         return render(request, "simulation_history_empty.html")
-    return render(request, "simulation_history.html", {'history':history, 'historySize':historySize})
 
 #               Current unsolved problem in PDT-SPACE
 #       1.  When running the docker image for pdt-space, sometimes the image needs to be downloaded and reinstall again.
@@ -3331,6 +3339,14 @@ def fmServerlessSimulator(request):
                     self.originalMeshFileName = name
                     self.meshFile = meshFile(name)
 
+            # insert into db and generate a unique id TODO change mesh and tcl filenames
+            # r_id = generate_unique_request_id()
+            # ServerlessRequest.objects.create(
+            #     request_id=r_id,
+            #     mesh_name=insert_id_to_filename('Bladder.mesh.vtk', r_id),
+            #     tcl_name=insert_id_to_filename('Bladder.tcl', r_id),
+            #     user=request.user
+            # )
                     
             mesh_serverless = mesh_serverless(obj.originalMeshFileName)
             print(obj.originalMeshFileName)
@@ -3347,7 +3363,6 @@ def fmServerlessSimulator(request):
         # formset3 = regionIDSet(request.GET or None)
 
     uploaded_meshes = meshFiles.objects.filter(user=request.user)
-
     context = {
         'form': form,
         # 'formset3': formset3,
