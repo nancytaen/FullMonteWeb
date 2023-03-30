@@ -436,7 +436,7 @@ def fmSimulatorMaterial(request):
         return redirect('please_login')
 
     # Info about the generated TCL
-    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
 
     # Form for user-uploaded TCL
     class Optional_Tcl(forms.Form):
@@ -531,7 +531,7 @@ def fmSimulatorMaterial(request):
     context = {
         'formset1': formset1,
         'unit': request.session['meshUnit'],
-        'tcl_script_name': generated_tcl.script.name,
+        'tcl_script_name': request.FILES['tcl_file'], # keep for now 
         'tcl_form': tcl_form,
     }
 
@@ -3140,15 +3140,16 @@ def fmServerlessSimulatorMaterial(request):
 
             tcl_file = default_storage.open(generated_tcl.script.name)
             # print(tcl_file)
+            # to do error if tcl file does not only contain letters, numbers, hyphens and underscores
             #  Reading file from storage
-            file = default_storage.open(request.FILES['tcl_file'].name)
-            with open(request.FILES['tcl_file'].name, "w") as f:
-                for line in file:
-                    f.write(str(line, encoding='utf-8'))
-                    # f.write(line.encode('utf-8'))
-            f.close()
+            ## remove
+            # file = default_storage.open(request.FILES['tcl_file'].name)
+            # with open(request.FILES['tcl_file'].name, "w") as f:
+            #     for line in file:
+            #         f.write(str(line, encoding='utf-8'))
+            # f.close()
             
-            upload_large_file(settings.IBM_COS_TCL_BUCKET_NAME, request.FILES['tcl_file'].name, "/root/FullMonteWeb/"+request.FILES['tcl_file'].name)
+            upload_file_ibm(settings.IBM_COS_TCL_BUCKET_NAME, request.FILES['tcl_file'].name, "/root/FullMonteWeb/"+request.FILES['tcl_file'].name)
             # client.exec_command('> ~/sim_run.log')
             # sys.stdout.flush()
             # client.close()
@@ -3202,10 +3203,11 @@ def fmServerlessSimulatorMaterial(request):
         formset1 = materialSetSet(request.GET or None)
         tcl_form = Optional_Tcl()
 
+    print(tclInput.objects.filter(user = request.user).latest('id').meshFile.name[:tclInput.objects.filter(user = request.user).latest('id').meshFile.name.index(".")])
     context = {
         'formset1': formset1,
         # 'unit': request.session['meshUnit'],
-        'tcl_script_name': generated_tcl.script.name,
+        'tcl_script_name': tclInput.objects.filter(user = request.user).latest('id').meshFile.name[:tclInput.objects.filter(user = request.user).latest('id').meshFile.name.index(".")] +".tcl",
         'tcl_form': tcl_form,
     }
 
@@ -3270,7 +3272,7 @@ def fmServerlessSimulator(request):
             # print(request.FILES['meshFile'].file.name)
             # upload random mesh
             # print(request.FILES['meshFile'].file.name)
-            upload_large_file(settings.IBM_COS_MESH_BUCKET_NAME, obj.originalMeshFileName , request.FILES['meshFile'].file.name)
+            upload_file_ibm(settings.IBM_COS_MESH_BUCKET_NAME, obj.originalMeshFileName , request.FILES['meshFile'].file.name)
             print(form.cleaned_data['kernelType'])
 
             selected_abosrbed = 'Absorbed' in form.cleaned_data['kernelType']
@@ -3337,7 +3339,7 @@ def fmServerlessSimulator(request):
             energy  = request.session['totalEnergy']
             meshUnit = request.session['meshUnit']
             energyUnit = request.session['energyUnit']
-            script_path = emptyTclTemplateGenerator(request.session, mesh_serverless, meshUnit, energy, energyUnit, request.user)
+            script_path = emptyTclTemplateGeneratorServerless(request.session, mesh_serverless, meshUnit, energy, energyUnit, request.user)
             print("script_path", script_path)
             return HttpResponseRedirect('/application/serverless_simulator_material')
 
@@ -3364,14 +3366,8 @@ def serverless_running(request):
     return render(request, 'serverless_running.html', context)
 
 
-def upload_large_file(bucket_name, item_name, file_path):
+def upload_file_ibm(bucket_name, item_name, file_path):
     print("Starting large file upload for {0} to bucket: {1}".format(item_name, bucket_name))
-
-    # # set the chunk size to 5 MB
-    # part_size = 1024 * 1024 * 5
-
-    # # set threadhold to 5 MB
-    # file_threshold = 1024 * 1024 * 5
 
     # Create client connection
     cos_cli = ibm_boto3.client("s3",
@@ -3381,28 +3377,13 @@ def upload_large_file(bucket_name, item_name, file_path):
         config=Config(signature_version="oauth"),
         endpoint_url=settings.IBM_COS_ENDPOINT_URL
     )
-    # res=cos_cli.upload_file(file_path, bucket_name, item_name)
-
-    # # set the transfer threshold and chunk size in config settings
-    # transfer_config = ibm_boto3.s3.transfer.TransferConfig(
-    #     multipart_threshold=file_threshold,
-    #     multipart_chunksize=part_size
-    # )
-
-    # create transfer manager
-    # transfer_mgr = ibm_boto3.s3.transfer.TransferManager(cos_cli, config=transfer_config)
-
+   
     try:
         # initiate file upload
         res=cos_cli.upload_file(file_path, bucket_name, item_name)
-        # future = transfer_mgr.upload(file_path, bucket_name, item_name)
-
-        # wait for upload to complete
-        # future.result()
 
         print ("File upload complete!")
     except Exception as e:
         print("Unable to complete large file upload: {0}".format(e))
     finally:
         print("completed file transfer")
-        # transfer_mgr.shutdown()
