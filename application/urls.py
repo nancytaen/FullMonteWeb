@@ -65,6 +65,7 @@ urlpatterns = [
     # /application/serverless_running
     # path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
     path('serverless_running', views.serverless_running, name='serverless_running'),
+    path('serverless_simulation_finish', views.serverless_simulation_finish, name='serverless_simulation_finish'),
 
     # serverless files download
     url(r'cos_d/(?P<filename>[-\w_\\-\\.]+)&bucket=(?P<bucket>[-\w_\\-\\.]+)/$',
