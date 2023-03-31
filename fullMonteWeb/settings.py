@@ -177,5 +177,6 @@ IBM_COS_ENDPOINT_URL="https://s3.ca-tor.cloud-object-storage.appdomain.cloud"
 IBM_COS_MESH_BUCKET_NAME='ece496-fullmontesw-bucket-mesh'
 IBM_COS_TCL_BUCKET_NAME='ece496-fullmontesw-bucket-tcl'
 IBM_COS_OUTPUT_BUCKET_NAME='ece496-fullmontesw-bucket-outputs'
+IBM_COS_GENERATED_TCL_BUCKET_NAME='ece496-fullmontesw-bucket-emptygeneratedtcl'
 COS_HMAC_ACCESS_KEY_ID = config('COS_HMAC_ACCESS_KEY_ID')
 COS_HMAC_SECRET_ACCESS_KEY = config('COS_HMAC_SECRET_ACCESS_KEY')

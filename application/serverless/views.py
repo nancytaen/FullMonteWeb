@@ -7,10 +7,15 @@ from django.shortcuts import redirect
 from application.serverless.cos_storage import cos_presigned_url, insert_id_to_filename
 from application.serverless.models import ServerlessRequest, ServerlessOutput
 
-BUCKET_NAME_MAPPING = {
-    'mesh': 'IBM_COS_MESH_BUCKET_NAME',
-    'tcl': 'IBM_COS_TCL_BUCKET_NAM',
-    'output': 'IBM_COS_OUTPUT_BUCKET_NAME',
+MESH_BUCKET = 'mesh_bucket'
+TCL_BUCKET = 'tcl_bucket'
+GENERATED_TCL_BUCKET = 'generated_tcl_bucket'
+OUTPUT_BUCKET = 'output_bucket'
+BUCKET_MAPPING = {
+    MESH_BUCKET: settings.IBM_COS_MESH_BUCKET_NAME,
+    GENERATED_TCL_BUCKET: settings.IBM_COS_GENERATED_TCL_BUCKET_NAME,
+    TCL_BUCKET: settings.IBM_COS_TCL_BUCKET_NAME,
+    OUTPUT_BUCKET: settings.IBM_COS_OUTPUT_BUCKET_NAME,
 }
 
 # def query_serverless_status(request):
