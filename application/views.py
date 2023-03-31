@@ -3108,7 +3108,6 @@ def fmServerlessSimulatorMaterial(request):
     
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        print("hello")
         # conn = DbConnection()
         # text_obj = request.session['text_obj']
         # private_key_file = io.StringIO(text_obj)
@@ -3150,14 +3149,13 @@ def fmServerlessSimulatorMaterial(request):
             # print(tcl_file)
             # to do error if tcl file does not only contain letters, numbers, hyphens and underscores
             #  Reading file from storage
-            ## remove
-            # file = default_storage.open(request.FILES['tcl_file'].name)
-            # with open(request.FILES['tcl_file'].name, "w") as f:
-            #     for line in file:
-            #         f.write(str(line, encoding='utf-8'))
-            # f.close()
+            file = default_storage.open(request.FILES['tcl_file'].name)
+            with open("uploaded_tcl_script.tcl", "w") as f:
+                for line in file:
+                    f.write(str(line, encoding='utf-8'))
+            f.close()
             
-            upload_file_ibm(settings.IBM_COS_TCL_BUCKET_NAME, request.FILES['tcl_file'].name, "/root/FullMonteWeb/"+request.FILES['tcl_file'].name)
+            upload_file_ibm(settings.IBM_COS_TCL_BUCKET_NAME, request.FILES['tcl_file'].name, "uploaded_tcl_script.tcl")
             # client.exec_command('> ~/sim_run.log')
             # sys.stdout.flush()
             # client.close()
@@ -3375,11 +3373,55 @@ def fmServerlessSimulator(request):
 
 # FullMonte serverless simulation running page
 def serverless_running(request):
+    client = ibm_boto3.client("s3",
+        ibm_api_key_id=settings.IBM_COS_API_KEY_ID,
+        ibm_service_instance_id= settings.IBM_COS_SERVICE_INSTANCE_CRN,
+        ibm_auth_endpoint=settings.IBM_COS_AUTH_ENDPOINT,
+        config=Config(signature_version="oauth"),
+        endpoint_url=settings.IBM_COS_ENDPOINT_URL
+    )
+
+    outputFileFound = 0
+    # create mesh output name
+    meshName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name[:tclInput.objects.filter(user = request.user).latest('id').meshFile.name.index(".")]
+    unique_tclName = str(meshName + '.tcl-') # TO DO: NANCY WILL APPEND UNIQUE USER ID
+    meshFileOutputName = str(unique_tclName + meshName +'.mesh.out.vtk')
+    while outputFileFound==0:
+        response = client.list_objects_v2(
+        Bucket=settings.IBM_COS_OUTPUT_BUCKET_NAME,
+        # Delimiter='string',
+        EncodingType='url',
+        MaxKeys=123,
+        Prefix=meshFileOutputName,
+        # ContinuationToken='string',
+        FetchOwner=True|False,
+        # StartAfter='string',
+        # ExpectedBucketOwner='string'
+        )   
+        if 'Contents' in response:
+            if len(response['Contents']) != 0:
+                for filename in response['Contents']:
+                    print(meshFileOutputName)
+                    if filename['Key'] == meshFileOutputName:
+                        print("output found")
+                        outputFileFound = 1
+        print(response)
+        time.sleep(5)
+        print("waiting for serverless simulation to complete")
+        context = {
+        }
+        render(request, 'serverless_running.html', context)
+    return HttpResponseRedirect('/application/serverless_simulation_finish')
+   
+def serverless_simulation_finish(request):
+    # create mesh output name
+    meshName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name[:tclInput.objects.filter(user = request.user).latest('id').meshFile.name.index(".")]
+    unique_tclName = str(meshName + '.tcl-') # TO DO: NANCY WILL APPEND UNIQUE USER ID
+    meshFileOutputName = str(unique_tclName + meshName +'.mesh.out.vtk')
     context = {
-
+        'output_files': meshFileOutputName
     }
-    return render(request, 'serverless_running.html', context)
-
+    return render(request, 'serverless_simulation_finish.html', context)
 
 def upload_file_ibm(bucket_name, item_name, file_path):
     print("Starting large file upload for {0} to bucket: {1}".format(item_name, bucket_name))
