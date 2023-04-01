@@ -11,7 +11,11 @@
         <a href="download_from_ec2/{{ item }}">{{ item }}</a><br/>
     {% endfor %} -->
     <br/>
-    <a href="cos_d/{{output_files}}&bucket=output_bucket"> {{ output_files }}</a> 
+    {% for file in output_files %}
+      {% if file %}
+        <a href="cos_d/{{file}}&bucket=output_bucket"> {{ file }}</a>
+      {% endif %}
+    {% endfor %}
     
     <p><b>Suggestions for next steps:</b></p>
     <ul class="suggestion-list">

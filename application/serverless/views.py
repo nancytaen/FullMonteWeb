@@ -1,16 +1,14 @@
 import sys
-import time
 
 from django import forms
 from django.conf import settings
-from django.core.files.storage import default_storage
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect
 from django.db import IntegrityError
-from django.db.models import Model
 from django.shortcuts import redirect, render
 
 from application.forms import materialSetSet, tclInputForm, lightSourceSet
-from application.models import tclScript, tclInput, meshFiles
+from application.models import meshFiles
 from application.serverless.cos_storage import cos_presigned_url, cos_upload_file, cos_search_prefix, \
     handle_uploaded_file
 from application.serverless.models import ServerlessRequest, ServerlessOutput
@@ -27,17 +25,6 @@ BUCKET_MAPPING = {
     TCL_BUCKET: settings.IBM_COS_TCL_BUCKET_NAME,
     OUTPUT_BUCKET: settings.IBM_COS_OUTPUT_BUCKET_NAME,
 }
-
-# def query_serverless_status(request):
-#     if request.method != 'POST':
-#         return HttpResponse(status=405)
-#     try:
-#         r = ServerlessRequest.objects.get(request_id=request.get('id'), user=request.user)
-#     except Model.DoesNotExist:
-#         return HttpResponse(status=404)
-#     if r.completed:
-#         return redirect('simulation_finish')
-#     return HttpResponse(status=200)
 
 
 def _initiate_serverless_simulation(source, serverless_request, user):
@@ -67,7 +54,7 @@ def _record_completed_serverless_simulation(request_id, output_files):
     r = ServerlessRequest.objects.get(request_id=request_id)
     ServerlessOutput.objects.create(
         request=r,
-        output_vtk_name=output_files.get('out', ''),
+        output_vtk_name=output_files.get('out.vtk', ''),
         output_txt_name=output_files.get('txt', ''),
         log_name=output_files.get('log', ''),
     )
@@ -75,6 +62,45 @@ def _record_completed_serverless_simulation(request_id, output_files):
     r.save()
     # TODO email user
     print(r.user.email)
+
+
+def get_output_of_simulation(prefix):
+    matches = cos_search_prefix(settings.IBM_COS_OUTPUT_BUCKET_NAME, prefix)
+    print(f"output found: {', '.join(matches)}")
+    output_files = {match[len(prefix):]: match for match in matches}
+    if not output_files.get('log', ''):
+        return False
+    return output_files
+
+
+def update_incomplete_simulations(user):
+    """
+    check and update the status of incomplete simulations
+    @param user: user id
+    @return: incomplete simulation objects
+    """
+    rs = ServerlessRequest.objects.filter(user=user, completed=False)
+    incomplete = []
+    for r in rs:
+        prefix = ServerlessParameters.get_base(r.mesh_name)
+        output_files = get_output_of_simulation(prefix)
+        if output_files:
+            _record_completed_serverless_simulation(r.request_id, output_files)
+        else:
+            incomplete.append(r)
+    return incomplete
+
+
+def query_serverless_status(request):
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+    try:
+        r = ServerlessRequest.objects.get(request_id=request.get('id'), user=request.user)
+    except ObjectDoesNotExist:
+        return HttpResponse(status=404)
+    if r.completed:
+        return redirect('simulation_finish')
+    return HttpResponse(status=200)
 
 
 def cos_download_view(request, filename, bucket):
@@ -100,28 +126,24 @@ def cos_download_view(request, filename, bucket):
 
 
 def serverless_running(request):
-
     serverless_request = request.session.get(ServerlessParameters.SERVERLESS_REQUEST, {})
     if not serverless_request:
         return HttpResponse(status=404)
 
     try:
         prefix = serverless_request[ServerlessParameters.BASE]
-        matches = cos_search_prefix(settings.IBM_COS_OUTPUT_BUCKET_NAME, prefix)
-        print(f"output found: {', '.join(matches)}")
-        output_files = {match[len(prefix):]: match for match in matches}
-        if not output_files.get('log', ''):
+        output_files = get_output_of_simulation(prefix)
+        if not output_files:
             print("waiting for serverless simulation to complete")
             context = {}
             return render(request, 'serverless/serverless_running.html', context)
+        print(f"output found: {', '.join(output_files.values())}")
         _record_completed_serverless_simulation(serverless_request[ServerlessParameters.ID], output_files)
+        return HttpResponseRedirect('/application/serverless_simulation_finish')
 
-    except Model.DoesNotExist or IntegrityError:
+    except ObjectDoesNotExist or IntegrityError:
         del request.session[ServerlessParameters.SERVERLESS_REQUEST]
         return HttpResponse(status=404)
-
-    del request.session[ServerlessParameters.SERVERLESS_REQUEST]
-    return HttpResponseRedirect('/application/serverless_simulation_finish')
 
 
 def fmServerlessSimulatorSource(request):
@@ -276,6 +298,7 @@ def serverless_simulation_confirmation(request):
     # Info to display on confirmation page
     class Material_Class:
         pass
+
     class Light_Source_Class:
         pass
 
@@ -364,7 +387,7 @@ def fmServerlessSimulatorMaterial(request):
         # Skip rest of setup if user uploaded their own TCL script
         if '_skip' in request.POST:
             request.session['material'] = []
-            request.session['region_name'] = [] # for visualization legend
+            request.session['region_name'] = []  # for visualization legend
             request.session['scatteringCoeff'] = []
             request.session['absorptionCoeff'] = []
             request.session['refractiveIndex'] = []
@@ -422,17 +445,17 @@ def fmServerlessSimulatorMaterial(request):
 
         # # Get all entries from materials formset and check whether it's valid
         else:
-        #     client.close()
-        #     connections.close_all()
-        #     # transfer all necessary files to run simulation
-        #     p = Process(target=transfer_files_for_input_mesh_visualization, args=(request, ))
-        #     p.start()
+            #     client.close()
+            #     connections.close_all()
+            #     # transfer all necessary files to run simulation
+            #     p = Process(target=transfer_files_for_input_mesh_visualization, args=(request, ))
+            #     p.start()
             formset1 = materialSetSet(request.POST)
 
             if formset1.is_valid():
                 # process cleaned data from formsets
                 request.session['material'] = []
-                request.session['region_name'] = [] # for visualization legend
+                request.session['region_name'] = []  # for visualization legend
                 request.session['scatteringCoeff'] = []
                 request.session['absorptionCoeff'] = []
                 request.session['refractiveIndex'] = []
@@ -498,10 +521,10 @@ def fmServerlessSimulator(request):
             print("This is 2")
             # uploaded a new mesh
             # process cleaned data from formsets
-            obj = form.save(commit = False)
+            obj = form.save(commit=False)
             obj.user = request.user
             obj.originalMeshFileName = obj.meshFile.name
-            print(obj.originalMeshFileName )
+            print(obj.originalMeshFileName)
             obj.save()
             print(obj)
             sys.stdout.flush()
@@ -620,10 +643,13 @@ def fmServerlessSimulator(request):
 
 def serverless_simulation_finish(request):
     # create mesh output name
-    meshName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name[:tclInput.objects.filter(user = request.user).latest('id').meshFile.name.index(".")]
-    unique_tclName = str(meshName + '.tcl-') # TO DO: NANCY WILL APPEND UNIQUE USER ID
-    meshFileOutputName = str(unique_tclName + meshName +'.mesh.out.vtk')
+    request_id = request.session[ServerlessParameters.SERVERLESS_REQUEST][ServerlessParameters.ID]
+    try:
+        r = ServerlessOutput.objects.get(request_id=request_id)
+    except ObjectDoesNotExist:
+        return HttpResponse(status=404)
     context = {
-        'output_files': meshFileOutputName
+        'output_files': [r.output_vtk_name, r.output_txt_name, r.log_name]
     }
+    del request.session[ServerlessParameters.SERVERLESS_REQUEST]
     return render(request, 'serverless/serverless_simulation_finish.html', context)

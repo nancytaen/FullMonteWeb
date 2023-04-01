@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pytz import timezone as tz
 from django.core.files import temp as tempfile
 
+from .serverless.views import update_incomplete_simulations
+
 # Extremely hacky fix for VTK not importing correctly on Heroku
 try:
     from shutil import copyfile
@@ -2011,12 +2013,13 @@ def simulation_history(request):
     history = simulationHistory.objects.filter(user=request.user).order_by('-simulation_time') # order by time (most present at top)
     historySize = history.count()
 
+    incomplete = update_incomplete_simulations(request.user)
     serverless_history = ServerlessOutput.objects.filter(request__user=request.user).order_by('-datetime')
 
-    if historySize + serverless_history.count() > 0:
+    if historySize + serverless_history.count() + len(incomplete) > 0:
         print(serverless_history)
         return render(request, "simulation_history.html", {
-            'history':history, 'historySize':historySize, 'serverless': serverless_history
+            'history':history, 'historySize':historySize, 'serverless': serverless_history, 'serverless_incomplete': incomplete
         })
     else:
         return render(request, "simulation_history_empty.html")

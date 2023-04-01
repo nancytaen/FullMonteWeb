@@ -11,7 +11,7 @@ class ServerlessParameters:
     def __init__(self, mesh_name):
         self.request_id = shortuuid.uuid()
         self.mesh_name = self.insert_id_to_filename(mesh_name)
-        self.base_name = self.mesh_name[:-3]  # base name includes . e.g. something.vtk -> something.
+        self.base_name = self.get_base(self.mesh_name)
         self.tcl_name = f'{self.base_name}tcl'
 
     def insert_id_to_filename(self, filename):
@@ -25,3 +25,8 @@ class ServerlessParameters:
         # use - and . as delimiters to extract the request id from filename
         base = filename.rsplit('.', 1)[0]
         return base.rsplit('-', 1)[1]
+
+    @staticmethod
+    def get_base(mesh_name):
+        # base name includes . e.g. something.vtk -> something.
+        return mesh_name[:-3]

@@ -1,12 +1,12 @@
 <div class="txt_container" style="padding: 1rem 0rem 0rem 0rem;">
   <h2 class="text-center mt-4">Serverless (IBM)</h2>
   <p style="padding: 0; margin: 0;"><b>Total rows: {{ serverless|length }}</b></p>
-  {% if not serverless %}
+  {% if not serverless and not serverless_incomplete %}
     <p>Please go to the Serverless Simulation tab to perform FullMonte simulation</p>
   {% endif %}
 </div>
 {% if serverless %}
-  <div class="custom_table_scrollbar">
+  <div class="mb-4">
     <table class="table table-bordered table-striped table-sm">
       <thead>
         <tr>
@@ -22,11 +22,11 @@
       <tbody>
         {% for item in serverless %}
           <tr>
-            <td><a href="cos_d/{{ item.request.mesh_name }}&bucket=mesh">{{ item.request.mesh_name }}</a></td>
-            <td><a href="cos_d/{{ item.request.tcl_name }}&bucket=tcl">{{ item.request.tcl_name }}</a></td>
-            <td><a href="cos_d/{{ item.output_vtk_name }}&bucket=output">{{ item.output_vtk_name }}</a></td>
-            <td><a href="cos_d/{{ item.output_txt_name }}&bucket=output">{{ item.output_txt_name }}</a></td>
-            <td><a href="cos_d/{{ item.output_log_name }}&bucket=output">{{ item.output_log_name }}</a></td>
+            <td><a href="cos_d/{{ item.request.mesh_name }}&bucket=mesh_bucket">{{ item.request.mesh_name }}</a></td>
+            <td><a href="cos_d/{{ item.request.tcl_name }}&bucket=tcl_bucket">{{ item.request.tcl_name }}</a></td>
+            <td><a href="cos_d/{{ item.output_vtk_name }}&bucket=output_bucket">{{ item.output_vtk_name }}</a></td>
+            <td><a href="cos_d/{{ item.output_txt_name }}&bucket=output_bucket">{{ item.output_txt_name }}</a></td>
+            <td><a href="cos_d/{{ item.log_name }}&bucket=output_bucket">{{ item.log_name }}</a></td>
             <td nowrap>{{ item.request.datetime }}</td>
             <td nowrap>{{ item.datetime }}</td>
           </tr>
@@ -35,3 +35,33 @@
     </table>
   </div>
 {% endif %}
+  {% if serverless_incomplete %}
+    <div class="txt_container mt-4" style="padding: 1rem 0rem 0rem 0rem;">
+      <h3 class="text-center">Incomplete Serverless Simulations(IBM)</h3>
+      <p style="padding: 0; margin: 0;"><b>Total rows: {{ serverless_incomplete|length }}</b></p>
+    </div>
+    <div class="mt-2">
+      <table class="table table-bordered table-striped table-sm">
+        <thead>
+          <tr>
+            <th class="th-sm">Mesh File</th>
+            <th class="th-sm">TCL Script</th>
+            <th class="th-sm">Time Started</th>
+            <th class="th-sm">Update</th>
+            <th class="th-sm">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in serverless_incomplete %}
+            <tr>
+              <td><a href="cos_d/{{ item.mesh_name }}&bucket=mesh_bucket">{{ item.mesh_name }}</a></td>
+              <td><a href="cos_d/{{ item.tcl_name }}&bucket=tcl_bucket">{{ item.tcl_name }}</a></td>
+              <td nowrap>{{ item.datetime }}</td>
+              <td><button class="btn-secondary">Update</button></td>
+              <td><button class="btn-danger">Delete</button></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}

@@ -364,7 +364,7 @@ def emptyTclTemplateGeneratorServerless(session, mesh, mesh_unit, energy, energy
     f.write('#====================================================================================================================\n')
     f.write('#                                   Input VTK File Path (please do not modify)                                       \n')
     f.write('#====================================================================================================================\n')
-    meshpath = '/sims/' + mesh.meshFile.name
+    meshpath = '/sims/' + mesh
     f.write('set fn "' + meshpath + '"\n\n')
     f.write('VTKMeshReader R\n')
     f.write(indent + 'R filename $fn\n')
@@ -659,7 +659,7 @@ def tclGeneratorWriter(session, mesh, mesh_unit, energy, energy_unit, name):
     f.write('#                                   Input VTK File Path (please do not modify)                                       \n')
     f.write('#====================================================================================================================\n')
     #meshpath = dir_path + '/' + mesh.meshFile.name
-    meshpath = '/sims/' + mesh.meshFile.name
+    meshpath = '/sims/' + mesh
     f.write('set fn "' + meshpath + '"\n\n')
     f.write('VTKMeshReader R\n')
     f.write(indent + 'R filename $fn\n')
