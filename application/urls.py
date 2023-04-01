@@ -54,22 +54,26 @@ urlpatterns = [
     ####################### serverless simulator #######################
     # /application/serverless_simulator
     # path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
-    path('serverless_simulator', views.fmServerlessSimulator, name='serverless_simulator'),
+    path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
 
     # /application/simulator_material
-    path('serverless_simulator_material', views.fmServerlessSimulatorMaterial, name='serverless_simulator_material'),
+    path('serverless_simulator_material', serverless_views.fmServerlessSimulatorMaterial, name='serverless_simulator_material'),
 
     # /application/simulator_source
-    path('serverless_simulator_source', views.fmServerlessSimulatorSource, name='serverless_simulator_source'),
+    path('serverless_simulator_source', serverless_views.fmServerlessSimulatorSource, name='serverless_simulator_source'),
+
+    path('serverless_confirmation', serverless_views.serverless_simulation_confirmation, name='serverless_confirmation'),
 
     # /application/serverless_running
-    # path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
-    path('serverless_running', views.serverless_running, name='serverless_running'),
-    path('serverless_simulation_finish', views.serverless_simulation_finish, name='serverless_simulation_finish'),
+    path('serverless_running', serverless_views.serverless_running, name='serverless_running'),
+    path('serverless_simulation_finish', serverless_views.serverless_simulation_finish, name='serverless_simulation_finish'),
 
     # serverless files download
     url(r'cos_d/(?P<filename>[-\w_\\-\\.]+)&bucket=(?P<bucket>[-\w_\\-\\.]+)/$',
         serverless_views.cos_download_view, name='serverless_cos_download'),
+
+    # /application/serverless_finish
+    # path('serverless_finish', serverless_views.serverless_finish, name='serverless_finish'),
 
     # /application/recommendation
     path('recommendation', views.instance_recommendation, name='recommendation'),

@@ -75,20 +75,18 @@
     {% endfor %}
     <br/>
 
-    <button id='advanced'>Advanced Options</button>
-    <div id='advancedOption' class='table'>
-        <h6>Click here to download the auto-generated TCL script if you wish to make changes: <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a></h6>
+  <div>
+    {% include "estimation/estimate.html"%}
+  </div>
+  <button id='advanced'>Advanced Options</button>
+  <div id='advancedOption' class='table'>
+      <h6>Click here to download the auto-generated TCL script if you wish to make changes: <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a></h6>
     </div>
-    <br/>
-    </br>
-
-    <div>
-        {% include "estimation/estimate.html"%}
-    </div>
+  <br/>
 
     <div class="d-flex justify-content-center ">
-        <form class = 'card p-3 bg-light' action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
-            <div id="advancedOption1" class="table">
+        <form action="" method="post" enctype="multipart/form-data" onsubmit="return Validate(this);" style="width: 60%; text-align: center;">
+            <div id="advancedOption1" class="mb-4">
                 <h6>Upload the modified TCL script to run the simulation (please make sure to follow the instructions in the template and keep the filename unmodified):</h6>
                 <table class='no_error'>
                     {% csrf_token %}
@@ -101,12 +99,14 @@
                     </tr>
                 </table>
             </div>
-            <b>Looking to make the simulation cheaper or faster?</b>
-            <p>NOTE: The recommendation will take approximately 2 minutes to run</p>
-            <p><input type="submit" name="recommend_btn" value="Recommend EC2 instances"></p>
-            <br>
-            <b>Satisfied with your current instance?</b>
-            <p><input type="submit" name="simulate_btn" value="Confirm and Submit"></p>
+            <div class="card p-3 bg-light my-4">
+              <b>Looking to make the simulation cheaper or faster?</b>
+              <p>NOTE: The recommendation will take approximately 2 minutes to run</p>
+              <p><input type="submit" name="recommend_btn" value="Recommend EC2 instances"></p>
+              <br>
+              <b>Satisfied with your current instance?</b>
+              <p><input type="submit" name="simulate_btn" value="Confirm and Submit" class="mt-4"></p>
+            </div>
         </form>
     </div>
     <br>

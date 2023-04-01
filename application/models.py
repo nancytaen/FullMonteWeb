@@ -1,7 +1,9 @@
 from django.db import models
 from application.storage_backends import *
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.conf import settings 
+from django.conf import settings
+
+from application.serverless.models import ServerlessRequest, ServerlessOutput
 
 user_model = settings.AUTH_USER_MODEL
 
