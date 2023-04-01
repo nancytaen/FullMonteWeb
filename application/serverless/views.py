@@ -56,20 +56,20 @@ def _initiate_serverless_simulation(source, serverless_request, user):
     )
 
 
-def _record_completed_serverless_simulation(request_id, output_types):
+def _record_completed_serverless_simulation(request_id, output_files):
     """
     insert output filenames to ServerlessOutput
     TODO email user
     @param request_id:
-    @param output_types: ictionary of {[file extension] filename}
+    @param output_files: dictionary of {[file extension] filename}
     @return:
     """
     r = ServerlessRequest.objects.get(request_id=request_id)
     ServerlessOutput.objects.create(
         request=r,
-        output_vtk_name=output_types.get('out', ''),
-        output_txt_name=output_types.get('txt', ''),
-        log_name=output_types.get('log', ''),
+        output_vtk_name=output_files.get('out', ''),
+        output_txt_name=output_files.get('txt', ''),
+        log_name=output_files.get('log', ''),
     )
     r.completed = True
     r.save()
@@ -108,14 +108,13 @@ def serverless_running(request):
     try:
         prefix = serverless_request[ServerlessParameters.BASE]
         matches = cos_search_prefix(settings.IBM_COS_OUTPUT_BUCKET_NAME, prefix)
-        if not matches:
+        print(f"output found: {', '.join(matches)}")
+        output_files = {match[len(prefix):]: match for match in matches}
+        if not output_files.get('log', ''):
             print("waiting for serverless simulation to complete")
             context = {}
             return render(request, 'serverless/serverless_running.html', context)
-
-        print(f"output found: {', '.join(matches)}")
-        output_types = {match[len(prefix):]: match for match in matches}
-        _record_completed_serverless_simulation(serverless_request[ServerlessParameters.ID], output_types)
+        _record_completed_serverless_simulation(serverless_request[ServerlessParameters.ID], output_files)
 
     except Model.DoesNotExist or IntegrityError:
         del request.session[ServerlessParameters.SERVERLESS_REQUEST]
