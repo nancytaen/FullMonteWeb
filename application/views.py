@@ -845,7 +845,7 @@ def simulation_confirmation(request):
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
         'unit': request.session['meshUnit'],
-        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(request, request.session['ec2_instance_type'], format_cost=True),
         'recommendation': Recommendation(None).recommend(),
     }
 
@@ -857,8 +857,8 @@ def instance_recommendation(request):
     if request.method == 'POST':
         return HttpResponseRedirect('/application/simulation_confirmation')
     context = {
-        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
-        'recommendation': Recommendation(None).recommend(),
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(request, request.session['ec2_instance_type'], format_cost=True),
+        'recommendation': Recommendation(request).recommend(),
     }
     return render(request, 'estimation/simulation_recommendation.html', context)
 
