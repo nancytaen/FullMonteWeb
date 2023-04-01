@@ -66,7 +66,7 @@ def _record_completed_serverless_simulation(request_id, output_files):
 
 def get_output_of_simulation(prefix):
     matches = cos_search_prefix(settings.IBM_COS_OUTPUT_BUCKET_NAME, prefix)
-    print(f"output found: {', '.join(matches)}")
+    print(f"prefix: {prefix}, output found: {', '.join(matches)}")
     output_files = {match[len(prefix):]: match for match in matches}
     if not output_files.get('log', ''):
         return False
@@ -285,7 +285,7 @@ def serverless_simulation_confirmation(request):
         energy = request.session['totalEnergy']
         meshUnit = request.session['meshUnit']
         energyUnit = request.session['energyUnit']
-        source = tclGeneratorWriter(request.session, mesh_name, meshUnit, energy, energyUnit, base_name)
+        source = tclGeneratorWriter(request.session, mesh_name, meshUnit, energy, energyUnit, base_name[:-1])
         _initiate_serverless_simulation(source, serverless_request, request.user)
 
         # redirect to run simulation
