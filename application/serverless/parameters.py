@@ -18,7 +18,7 @@ class ServerlessParameters:
         # split filename into basename and extension
         # basename-<request_id>.ext
         partitions = filename.rsplit('.', 1)
-        return f'{partitions[0]}-{self.request_id}.{partitions[1]}'
+        return f'{partitions[0].replace(".", "-")}-{self.request_id}.{partitions[1]}'
 
     @staticmethod
     def extract_id_from_filename(filename):
