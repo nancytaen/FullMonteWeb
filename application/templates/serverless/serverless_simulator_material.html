@@ -320,19 +320,19 @@
             if (oInput.type == "file") {
                     var sFileName = oInput.value;
                     if (sFileName.length > 0) {
-                        var filename = sFileName.replace(/^.*[\\\/]/, '');
-                        var blnValid = (filename === tcl_script_name);
-                        console.log(filename)
-                        console.log(sFileName)
-                        if(blnValid) {
-                            return confirm('This will run the FullMonte Simulator with your uploaded TCL script and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.'); 
+                        const filename = sFileName.replace(/^.*[\\\/]/, '');
+                        const extension = sFileName.split('.').pop();
+                        let blnValid = (extension === 'tcl');
+                        if (!blnValid) {
+                          if (confirm(`Alert! ${filename} does not end with .tcl. Do you have the correct file?`) === true) {
+                            blnValid = true;
+                          } else {
+                            return false;
+                          }
                         }
-                        
-                        alert("filname is"+ sFileName);
-                        // if (!blnValid) {
-                        //     alert("Sorry, " + filename + " is invalid. Please change your uploaded TCL script to be " + tcl_script_name);
-                        //     return false;
-                        // }
+                        if(blnValid) {
+                          return confirm('This will run the FullMonte Simulator with your uploaded TCL script and will take some time. Please wait. Any old simulation files will also be deleted from your EC2 instance, but a copy of them have already been saved to the AWS S3 long-term storage, so you can still retrieve them from the Simulation History page.');
+                        }
                     }
                     else {
                         alert("No TCl script uploaded. Please upload a TCL script before launching simulation, or set up manually by filling out the forms below.");

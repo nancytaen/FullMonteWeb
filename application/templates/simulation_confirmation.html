@@ -3,7 +3,11 @@
 <div class="txt_container" style="text-align: center;">
     <h1>Please Confirm your simulation parameters</h1> 
 
-    <h5><b>Mesh: {{ mesh_name }}</b></h5>
+    {% if serverless %}
+      <h5><b><a href="cos_d/{{ mesh_name }}&bucket=mesh_bucket">Mesh: {{ mesh_name }}</a></b></h5>
+    {% else %}
+      <h5><b>Mesh: {{ mesh_name }}</b></h5>
+    {% endif %}
 
     <br/>
 
@@ -75,12 +79,20 @@
     {% endfor %}
     <br/>
 
-  <div>
-    {% include "estimation/estimate.html"%}
-  </div>
+  {% if not serverless %}
+    <div>
+      {% include "estimation/estimate.html"%}
+    </div>
+  {% endif %}
   <button id='advanced'>Advanced Options</button>
   <div id='advancedOption' class='table'>
-      <h6>Click here to download the auto-generated TCL script if you wish to make changes: <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a></h6>
+      <h6>Click here to download the auto-generated TCL script if you wish to make changes:
+        {% if serverless %}
+          <a href="cos_d/{{tcl_script_name}}&bucket=generated_tcl_bucket">{{ tcl_script_name }}</a>
+        {% else %}
+          <a href="download/{{tcl_script_name}}">{{ tcl_script_name }}</a>
+        {% endif %}
+      </h6>
     </div>
   <br/>
 
@@ -99,14 +111,16 @@
                     </tr>
                 </table>
             </div>
-            <div class="card p-3 bg-light my-4">
-              <b>Looking to make the simulation cheaper or faster?</b>
-              <p>NOTE: The recommendation will take approximately 2 minutes to run</p>
-              <p><input type="submit" name="recommend_btn" value="Recommend EC2 instances"></p>
-              <br>
-              <b>Satisfied with your current instance?</b>
-              <p><input type="submit" name="simulate_btn" value="Confirm and Submit" class="mt-4"></p>
-            </div>
+              <div class="card p-3 bg-light my-4">
+                {% if not serverless %}
+                  <b>Looking to make the simulation cheaper or faster?</b>
+                  <p>NOTE: The recommendation will take approximately 2 minutes to run</p>
+                  <p><input type="submit" name="recommend_btn" value="Recommend EC2 instances"></p>
+                  <br>
+                  <b>Satisfied with your current instance?</b>
+                {% endif %}
+                <p><input type="submit" name="simulate_btn" value="Confirm and Submit" class="mt-4"></p>
+              </div>
         </form>
     </div>
     <br>
