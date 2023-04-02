@@ -6,6 +6,32 @@ from application.storage_backends import *
 from django.core.files.storage import default_storage
 from .models import *
 from django.core.files.base import ContentFile
+import ibm_boto3
+from ibm_botocore.client import Config, ClientError
+
+
+def upload_file_ibm(bucket_name, item_name, file_path):
+    print("Starting large file upload for {0} to bucket: {1}".format(item_name, bucket_name))
+
+    # Create client connection
+    cos_cli = ibm_boto3.client("s3",
+                               ibm_api_key_id=settings.IBM_COS_API_KEY_ID,
+                               ibm_service_instance_id=settings.IBM_COS_SERVICE_INSTANCE_CRN,
+                               ibm_auth_endpoint=settings.IBM_COS_AUTH_ENDPOINT,
+                               config=Config(signature_version="oauth"),
+                               endpoint_url=settings.IBM_COS_ENDPOINT_URL
+                               )
+
+    try:
+        # initiate file upload
+        res = cos_cli.upload_file(file_path, bucket_name, item_name)
+
+        print("File upload complete!")
+    except Exception as e:
+        print("Unable to complete large file upload: {0}".format(e))
+    finally:
+        print("completed file transfer")
+
 
 def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     script_name = mesh.originalMeshFileName[:-4] + '.tcl'
@@ -14,26 +40,26 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     new_script.user = current_user
     new_script.script.save(script_name, ContentFile(_temp))
     script_name = new_script.script.name
-    
-    #initialize session inputs
+
+    # initialize session inputs
     indent = '    '
     kernelType = session['kernelType']
     scoredVolumeRegionID = session['scoredVolumeRegionID']
     packetCount = session['packetCount']
 
-    #initialize path for copying tcl template
+    # initialize path for copying tcl template
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
 
-    #start by wiping script template
+    # start by wiping script template
     with open(source, 'r') as f:
         lines = f.readlines()
-    
+
     f = open(source, 'w')
     for line in lines[::-1]:
         del lines[-1]
-    
-    #start writing to tcl script
+
+    # start writing to tcl script
     f = open(source, 'a')
     f.write('#====================================================================================================================\n')
     f.write('#====================================================================================================================\n')
@@ -54,7 +80,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write(indent + '}\n')
     f.write(indent + 'puts [format "\\rProgress %6.2f%%" 100.0]\n')
     f.write('}\n\n')
-    
+
     #append mesh to tcl script
     #meshpath = dir_path + '/' + mesh.meshFile.name
     f.write('#====================================================================================================================\n')
@@ -74,7 +100,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write('#====================================================================================================================\n')
     f.write('set M [R mesh]\n')
     f.write('$M unitDimension ' + '"' + mesh_unit + '"\n\n')
-    
+
     #append example material set template to tcl script
     f.write('#====================================================================================================================\n')
     f.write('#                                                Region Materials                                                    \n')
@@ -102,7 +128,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
         for regionID in scoredVolumeRegionID:
             f.write('VolumeCellInRegionPredicate vol' + str(regionID) + '\n')
-            f.write('vol'+ str(regionID) + ' setRegion '+ str(regionID) + '\n\n')
+            f.write('vol' + str(regionID) + ' setRegion ' + str(regionID) + '\n\n')
 
     #append source to tcl script
     f.write('#====================================================================================================================\n')
@@ -156,7 +182,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write('set ODC [k results]\n\n')
 
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
-        #get photon weight results
+        # get photon weight results
         f.write('# use DirectedSurfaceSum class to get the total photon weight entering the detector \n')
         f.write('DirectedSurfaceSum dss\n')
         f.write(indent + 'dss input $ODC\n')
@@ -186,15 +212,15 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
-    #initialize path for results
-    #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
-    #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
+    # initialize path for results
+    # meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
+    # fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
     name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     # dvhResult = '/sims/' + name + '.dvh.txt'
     comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
-    
+
     #write the mesh with fluence appended
     f.write('#====================================================================================================================\n')
     f.write('#                                               Output Mesh Writer                                                   \n')
@@ -252,7 +278,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
             f.write(indent + 'EFsurf' + str(cnt) + ' data [$ODC getByType "DirectedSurface" ' + str(cnt) + ']\n')
             f.write(indent + 'EFsurf' + str(cnt) + ' outputFluence\n')
             f.write(indent + 'EFsurf' + str(cnt) + ' update\n\n')
-            #write the surface exit energy into the mesh file
+            # write the surface exit energy into the mesh file
             f.write('VTKSurfaceWriter SW' + str(cnt) + '\n')
             f.write(indent + 'SW' + str(cnt) + ' filename "' + surfaceMeshResult + '"\n')
             f.write(indent + 'SW' + str(cnt) + ' addData "Fluence" [EFsurf' + str(cnt) + ' result]\n')
@@ -276,7 +302,7 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
             f.write('puts -nonewline $fileId "$region' + str(regionID) + '_res "\n')
             f.write('close $fileId\n\n')
 
-    #copy and save script to AWS
+    # copy and save script to AWS
     f = open(source, 'r')
     lines = f.readlines()
     _temp = b''
@@ -288,14 +314,277 @@ def emptyTclTemplateGenerator(session, mesh, mesh_unit, energy, energy_unit, cur
     new_script.save()
 
     f.close()
-    
+
     return new_script.script.name
 
-def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
-    generated_script = tclScript.objects.filter(user = current_user).latest('id')
-    script_name = generated_script.script.name
 
-    #initialize session inputs
+def emptyTclTemplateGeneratorServerless(session, mesh, mesh_unit, energy, energy_unit, current_user):
+    # initialize session inputs
+    indent = '    '
+    kernelType = session['kernelType']
+    scoredVolumeRegionID = session['scoredVolumeRegionID']
+    packetCount = session['packetCount']
+
+    # initialize path for copying tcl template
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    source = dir_path + '/tcl/tcl_template.tcl'
+
+    # start by wiping script template
+    with open(source, 'r') as f:
+        lines = f.readlines()
+
+    f = open(source, 'w')
+    for line in lines[::-1]:
+        del lines[-1]
+
+    # start writing to tcl script
+    f = open(source, 'a')
+    f.write('#====================================================================================================================\n')
+    f.write('#====================================================================================================================\n')
+    f.write('#                                   Autogenerated FullMonte Simulation TCL Script                                    \n')
+    f.write('# When modifying this file, please carefully follow the instractions for each section to ensure a successful run.    \n')
+    f.write('#====================================================================================================================\n')
+    f.write('#====================================================================================================================\n')
+    f.write('package require FullMonte\n\n')
+
+    f.write('#====================================================================================================================\n')
+    f.write('#                              Simulation Progress Tracker (please do not modify)                                    \n')
+    f.write('#====================================================================================================================\n')
+    f.write('proc progressTimer {} {\n')
+    f.write(indent + 'while { ![k done] } {\n')
+    f.write(indent + indent + 'puts -nonewline [format "\\rProgress %6.2f%%" [expr 100.0*[k progressFraction]]]\n')
+    f.write(indent + indent + 'flush stdout\n')
+    f.write(indent + indent + 'after 200\n')
+    f.write(indent + '}\n')
+    f.write(indent + 'puts [format "\\rProgress %6.2f%%" 100.0]\n')
+    f.write('}\n\n')
+
+    #append mesh to tcl script
+    #meshpath = dir_path + '/' + mesh.meshFile.name
+    f.write('#====================================================================================================================\n')
+    f.write('#                                   Input VTK File Path (please do not modify)                                       \n')
+    f.write('#====================================================================================================================\n')
+    meshpath = '/sims/' + mesh
+    f.write('set fn "' + meshpath + '"\n\n')
+    f.write('VTKMeshReader R\n')
+    f.write(indent + 'R filename $fn\n')
+    f.write(indent + 'R read\n\n')
+
+    f.write('#====================================================================================================================\n')
+    f.write('#                                                  Mesh Geometry                                                     \n')
+    f.write('# The "unitDimension" function is optional. If you would like to specify the unit of your mesh, which can be cm or   \n')
+    f.write('# mm, please do so with this function. This template uses the unit from your simulation settings, but you may        \n')
+    f.write('# modify it if appropriate.                                                                                          \n')
+    f.write('#====================================================================================================================\n')
+    f.write('set M [R mesh]\n')
+    f.write('$M unitDimension ' + '"' + mesh_unit + '"\n\n')
+
+    #append example material set template to tcl script
+    f.write('#====================================================================================================================\n')
+    f.write('#                                                Region Materials                                                    \n')
+    f.write('# Please define your region materials here. Air is always Region 0, and an example usage is provided below. Please   \n')
+    f.write('# specify the material properties in order that matches the region IDs in the supplied mesh. If the mesh unit was    \n')
+    f.write('# previously specified, you must specify the material units as well (should be consistant with the mesh unit).       \n')
+    f.write('#====================================================================================================================\n')
+    f.write('MaterialSet MS\n\n')
+    f.write('Material air \n')
+    f.write(indent + 'air' + indent + 'unitDimension' + indent + '"' + mesh_unit + '"\n')
+    f.write(indent + 'air' + indent + 'scatteringCoeff' + indent + '0.0\n')
+    f.write(indent + 'air' + indent + 'absorptionCoeff' + indent + '0.0\n')
+    f.write(indent + 'air' + indent + 'refractiveIndex' + indent + '1.0\n')
+    f.write(indent + 'air' + indent + 'anisotropy' + indent + '0.0\n\n')
+
+    f.write('Material examplematerial \n')
+    f.write(indent + 'examplematerial' + indent + 'unitDimension' + indent + '"' + mesh_unit + '"\n')
+    f.write(indent + 'examplematerial' + indent + 'scatteringCoeff' + indent + '0.1\n')
+    f.write(indent + 'examplematerial' + indent + 'absorptionCoeff' + indent + '0.2\n')
+    f.write(indent + 'examplematerial' + indent + 'refractiveIndex' + indent + '1.2\n')
+    f.write(indent + 'examplematerial' + indent + 'anisotropy' + indent + '0.1\n\n')
+    f.write('MS exterior air\n')
+    f.write('MS append examplematerial\n\n')
+
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        for regionID in scoredVolumeRegionID:
+            f.write('VolumeCellInRegionPredicate vol' + str(regionID) + '\n')
+            f.write('vol' + str(regionID) + ' setRegion ' + str(regionID) + '\n\n')
+
+    #append source to tcl script
+    f.write('#====================================================================================================================\n')
+    f.write('#                                                Light Source(s)                                                     \n')
+    f.write('# Please define your light source type and their positions on the mesh (make sure the coordinates are scaled to      \n')
+    f.write('# match the mesh unit, if specified. Supported light source types include: Point, PencilBeam, Volume, Ball,          \n')
+    f.write('# Cylinder, and SurfaceSourceBuilder.                                                                                \n')
+    f.write('#====================================================================================================================\n')
+    #point source example
+    f.write('Point P1\n')
+    line = 'P1 position "-2.5 20.0 1400.0"\n'
+    line2 = 'P1 power 1\n\n'
+    f.write(indent + line)
+    f.write(indent + line2)
+
+    #append kernel template to tcl script
+    f.write('#====================================================================================================================\n')
+    f.write('#                                                     Kernel                                                         \n')
+    f.write('# This is autogenerated from your simulation settings. You may modify if you would like to use a different kernel    \n')
+    f.write('# type. Choices are: TetraSVKernel, TetraSurfaceKernel, TetraVolumeKernel, TetraInternalKernel, and                  \n')
+    f.write('# TetraCUDAInternalKernel. Optionally, the amount and type (power/energy) that is represented by the total photon    \n')
+    f.write('# packets can be specifie in the "energyPowerValue" and "isEnergy_or_Power" functions, respectively.                 \n')
+    f.write('#====================================================================================================================\n')
+    f.write(kernelType + ' k\n')
+    f.write(indent + 'k packetCount ' + str(packetCount) + '\n')
+    # f.write(indent + 'k source P1\n')
+    f.write(indent + 'k geometry $M\n')
+    f.write(indent + 'k materials MS\n')
+    f.write(indent + 'k isEnergy_or_Power "' + energy_unit + '"\n')
+    f.write(indent + 'k energyPowerValue ' + str(energy) + '\n')
+    if kernelType == "TetraInternalKernel":
+        for regionID in scoredVolumeRegionID:
+            f.write(indent + '[k directedSurfaceScorer] addScoringRegionBoundary vol' + str(regionID) + '\n')
+    elif kernelType == "TetraCUDAInternalKernel":
+        for regionID in scoredVolumeRegionID:
+            f.write(indent + 'k addScoringRegionBoundary vol' + str(regionID) + '\n')
+    f.write(indent + 'k source P1\n\n')
+
+    #run and wait
+    f.write('#====================================================================================================================\n')
+    f.write('#                                   Simulation Start (please do not modify)                                          \n')
+    f.write('#====================================================================================================================\n')
+    f.write(indent + 'k startAsync\n')
+    f.write(indent + 'progressTimer\n')
+    f.write(indent + 'k finishAsync\n\n')
+
+    #get results
+    f.write('#====================================================================================================================\n')
+    f.write('#                                  Simulation Results (please do not modify)                                         \n')
+    f.write('#====================================================================================================================\n')
+    f.write('set ODC [k results]\n\n')
+
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        # get photon weight results
+        f.write('# use DirectedSurfaceSum class to get the total photon weight entering the detector \n')
+        f.write('DirectedSurfaceSum dss\n')
+        f.write(indent + 'dss input $ODC\n')
+        f.write(indent + 'dss update\n\n')
+        f.write('# put result into variable \n')
+        cnt = 0
+        for regionID in scoredVolumeRegionID:
+            f.write('set region' + str(regionID) + '_res [dss totalEnteringWeight ' + str(cnt) + ']\n')
+            cnt = cnt + 1
+        f.write('\n')
+
+    #convert photon weight from simulation raw results to energy absorbed per volume element
+    f.write('#====================================================================================================================\n')
+    f.write('#                                           Energy to Fluence Converter                                              \n')
+    f.write('# This section of the template converts the simulation results of volume energy to fluence values (Energy/area, such \n')
+    f.write('# as J/mm^2). You may modify for your different conversion needs. The choices for                                    \n')
+    f.write('# Input include: inputPhotonWeight (raw results from simulation - unit-less),                                        \n')
+    f.write('#                 inputEnergy (PhotonWeight*TotalEnergy/TotalPackets - in Joules (J) or Watt (W)),                   \n')
+    f.write('#                 inputFluence (Energy/Area or Energy/Volume/muA - in W/mm^2, W/cm^2, J/mm^2, or J/cm^2), and        \n')
+    f.write('#                 inputEnergyPerVolume (Energy/Volume - in W/mm^3, W/cm^3, J/mm^3, or J/cm^3.                        \n')
+    f.write('# Output include: outputPhotonWeight, outputFluence, outputEnergy, and outputEnergyPerVolume.                        \n')
+    f.write('#====================================================================================================================\n')
+    f.write('EnergyToFluence EF\n')
+    f.write(indent + 'EF kernel k\n')
+    f.write(indent + 'EF inputPhotonWeight\n')
+    f.write(indent + 'EF data [$ODC getByName "VolumeEnergy"]\n')
+    f.write(indent + 'EF outputFluence\n')
+    f.write(indent + 'EF update\n\n')
+
+    # initialize path for results
+    # meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
+    # fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
+    name = mesh[:-4]
+    meshResult = '/sims/' + name + '.out.vtk'
+    fluenceResult = '/sims/' + name + '.phi_v.txt'
+    # dvhResult = '/sims/' + name + '.dvh.txt'
+    comment = 'MeshUnit: ' + mesh_unit + ' EnergyUnit: ' + energy_unit
+
+    #write the mesh with fluence appended
+    f.write('#====================================================================================================================\n')
+    f.write('#                                               Output Mesh Writer                                                   \n')
+    f.write('# This section of the template generates an output VTK that contains fluence values of the volume. By default, it is \n')
+    f.write('# named after the input mesh with a ".out.vtk" extension. You may modify this path or generate multiple output VTKs  \n')
+    f.write('# as long as you start the path names with "/sims/" directory and no subdirectories.                                 \n')
+    f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+    f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
+    f.write('# Please note that the DVH generator only looks for the default path, so you would not be able to automatically view \n')
+    f.write('# the DVH if you modify the file paths here. However, you can still manually download the output VTKs and upload them\n')
+    f.write('# back to the Visualization page to view their DVH. You can also use the 3D Visualizor in any case: if the default   \n')
+    f.write('# file name is not found, your Root folder will be loaded to the ParaView application, and you can find your desired \n')
+    f.write('# mesh by browsing through the Root folder.                                                                          \n')
+    f.write('#====================================================================================================================\n')
+    f.write('VTKMeshWriter W\n')
+    f.write(indent + 'W filename "' + meshResult + '"\n')
+    f.write(indent + 'W addData "Fluence" [EF result]\n')
+    f.write(indent + 'W mesh $M\n')
+    f.write(indent + 'W addHeaderComment "' + comment + '"\n')
+    f.write(indent + 'W write\n\n')
+
+    #write the fluence values only to a text file
+    f.write('#====================================================================================================================\n')
+    f.write('#                                              Fluence Matrix Writer                                                 \n')
+    f.write('# This section of the template writes fluence values of the volume into a simple text file. By default, it is named  \n')
+    f.write('# after the input mesh with a ".phi_v.txt" extension. You may modify its path or generate multiple output TXTs as    \n')
+    f.write('# long as you start the path names with "/sims/" directory and no subdirectories. You may also discard this section. \n')
+    f.write('#    Example 1: "/sims/example_output_fluence.txt" is ok                                                             \n')
+    f.write('#    Example 2: "example_output_fluence.txt" is NOT ok                                                               \n')
+    f.write('#    Example 3: "/sims/example_subdir/example_output_fluence.txt" is NOT ok                                          \n')
+    f.write('#====================================================================================================================\n')
+    f.write('TextFileMatrixWriter TW\n')
+    f.write(indent + 'TW filename "' + fluenceResult + '"\n')
+    f.write(indent + 'TW source [EF result]\n')
+    f.write(indent + 'TW write\n\n')
+
+    if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
+        #convert photon weight from simulation raw results to energy absorbed per volume element
+        f.write('#====================================================================================================================\n')
+        f.write('#                                             Output Surface Writer                                                  \n')
+        f.write('# This section of the template generates an output VTKs that contain surface exit energy for the selected regions. By\n')
+        f.write('# default, it is named after the input mesh with a ".surfRegionX.out.vtk" extension. You may modify this path or     \n')
+        f.write('# generate multiple output VTKs as long as you start the path names with "/sims/" directory and no subdirectories.   \n')
+        f.write('#    Example 1: "/sims/example_output_mesh.vtk" is ok                                                                \n')
+        f.write('#    Example 2: "example_output_mesh.vtk" is NOT ok                                                                  \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_mesh.vtk" is NOT ok                                             \n')
+        f.write('#====================================================================================================================\n')
+        cnt = 0
+        for regionID in scoredVolumeRegionID:
+            surfaceMeshResult = '/sims/' + name + '.surfRegion' + str(regionID) + '.out.vtk'
+            f.write('EnergyToFluence EFsurf' + str(cnt) + '\n')
+            f.write(indent + 'EFsurf' + str(cnt) + ' kernel k\n')
+            f.write(indent + 'EFsurf' + str(cnt) + ' inputPhotonWeight\n')
+            f.write(indent + 'EFsurf' + str(cnt) + ' data [$ODC getByType "DirectedSurface" ' + str(cnt) + ']\n')
+            f.write(indent + 'EFsurf' + str(cnt) + ' outputFluence\n')
+            f.write(indent + 'EFsurf' + str(cnt) + ' update\n\n')
+            # write the surface exit energy into the mesh file
+            f.write('VTKSurfaceWriter SW' + str(cnt) + '\n')
+            f.write(indent + 'SW' + str(cnt) + ' filename "' + surfaceMeshResult + '"\n')
+            f.write(indent + 'SW' + str(cnt) + ' addData "Fluence" [EFsurf' + str(cnt) + ' result]\n')
+            f.write(indent + 'SW' + str(cnt) + ' mesh $M\n')
+            f.write(indent + 'SW' + str(cnt) + ' write\n\n')
+            cnt = cnt + 1
+
+        # write photon weights of selected region to a TXT file
+        f.write('#====================================================================================================================\n')
+        f.write('#                                          Output Photon Weight Writer                                               \n')
+        f.write('# This section of the template writes photon weights of the selected region into a text file. By default, it is      \n')
+        f.write('# named after the input mesh with a ".phweights.txt" extension. You may modify this path or generate multiple output \n')
+        f.write('# TXTs as long as you start the path names with "/sims/" directory and no subdirectories.                            \n')
+        f.write('#    Example 1: "/sims/example_output_photon_weights.txt" is ok                                                      \n')
+        f.write('#    Example 2: "example_output_photon_weights.txt" is NOT ok                                                        \n')
+        f.write('#    Example 3: "/sims/example_subdir/example_output_photon_weights.txt" is NOT ok                                   \n')
+        f.write('#====================================================================================================================\n')
+        for regionID in scoredVolumeRegionID:
+            photonWeightResult = '/sims/' + name + '.surfRegion' + str(regionID) + '.phweights.txt'
+            f.write('set fileId [open "' + photonWeightResult + '" "w"]\n')
+            f.write('puts -nonewline $fileId "$region' + str(regionID) + '_res "\n')
+            f.write('close $fileId\n\n')
+
+    return source
+
+
+def tclGeneratorWriter(session, mesh, mesh_unit, energy, energy_unit, name):
+    # initialize session inputs
     indent = '    '
     kernelType = session['kernelType']
     scoredVolumeRegionID = session['scoredVolumeRegionID']
@@ -330,20 +619,20 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     yPos1 = session['yPos1']
     zPos1 = session['zPos1']
     emitVolume = session['emitVolume']
-    
-    #initialize path for copying tcl template
+
+    # initialize path for copying tcl template
     dir_path = os.path.dirname(os.path.abspath(__file__))
     source = dir_path + '/tcl/tcl_template.tcl'
 
-    #start by wiping script template
+    # start by wiping script template
     with open(source, 'r') as f:
         lines = f.readlines()
-    
+
     f = open(source, 'w')
     for line in lines[::-1]:
         del lines[-1]
-    
-    #start writing to tcl script
+
+    # start writing to tcl script
     f = open(source, 'a')
     f.write('#====================================================================================================================\n')
     f.write('#====================================================================================================================\n')
@@ -364,13 +653,13 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + '}\n')
     f.write(indent + 'puts [format "\\rProgress %6.2f%%" 100.0]\n')
     f.write('}\n\n')
-    
+
     #append mesh to tcl script
     f.write('#====================================================================================================================\n')
     f.write('#                                   Input VTK File Path (please do not modify)                                       \n')
     f.write('#====================================================================================================================\n')
     #meshpath = dir_path + '/' + mesh.meshFile.name
-    meshpath = '/sims/' + mesh.meshFile.name
+    meshpath = '/sims/' + mesh
     f.write('set fn "' + meshpath + '"\n\n')
     f.write('VTKMeshReader R\n')
     f.write(indent + 'R filename $fn\n')
@@ -384,7 +673,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('#====================================================================================================================\n')
     f.write('set M [R mesh]\n')
     f.write('$M unitDimension ' + '"' + mesh_unit + '"\n\n')
-    
+
     #append material set to tcl script
     f.write('#====================================================================================================================\n')
     f.write('#                                                Region Materials                                                    \n')
@@ -393,21 +682,21 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('# you must specify the material units as well (should be consistant with the mesh unit).                             \n')
     f.write('#====================================================================================================================\n')
     f.write('MaterialSet MS\n\n')
-    
+
     for ma, sc, ab, re, an in zip(material, scatteringCoeff, absorptionCoeff, refractiveIndex, anisotropy):
         matLower = ma.lower()
-        mat = matLower.replace(' ','')
+        mat = matLower.replace(' ', '')
         f.write('Material ' + mat + '\n')
         f.write(indent + mat + indent + 'unitDimension' + indent + '"' + mesh_unit + '"\n')
         f.write(indent + mat + indent + 'scatteringCoeff' + indent + str(sc) + '\n')
         f.write(indent + mat + indent + 'absorptionCoeff' + indent + str(ab) + '\n')
         f.write(indent + mat + indent + 'refractiveIndex' + indent + str(re) + '\n')
         f.write(indent + mat + indent + 'anisotropy' + indent + str(an) + '\n\n')
-    
+
     i = 0
     for ma in material:
         matLower = ma.lower()
-        mat = matLower.replace(' ','')
+        mat = matLower.replace(' ', '')
         if i == 0:
             f.write('MS exterior ' + mat + '\n')
         else:
@@ -419,7 +708,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
         for regionID in scoredVolumeRegionID:
             f.write('VolumeCellInRegionPredicate vol' + str(regionID) + '\n')
-            f.write('vol'+ str(regionID) + ' setRegion '+ str(regionID) + '\n\n')
+            f.write('vol' + str(regionID) + ' setRegion ' + str(regionID) + '\n\n')
 
     #append sources to tcl script
     f.write('#====================================================================================================================\n')
@@ -434,14 +723,14 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
             volumeRegion, emitHemiSphere, hemiSphereEmitDistribution, numericalAperture, checkDirection, xDir, yDir, zDir, xPos0, yPos0, zPos0, xPos1, yPos1, zPos1, emitVolume):
         if st == 'Point':
             f.write(st + ' P' + str(index) + '\n')
-            line = 'P' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line = 'P' + str(index) + ' position "' + str(x) + ' ' + str(y) + ' ' + str(z) + '"\n'
             line2 = 'P' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
         if st == 'PencilBeam':
             f.write(st + ' PB' + str(index) + '\n')
-            line = 'PB' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
-            line2 = 'PB' + str(index) + ' direction "' + str(xD)+ ' ' + str(yD) + ' ' + str(zD) + '"\n'
+            line = 'PB' + str(index) + ' position "' + str(x) + ' ' + str(y) + ' ' + str(z) + '"\n'
+            line2 = 'PB' + str(index) + ' direction "' + str(xD) + ' ' + str(yD) + ' ' + str(zD) + '"\n'
             line3 = 'PB' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
@@ -454,15 +743,15 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
             f.write(indent + line2)
         if st == 'Ball':
             f.write(st + ' B' + str(index) + '\n')
-            line = 'B' + str(index) + ' position "' + str(x)+ ' ' + str(y) + ' ' + str(z) + '"\n'
+            line = 'B' + str(index) + ' position "' + str(x) + ' ' + str(y) + ' ' + str(z) + '"\n'
             line2 = 'B' + str(index) + ' radius ' + str(ra) + '\n'
             line3 = 'B' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
             f.write(indent + line2)
         if st == 'Cylinder':
             f.write(st + ' CY' + str(index) + '\n')
-            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x0)+ ' ' + str(y0) + ' ' + str(z0) + '\"\n'
-            line2 = 'CY' + str(index) + ' endpoint 1 \"' + str(x1)+ ' ' + str(y1) + ' ' + str(z1) + '\"\n'
+            line = 'CY' + str(index) + ' endpoint 0 \"' + str(x0) + ' ' + str(y0) + ' ' + str(z0) + '\"\n'
+            line2 = 'CY' + str(index) + ' endpoint 1 \"' + str(x1) + ' ' + str(y1) + ' ' + str(z1) + '\"\n'
             line3 = 'CY' + str(index) + ' radius ' + str(ra) + '\n'
             line4 = 'CY' + str(index) + ' power ' + str(po) + '\n\n'
             f.write(indent + line)
@@ -482,7 +771,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
                         f.write(indent + line8)
         if st == 'SurfaceSourceBuilder':
             f.write('VolumeCellInRegionPredicate SSBvol' + str(index) + '\n')
-            f.write('SSBvol' + str(index) +' setRegion ' + str(vr) +'\n\n')
+            f.write('SSBvol' + str(index) + ' setRegion ' + str(vr) + '\n\n')
 
             f.write(st + ' SSB' + str(index) + '\n')
             line = 'SSB' + str(index) + ' mesh $M\n'
@@ -502,7 +791,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
                     f.write(indent + line6)
             if cd == "true":
                 line7 = 'SSB' + str(index) + ' checkDirection 1\n'
-                line8 = 'SSB' + str(index) + ' emitDirection \"' + str(xD1)+ ' ' + str(yD1) + ' ' + str(zD1) + '\"\n'
+                line8 = 'SSB' + str(index) + ' emitDirection \"' + str(xD1) + ' ' + str(yD1) + ' ' + str(zD1) + '\"\n'
                 f.write(indent + line7)
                 f.write(indent + line8)
             else:
@@ -587,7 +876,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write('set ODC [k results]\n\n')
 
     if kernelType == "TetraInternalKernel" or kernelType == "TetraCUDAInternalKernel":
-        #get photon weight results
+        # get photon weight results
         f.write('# use DirectedSurfaceSum class to get the total photon weight entering the detector \n')
         f.write('DirectedSurfaceSum dss\n')
         f.write(indent + 'dss input $ODC\n')
@@ -617,11 +906,10 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     f.write(indent + 'EF outputFluence\n')
     f.write(indent + 'EF update\n\n')
 
+    # initialize path for results
+    # meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
+    # fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
 
-    #initialize path for results
-    #meshResult = dir_path + '/vtk/vtk_' + start + '.out.vtk'
-    #fluenceResult = dir_path + '/vtk/vtk_' + start + '.phi_v.vtk'
-    name = script_name[:-4]
     meshResult = '/sims/' + name + '.out.vtk'
     fluenceResult = '/sims/' + name + '.phi_v.txt'
     # dvhResult = '/sims/' + name + '.dvh.txt'
@@ -684,7 +972,7 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
             f.write(indent + 'EFsurf' + str(cnt) + ' data [$ODC getByType "DirectedSurface" ' + str(cnt) + ']\n')
             f.write(indent + 'EFsurf' + str(cnt) + ' outputFluence\n')
             f.write(indent + 'EFsurf' + str(cnt) + ' update\n\n')
-            #write the surface exit energy into the mesh file
+            # write the surface exit energy into the mesh file
             f.write('VTKSurfaceWriter SW' + str(cnt) + '\n')
             f.write(indent + 'SW' + str(cnt) + ' filename "' + surfaceMeshResult + '"\n')
             f.write(indent + 'SW' + str(cnt) + ' addData "Fluence" [EFsurf' + str(cnt) + ' result]\n')
@@ -727,8 +1015,18 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     # f.write(indent + 'TDH filename "' + dvhResult + '"\n')
     # f.write(indent + 'TDH collection $DHC\n')
     # f.write(indent + 'TDH write\n')
+    return source
 
-    #copy and save script to AWS
+
+def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
+    generated_script = tclScript.objects.filter(user=current_user).latest('id')
+    script_name = generated_script.script.name
+
+    name = script_name[:-4]
+
+    source = tclGeneratorWriter(session, mesh.meshFile.name, mesh_unit, energy, energy_unit, name)
+
+    # copy and save script to AWS
     f = open(source, 'r')
     lines = f.readlines()
     _temp = b''
@@ -741,5 +1039,5 @@ def tclGenerator(session, mesh, mesh_unit, energy, energy_unit, current_user):
     generated_script.save()
 
     f.close()
-    
+
     return generated_script.script.name

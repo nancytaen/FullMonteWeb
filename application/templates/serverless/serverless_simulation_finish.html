@@ -1,0 +1,28 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<div class="txt_container">
+    <h1>The Simulation Completed Successfully.</h1> 
+    <!-- <p><b>Output from simulation run:</b></p>
+    <p>{% autoescape off %}{{output}}{% endautoescape %}</p>
+    <br/> -->
+
+    <p><b>Simulation output files (you can also download them later from History):</b></p>
+    <!-- {% for item in output_file_paths %}
+        <a href="download_from_ec2/{{ item }}">{{ item }}</a><br/>
+    {% endfor %} -->
+    <br/>
+    {% for file in output_files %}
+      {% if file %}
+        <a href="cos_d/{{file}}&bucket=output_bucket"> {{ file }}</a>
+      {% endif %}
+    {% endfor %}
+    
+    <p><b>Suggestions for next steps:</b></p>
+    <ul class="suggestion-list">
+        <li><a href=visualization>Visualize the simulation output mesh</a></li><br/>
+        <li><a href=simulator>Run another simulation</a></li>
+    </ul>
+</div>
+
+
+{% endblock %}
