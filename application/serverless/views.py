@@ -353,6 +353,7 @@ def serverless_simulation_confirmation(request):
         'tcl_script_name': serverless_request[ServerlessParameters.TCL],
         'tcl_form': tcl_form,
         'unit': request.session['meshUnit'],
+        'serverless': True,
     }
 
     return render(request, 'simulation_confirmation.html', context)
