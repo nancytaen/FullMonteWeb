@@ -47,8 +47,6 @@
             <th class="th-sm">Mesh File</th>
             <th class="th-sm">TCL Script</th>
             <th class="th-sm">Time Started</th>
-            <th class="th-sm">Update</th>
-            <th class="th-sm">Delete</th>
           </tr>
         </thead>
         <tbody>
@@ -57,8 +55,6 @@
               <td><a href="cos_d/{{ item.mesh_name }}&bucket=mesh_bucket">{{ item.mesh_name }}</a></td>
               <td><a href="cos_d/{{ item.tcl_name }}&bucket=tcl_bucket">{{ item.tcl_name }}</a></td>
               <td nowrap>{{ item.datetime }}</td>
-              <td><button class="btn-secondary">Update</button></td>
-              <td><button class="btn-danger">Delete</button></td>
             </tr>
           {% endfor %}
         </tbody>
