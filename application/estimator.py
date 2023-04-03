@@ -10,6 +10,8 @@ ESTIMATED_COST_KEY = 'cost'
 CURRENCY = 'USD'
 COST_FORMATTER_TEMPLATE = '$ {cost} {currency}'
 
+PACKET_COUNT_COEFF = 0.000005
+
 class MaterialCoeffs:
     def __init__(self, scatteringCoeff, absorptionCoeff):
         self.scatteringCoeff = scatteringCoeff
@@ -77,108 +79,101 @@ class TimeCostEstimator:
         self.estimator = "decisionTree"
         self.ec2_type = ec2_type
 
-    def _estimate_time(self, Mesh2_Scattering, Mesh2_Absor, Mesh3_Mu_Scattering,Mesh3_Mu_Absor, Mesh4_Mu_Scattering,Mesh4_Mu_Absor, Mesh5_Mu_Scattering,Mesh5_Mu_Absor, Mesh6_Mu_Scattering,Mesh6_Mu_Absor, Mesh7_Mu_Scattering,Mesh7_Mu_Absor, Mesh8_Mu_Scattering,Mesh8_Mu_Absor, Mesh9_Mu_Scattering,Mesh9_Mu_Absor, PacketCount, Storage, CPU_Cores, Instance_Type_Compute_Opti, Instance_Type_General):
-        # print(request)
-        if self.estimator is None:
-            return '00:08:29'
-        else:
-            if PacketCount <= 550000000.0:
-                if PacketCount <= 500000.0:
-                    if Mesh6_Mu_Absor <= 0.0:
-                        return 468.927
-                    else:  # if Mesh6 Mu Absorption > 0.0
-                        if Mesh5_Mu_Absor <= 0.1:
-                            return 2041.284
-                        else:  # if Mesh5 Mu Absorption > 0.1
-                            return 2546.043
-                else:  # if PacketCount (i.e. photon count) > 500000.0
-                    if Mesh4_Mu_Absor <= 0.0:
-                        if PacketCount <= 55000000.0:
-                            if CPU_Cores <= 6.0:
-                                return 339.845
-                            else:  # if Default CPU cores > 6.0
-                                if Storage <= 48.0:
-                                    return 1231.2665
-                                else:  # if Storage (GB) > 48.0
-                                    return 1383.402
-                        else:  # if PacketCount (i.e. photon count) > 55000000.0
-                            if Storage <= 48.0:
-                                if Mesh3_Mu_Scattering<= 7.5:
-                                    return 2441.525
-                                else:  # if Mesh3 Mu Scattering > 7.5
-                                    return 1639.837
-                            else:  # if Storage (GB) > 48.0
-                                return 502.118
-                    else:  # if Mesh4 Mu Absorption > 0.0
-                        if Mesh4_Mu_Scattering<= 3.12:
-                            return 1507.229
-                        else:  # if Mesh4 Mu Scattering > 3.12
-                            if Mesh6_Mu_Absor <= 0.03:
-                                if PacketCount <= 55000000.0:
-                                    if Mesh4_Mu_Scattering<= 8.0:
-                                        if Instance_Type_General <= 0.5:
-                                            if Storage <= 48.0:
-                                                if CPU_Cores <= 13.0:
-                                                    return 91.247
-                                                else:  # if Default CPU cores > 13.0
-                                                    return 45.056
-                                            else:  # if Storage (GB) > 48.0
-                                                return 306.349
-                                        else:  # if Instance Type_General > 0.5
-                                            if Mesh2_Scattering <= 11.95:
-                                                return 57.03
-                                            else:  # if Mesh2 Scattering > 11.95
-                                                return 71.69
-                                    else:  # if Mesh4 Mu Scattering > 8.0
-                                        if PacketCount <= 5500000.0:
-                                            return 80.359
-                                        else:  # if PacketCount (i.e. photon count) > 5500000.0
-                                            if CPU_Cores<= 13.0:
-                                                if Storage <= 28.0:
-                                                    return 307.029
-                                                else:  # if Storage (GB) > 28.0
-                                                    if Instance_Type_General <= 0.5:
-                                                        return 620.01
-                                                    else:  # if Instance Type_General > 0.5
-                                                        return 548.5435
-                                            else:  # if Default CPU cores > 13.0
-                                                return 147.521
-                                else:  # if PacketCount (i.e. photon count) > 55000000.0
-                                    if Mesh3_Mu_Absor <= 0.0:
-                                        if Instance_Type_Compute_Opti <= 0.5:
-                                            return 1127.098
-                                        else:  # if Instance Type_Compute Optimized > 0.5
-                                            return 972.916
-                                    else:  # if Mesh3 Mu Absorption > 0.0
-                                        return 267.751
-                            else:  # if Mesh6 Mu Absorption > 0.03
-                                if Instance_Type_General <= 0.5:
-                                    if PacketCount <= 55000000.0:
-                                        if CPU_Cores <= 13.0:
-                                            if Storage <= 28.0:
-                                                return 1115.885
-                                            else:  # if Storage (GB) > 28.0
-                                                return 972.916
-                                        else:  # if Default CPU cores > 13.0
-                                            return 536.958
-                                    else:  # if PacketCount (i.e. photon count) > 55000000.0
-                                        if Mesh4_Mu_Scattering<= 19.0:
-                                            return 79.438
-                                        else:  # if Mesh4 Mu Scattering > 19.0
-                                            return 479.74675
-                                else:  # if Instance Type_General > 0.5
-                                    if PacketCount <= 55000000.0:
-                                        if Mesh9_Mu_Scattering<= 7.36:
-                                            return 1373.241
-                                        else:  # if Mesh9 Mu Scattering > 7.36
-                                            return 173.115
-                                    else:  # if PacketCount (i.e. photon count) > 55000000.0
-                                        return 1405.032
-            else:  # if PacketCount (i.e. photon count) > 550000000.0
-                if Mesh5_Mu_Absor<= 0.12:
+    def _estimate_time(self, Mesh2_Scattering, Mesh2_Absor, Mesh3_Mu_Scattering, Mesh3_Mu_Absor, Mesh4_Mu_Scattering, Mesh4_Mu_Absor, Mesh5_Mu_Scattering, Mesh5_Mu_Absor, Mesh6_Mu_Scattering, Mesh6_Mu_Absor, Mesh7_Mu_Scattering, Mesh7_Mu_Absor, Mesh8_Mu_Scattering, Mesh8_Mu_Absor, Mesh9_Mu_Scattering, Mesh9_Mu_Absor, PacketCount , Storage, CPU_Cores, Instance_Type_Compute_Optimized, Instance_Type_General):
+        if PacketCount  <= 550000000.0:
+            if PacketCount  <= 55000000.0:
+                if Mesh4_Mu_Absor <= 0.03:
+                    if Mesh2_Scattering <= 6.4:
+                        if Instance_Type_Compute_Optimized <= 0.5:
+                            if Mesh5_Mu_Scattering <= 10.23:
+                                return 74.235
+                            else:  # if Mesh5_Mu_Scattering > 10.23
+                                return 57.03
+                        else:  # if Instance Type_Compute Optimized > 0.5
+                            if Storage  <= 48.0:
+                                if Storage <= 28.0:
+                                    return 91.267
+                                else:  # if Storage > 28.0
+                                    return 91.247
+                            else:  # if Storage > 48.0
+                                return 306.349
+                    else:  # if Mesh2_Scattering > 6.4
+                        if CPU_Cores <= 13.0:
+                            if Instance_Type_General <= 0.5:
+                                if Storage <= 28.0:
+                                    return 307.029
+                                else:  # if Storage > 28.0
+                                    return 620.01
+                            else:  # if Instance_Type_General > 0.5
+                                if Mesh2_Scattering <= 8.9:
+                                    return 548.5435
+                                else:  
+                                    if Mesh4_Mu_Scattering <= 15.0:
+                                        return 267.2335
+                                    else:  # if Mesh4_Mu_Scattering > 15.0
+                                        return 173.115
+                        else:  # if CPU_Cores > 13.0
+                            return 147.521
+                else:  # if Mesh4_Mu_Absor > 0.03
+                    if Storage <= 48.0:
+                        if Mesh2_Absor <= 0.02:
+                            return 2596.701
+                        else:  # if Mesh2_Absor > 0.02
+                            if Storage <= 28.0:
+                                return 1115.885
+                            else:  # if Storage > 28.0
+                                return 972.916
+                    else:  # if Storage > 48.0
+                        if Mesh2_Scattering <= 17.8:
+                            return 688.073
+                        else:  # if Mesh2_Scattering > 17.8
+                            return 71.69
+            else:  # if PacketCount  > 55000000.0
+                if CPU_Cores <= 6.0:
+                    if Storage <= 48.0:
+                        if Mesh5_Mu_Scattering <= 2.5:
+                            return 2626.801
+                        else:  # if Mesh5_Mu_Scattering > 2.5
+                            if Mesh9_Mu_Scattering <= 5.52:
+                                if Mesh5_Mu_Absor <= 0.02:
+                                    return 1904.5075
+                                else:  # if Mesh5_Mu_Absor > 0.02
+                                    return 2041.284
+                            else:  # if Mesh9_Mu_Scattering > 5.52
+                                return 2252.5235
+                    else:  # if Storage > 48.0
+                        if Mesh3_Mu_Absor <= 0.0:
+                            return 502.118
+                        else:  # if Mesh3_Mu_Absor > 0.0
+                            return 1405.032
+                else:  # if CPU_Cores > 6.0
+                    if Mesh3_Mu_Absor <= 0.0:
+                        return 2111.556
+                    else:  # if Mesh3_Mu_Absor > 0.0
+                        if Mesh6_Mu_Absor <= 0.01:
+                            return 972.916
+                        else:  # if Mesh6_Mu_Absor > 0.01
+                            if Mesh5_Mu_Scattering <= 61.35:
+                                if Mesh5_Mu_Scattering <= 30.45:
+                                    return 417.12166667
+                                else:  # if Mesh5_Mu_Scattering > 30.45
+                                    return 267.751
+                            else:  # if Mesh5_Mu_Scattering > 61.35
+                                return 79.438
+        else:  # if PacketCount  > 550000000.0
+            if Mesh5_Mu_Absor <= 0.12:
+                if Mesh4_Mu_Absor <= 0.01:
                     return 30215.35
-                else:  # if Mesh5 Mu Absorption > 0.12
-                    return 69604.01
+                else:  # if Mesh4_Mu_Absor > 0.01
+                    if Mesh6_Mu_Scattering <= 4.5:
+                        return 6642.233
+                    else:  # if Mesh6_Mu_Scattering > 4.5
+                        return 0.
+            else:  # if Mesh5_Mu_Absor > 0.12
+                return 69604.01
+        final = return_val + PACKET_COUNT_COEFF*PacketCount # a higher packet count should linearly increase the time
+        final = final * 0.9 if Instance_Type_Compute_Opti else final # If it's compute optimized, it should be faster
+        return final
 
     def _estimate_cost(self, instance_specific_type, time):
         # print(time)
