@@ -436,7 +436,7 @@ def fmSimulatorMaterial(request):
         return redirect('please_login')
 
     # Info about the generated TCL
-    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
 
     # Form for user-uploaded TCL
     class Optional_Tcl(forms.Form):
@@ -531,7 +531,7 @@ def fmSimulatorMaterial(request):
     context = {
         'formset1': formset1,
         'unit': request.session['meshUnit'],
-        'tcl_script_name': request.FILES['tcl_file'], # keep for now 
+        'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
     }
 
