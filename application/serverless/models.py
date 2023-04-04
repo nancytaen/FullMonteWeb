@@ -9,7 +9,7 @@ class ServerlessRequest(models.Model):
     mesh_name = models.CharField(max_length=255, null=False)
     tcl_name = models.CharField(max_length=255, null=False)
     completed = models.BooleanField(default=False)
-    datetime = models.DateTimeField(auto_now=True)
+    datetime = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(
         user_model,
         default=0,
@@ -29,4 +29,4 @@ class ServerlessOutput(models.Model):
     output_vtk_name = models.CharField(max_length=255, null=True)
     output_txt_name = models.CharField(max_length=255, null=True)
     log_name = models.CharField(max_length=255, null=True)
-    datetime = models.DateTimeField(auto_now=True)
+    datetime = models.DateTimeField(auto_now_add=True)
