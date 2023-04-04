@@ -224,7 +224,7 @@ class Recommendation:
         self.fastest = []
         self.cheapest = []
 
-    def recommend(self):
+    def recommend(self, file_size):
         if self.request is None:
             return {
                 'fastest': [
@@ -268,16 +268,19 @@ class Recommendation:
             # Run the Estimator with all the different instance parameters and save the three cheapest and fastests
             estimated_instances = []
             for instance in instance_info:
-                # time, cost, type = TimeCostEstimator(None, self.request.session['ec2_instance_type']).estimate(self.request, format_cost=True)
-                result = TimeCostEstimator(None, instance).estimate(self.request, instance, format_cost=False)
-                estimated_instances.append(InstanceEstimate(
-                        time=result[ESTIMATED_TIME_KEY],
-                        cost=result[ESTIMATED_COST_KEY],
-                        type=result['type'],
-                        vcpu=instance_info[instance].vcpu,
-                        cpu_ram=instance_info[instance].cpu_ram 
-                    ).dict()
-                )
+                # An estimation to ensure there is enough of a memory footprint for the mesh file
+                # Peak memory usage is about 20x the mesh file size, so for safety, multiply by 25 and convert the file size in bytes to GB (which is what RAM is in)
+                min_req_ram = file_size * 0.00000002
+                if instance_info[instance].cpu_ram > min_req_ram:
+                    result = TimeCostEstimator(None, instance).estimate(self.request, instance, format_cost=False)
+                    estimated_instances.append(InstanceEstimate(
+                            time=result[ESTIMATED_TIME_KEY],
+                            cost=result[ESTIMATED_COST_KEY],
+                            type=result['type'],
+                            vcpu=instance_info[instance].vcpu,
+                            cpu_ram=instance_info[instance].cpu_ram 
+                        ).dict()
+                    )
 
                 
             sorted_time = sorted(estimated_instances, key=lambda inst: float(inst['time']))
