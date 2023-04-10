@@ -5,11 +5,11 @@
     <div>
         {% include "estimation/estimate.html"%}
         <div class="mb-4">
-            {% with title="Least Estimated Compute Time" instances=recommendation.fastest description="The following EC2 instances are estimated to have the least compute time for this simulation. " %}
+            {% with title="Least Estimated Compute Time" instances=recommendation.fastest description="The following EC2 instances are estimated to have the least compute time for this simulation. Please note any instances that are estimated to have insufficient memory have been excluded from reccomendation. " %}
                 {% include "estimation/instance_estimates_table.html" with table_title=title ec2_instances=instances description=description only%}
             {% endwith %}
 
-            {% with title="Least Estimated Cost" instances=recommendation.cheapest description="The following EC2 instances are estimated to have the least computing cost for this simulation. " %}
+            {% with title="Least Estimated Cost" instances=recommendation.cheapest description="The following EC2 instances are estimated to have the least computing cost for this simulation. Please note any instances that are estimated to have insufficient memory have been excluded from reccomendation. " %}
                 {% include "estimation/instance_estimates_table.html" with table_title=title ec2_instances=instances description=description%}
             {% endwith %}
         </div>

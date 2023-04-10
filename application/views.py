@@ -436,7 +436,7 @@ def fmSimulatorMaterial(request):
         return redirect('please_login')
 
     # Info about the generated TCL
-    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
+    generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
 
     # Form for user-uploaded TCL
     class Optional_Tcl(forms.Form):
@@ -531,7 +531,7 @@ def fmSimulatorMaterial(request):
     context = {
         'formset1': formset1,
         'unit': request.session['meshUnit'],
-        'tcl_script_name': request.FILES['tcl_file'], # keep for now 
+        'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
     }
 
@@ -838,6 +838,9 @@ def simulation_confirmation(request):
     
     tcl_form = Optional_Tcl()
 
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    file_size = default_storage.size(meshFilePath)  
+
     context = {
         'mesh_name': meshFilePath, 
         'materials': materials,
@@ -845,8 +848,8 @@ def simulation_confirmation(request):
         'tcl_script_name': generated_tcl.script.name,
         'tcl_form': tcl_form,
         'unit': request.session['meshUnit'],
-        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
-        'recommendation': Recommendation(None).recommend(),
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(request, request.session['ec2_instance_type'], format_cost=True),
+        'recommendation': Recommendation(None).recommend(file_size),
     }
 
     return render(request, 'simulation_confirmation.html', context)
@@ -854,11 +857,16 @@ def simulation_confirmation(request):
 
 # recommendation page
 def instance_recommendation(request):
+
+    meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    file_size = default_storage.size(meshFilePath)  
+
+
     if request.method == 'POST':
         return HttpResponseRedirect('/application/simulation_confirmation')
     context = {
-        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(None, format_cost=True),
-        'recommendation': Recommendation(None).recommend(),
+        'estimates': TimeCostEstimator(None, request.session['ec2_instance_type']).estimate(request, request.session['ec2_instance_type'], format_cost=True),
+        'recommendation': Recommendation(request).recommend(file_size)
     }
     return render(request, 'estimation/simulation_recommendation.html', context)
 
