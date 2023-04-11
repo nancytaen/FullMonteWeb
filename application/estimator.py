@@ -86,101 +86,101 @@ class TimeCostEstimator:
                     if Mesh2_Scattering <= 6.4:
                         if Instance_Type_Compute_Optimized <= 0.5:
                             if Mesh5_Mu_Scattering <= 10.23:
-                                return 74.235
+                                return_val = 74.235
                             else:  # if Mesh5_Mu_Scattering > 10.23
-                                return 57.03
+                                return_val = 57.03
                         else:  # if Instance Type_Compute Optimized > 0.5
                             if Storage  <= 48.0:
                                 if Storage <= 28.0:
-                                    return 91.267
+                                    return_val = 91.267
                                 else:  # if Storage > 28.0
-                                    return 91.247
+                                    return_val = 91.247
                             else:  # if Storage > 48.0
-                                return 306.349
+                                return_val = 306.349
                     else:  # if Mesh2_Scattering > 6.4
                         if CPU_Cores <= 13.0:
                             if Instance_Type_General <= 0.5:
                                 if Storage <= 28.0:
-                                    return 307.029
+                                    return_val = 307.029
                                 else:  # if Storage > 28.0
-                                    return 620.01
+                                    return_val = 620.01
                             else:  # if Instance_Type_General > 0.5
                                 if Mesh2_Scattering <= 8.9:
-                                    return 548.5435
+                                    return_val = 548.5435
                                 else:  
                                     if Mesh4_Mu_Scattering <= 15.0:
-                                        return 267.2335
+                                        return_val = 267.2335
                                     else:  # if Mesh4_Mu_Scattering > 15.0
-                                        return 173.115
+                                        return_val = 173.115
                         else:  # if CPU_Cores > 13.0
-                            return 147.521
+                            return_val = 147.521
                 else:  # if Mesh4_Mu_Absor > 0.03
                     if Storage <= 48.0:
                         if Mesh2_Absor <= 0.02:
-                            return 2596.701
+                            return_val = 2596.701
                         else:  # if Mesh2_Absor > 0.02
                             if Storage <= 28.0:
-                                return 1115.885
+                                return_val = 1115.885
                             else:  # if Storage > 28.0
-                                return 972.916
+                                return_val = 972.916
                     else:  # if Storage > 48.0
                         if Mesh2_Scattering <= 17.8:
-                            return 688.073
+                            return_val = 688.073
                         else:  # if Mesh2_Scattering > 17.8
-                            return 71.69
+                            return_val = 71.69
             else:  # if PacketCount  > 55000000.0
                 if CPU_Cores <= 6.0:
                     if Storage <= 48.0:
                         if Mesh5_Mu_Scattering <= 2.5:
-                            return 2626.801
+                            return_val = 2626.801
                         else:  # if Mesh5_Mu_Scattering > 2.5
                             if Mesh9_Mu_Scattering <= 5.52:
                                 if Mesh5_Mu_Absor <= 0.02:
-                                    return 1904.5075
+                                    return_val = 1904.5075
                                 else:  # if Mesh5_Mu_Absor > 0.02
-                                    return 2041.284
+                                    return_val = 2041.284
                             else:  # if Mesh9_Mu_Scattering > 5.52
-                                return 2252.5235
+                                return_val = 2252.5235
                     else:  # if Storage > 48.0
                         if Mesh3_Mu_Absor <= 0.0:
-                            return 502.118
+                            return_val = 502.118
                         else:  # if Mesh3_Mu_Absor > 0.0
-                            return 1405.032
+                            return_val = 1405.032
                 else:  # if CPU_Cores > 6.0
                     if Mesh3_Mu_Absor <= 0.0:
-                        return 2111.556
+                        return_val = 2111.556
                     else:  # if Mesh3_Mu_Absor > 0.0
                         if Mesh6_Mu_Absor <= 0.01:
-                            return 972.916
+                            return_val = 972.916
                         else:  # if Mesh6_Mu_Absor > 0.01
                             if Mesh5_Mu_Scattering <= 61.35:
                                 if Mesh5_Mu_Scattering <= 30.45:
-                                    return 417.12166667
+                                    return_val = 417.12166667
                                 else:  # if Mesh5_Mu_Scattering > 30.45
-                                    return 267.751
+                                    return_val = 267.751
                             else:  # if Mesh5_Mu_Scattering > 61.35
-                                return 79.438
+                                return_val = 79.438
         else:  # if PacketCount  > 550000000.0
             if Mesh5_Mu_Absor <= 0.12:
                 if Mesh4_Mu_Absor <= 0.01:
-                    return 30215.35
+                    return_val = 30215.35
                 else:  # if Mesh4_Mu_Absor > 0.01
                     if Mesh6_Mu_Scattering <= 4.5:
-                        return 6642.233
+                        return_val = 6642.233
                     else:  # if Mesh6_Mu_Scattering > 4.5
-                        return 0.
+                        return_val = 0.
             else:  # if Mesh5_Mu_Absor > 0.12
-                return 69604.01
+                return_val = 69604.01
         final = return_val + PACKET_COUNT_COEFF*PacketCount # a higher packet count should linearly increase the time
-        final = final * 0.9 if Instance_Type_Compute_Opti else final # If it's compute optimized, it should be faster
-        return final
+        final = final * 0.9 if Instance_Type_Compute_Optimized else final # If it's compute optimized, it should be faster
+        return round(final,5)
 
     def _estimate_cost(self, instance_specific_type, time):
         # print(time)
         if self.estimator is None:
             return 0.051
         else:
-            return instance_info[instance_specific_type].cost * time / 360
+            return instance_info[instance_specific_type].cost * time / 3600
 
 
     @staticmethod
@@ -192,25 +192,17 @@ class TimeCostEstimator:
         materials = []
         for i in range(len(request.session['material'])):
             temp = MaterialCoeffs(request.session['scatteringCoeff'][i],request.session['absorptionCoeff'][i])
-            # temp.scatteringCoeff = request.session['scatteringCoeff'][i]
-            # temp.absorptionCoeff = request.session['absorptionCoeff'][i]
             materials.append(temp) 
 
         for i in range(len(request.session['material']),10):
             temp = MaterialCoeffs(0,0)
             materials.append(temp)
 
-
-        # instance_type = request.session['ec2_instance_type']
         time = self._estimate_time(materials[1].scatteringCoeff, materials[1].absorptionCoeff, materials[2].scatteringCoeff, materials[2].absorptionCoeff,materials[3].scatteringCoeff, materials[3].absorptionCoeff, materials[4].scatteringCoeff, materials[4].absorptionCoeff, materials[5].scatteringCoeff, materials[5].absorptionCoeff, materials[6].scatteringCoeff, materials[6].absorptionCoeff, materials[7].scatteringCoeff, materials[7].absorptionCoeff, materials[8].scatteringCoeff, materials[8].absorptionCoeff, 
                                     request.session['packetCount'], instance_info[instance].cpu_ram, instance_info[instance].vcpu, instance_info[instance].instance_type == "Instance_Type_Compute_Opti", instance_info[instance].instance_type == "Instance_Type_General")
         cost = self._estimate_cost(instance, time)
-        cost = round(cost,2) # Round the cost to 2 decimal points
-        # return {
-        #     time,
-        #     self.format_cost(cost) if format_cost else cost,
-        #     self.ec2_type
-        # }
+        cost = round(cost,5) # Round the cost to 2 decimal points
+
         return {
             ESTIMATED_TIME_KEY: time,
             ESTIMATED_COST_KEY: self.format_cost(cost) if format_cost else cost,
@@ -291,11 +283,3 @@ class Recommendation:
                 'cheapest': sorted_cost[0:3],
             }
 
-
-
-
-# if __name__ == "__main__":
-#     recc = Recommendation(None)
-#     pprint(recc.recommend())
-#     sorted_products = sorted(recc.recommend()['cheapest'], key=lambda instance: instance['time'], reverse = True)
-#     pprint(sorted_products[0:3])
