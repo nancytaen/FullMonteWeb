@@ -163,3 +163,7 @@ class pdtOuputLogFile(models.Model):
                              on_delete=models.CASCADE
                              )
     pdt_space_log = models.FileField(storage=PublicMediaStorage())
+
+class ServerlessDetails(models.Model):
+    username = models.CharField(max_length=50)
+    password = models.CharField(max_length=50)

@@ -7,8 +7,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.db import IntegrityError
 from django.shortcuts import redirect, render
 
-from application.forms import materialSetSet, tclInputForm, lightSourceSet
-from application.models import meshFiles
+from application.forms import materialSetSet, tclInputForm, lightSourceSet, ServerlessForm
+from application.models import meshFiles, ServerlessDetails
 from application.serverless.cos_storage import cos_presigned_url, cos_upload_file, cos_search_prefix, \
     handle_uploaded_file
 from application.serverless.models import ServerlessRequest, ServerlessOutput
@@ -151,6 +151,7 @@ def fmServerlessSimulatorSource(request):
     if not request.user.is_authenticated:
         return redirect('please_login')
 
+    # if not re
     # visualize input mesh
     # inputMeshFileName = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
     # text_obj = request.session['text_obj']
@@ -244,10 +245,7 @@ def fmServerlessSimulatorSource(request):
 
 
 def serverless_simulation_confirmation(request):
-    # TO DO: migrate to serverless
-    # # Info about the generated TCL and mesh file
-    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
-    # meshFilePath = tclInput.objects.filter(user = request.user).latest('id').meshFile.name
+    # Info about the generated TCL and mesh file
     serverless_request = request.session[ServerlessParameters.SERVERLESS_REQUEST]
 
     # Form for user-uploaded TCL
@@ -255,30 +253,7 @@ def serverless_simulation_confirmation(request):
         tcl_file = forms.FileField(required=False)
 
     if request.method == 'POST':
-        # Check if user uploaded their own TCL script
-        # form = Optional_Tcl(request.POST, request.FILES)
-        # if not request.POST.__contains__('tcl_file'):
-        #     # there is a file uploaded
-        #     default_storage.delete(request.FILES['tcl_file'].name)
-        #     default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # replace the TCL file in S3
-
-        # text_obj = request.session['text_obj']
-        # private_key_file = io.StringIO(text_obj)
-        # privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        # try:
-        #     client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='simulation_confirmation')
-        # except:
-        #     sys.stdout.flush()
-        #     messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        #     return HttpResponseRedirect('/application/aws')
-        # client.exec_command('> ~/sim_run.log')
-        # sys.stdout.flush()
-        # client.close()
-        # connections.close_all()
-
-        # Transfer all neccessary files for simulation
-        # p = Process(target=transfer_files_and_run_simulation, args=(request, ))
-        # p.start()
+        # if user uploaded their own TCL script
 
         mesh_name = serverless_request[ServerlessParameters.MESH]
         base_name = serverless_request[ServerlessParameters.BASE]
@@ -365,7 +340,6 @@ def fmServerlessSimulatorMaterial(request):
         return redirect('please_login')
 
     # Info about the generated TCL
-    # generated_tcl = tclScript.objects.filter(user = request.user).latest('id')
     serverless_request = request.session[ServerlessParameters.SERVERLESS_REQUEST]
 
     # Form for user-uploaded TCL
@@ -374,16 +348,6 @@ def fmServerlessSimulatorMaterial(request):
 
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
-        # conn = DbConnection()
-        # text_obj = request.session['text_obj']
-        # private_key_file = io.StringIO(text_obj)
-        # privkey = paramiko.RSAKey.from_private_key(private_key_file)
-        # # try:
-        #     client = SshConnection(hostname=request.session['DNS'], privkey=privkey, id='fmSimulatorMaterial')
-        # except:
-        #     sys.stdout.flush()
-        #     messages.error(request, 'Error - looks like your AWS remote server is down, please check your instance in the AWS console and connect again')
-        #     return HttpResponseRedirect('/application/aws')
 
         # Skip rest of setup if user uploaded their own TCL script
         if '_skip' in request.POST:
@@ -406,36 +370,14 @@ def fmServerlessSimulatorMaterial(request):
                         break
 
                 # file uploaded and "Submit and Run" button clicked
-                # form = Optional_Tcl(request.POST, request.FILES)
-                # default_storage.delete(request.FILES['tcl_file'].name)
-                # default_storage.save(request.FILES['tcl_file'].name, request.FILES['tcl_file']) # save new TCL script to S3
-                # print("uploading tcl", default_storage.path(request.FILES['tcl_file'].name))
-                # print("uploading tcl2", request.FILES['tcl_file'].temporary_file_path())
-                # print("uploading tcl2", request.FILES['tcl_file'].file_path)
-                # print("uploading tcl2", request.FILES['tcl_file'].file.name)
-
-                # tcl_file = default_storage.open(generated_tcl.script.name)
-                # print(tcl_file)
+             
                 # to do error if tcl file does not only contain letters, numbers, hyphens and underscores
                 #  Reading file from storage
                 # file = default_storage.open(request.FILES['tcl_file'].name)
-                # TODO
                 temp_dest = "/tmp/uploaded_tcl_script.tcl"
                 handle_uploaded_file(request.FILES['tcl_file'], temp_dest)
-                # with open("uploaded_tcl_script.tcl", "w") as f:
-                #     for line in file:
-                #         f.write(str(line, encoding='utf-8'))
-                # f.close()
 
                 _initiate_serverless_simulation(temp_dest, serverless_request, request.user)
-                # client.exec_command('> ~/sim_run.log')
-                # sys.stdout.flush()
-                # client.close()
-                # connections.close_all()
-
-                # transfer all necessary files to run simulation
-                # p = Process(target=transfer_files_and_run_simulation, args=(request, ))
-                # p.start()
 
                 # # redirect to run simulation
                 # request.session['start_time'] = str(datetime.now(timezone.utc))
@@ -446,11 +388,6 @@ def fmServerlessSimulatorMaterial(request):
 
         # # Get all entries from materials formset and check whether it's valid
         else:
-            #     client.close()
-            #     connections.close_all()
-            #     # transfer all necessary files to run simulation
-            #     p = Process(target=transfer_files_for_input_mesh_visualization, args=(request, ))
-            #     p.start()
             formset1 = materialSetSet(request.POST)
 
             if formset1.is_valid():
@@ -488,11 +425,45 @@ def fmServerlessSimulatorMaterial(request):
 
         return render(request, "serverless/serverless_simulator_material.html", context)
 
+def serverless_login(request):
+    # Initiate your form
+    serverless_form = ServerlessForm(data=request.POST)
+    request.session['serverless_password'] = 'invalid'
+
+    if (request.method == 'POST'):
+        print("hi")
+        if serverless_form.is_valid():
+            user = serverless_form.cleaned_data['username']
+            password = serverless_form.cleaned_data['password']
+            try:
+                # get the actual password info from the database
+                # user_object = ServerlessForm.objects.filter(username=user).get()
+                # actual_pw = user_object.password # modify when we have a database
+                print("hi", settings.SERVERLESS_PASSWORD )
+                if (settings.SERVERLESS_PASSWORD == password):
+                    request.session['serverless_password'] = 'valid'
+                    return httpResponseRedirect('/application/serverless_simulator')
+                else:
+                    return redirect('serverless_login')
+
+            except:
+                # handle exceptions here
+                return HttpResponseRedirect('/application/serverless_simulator')
+    context = {'form': serverless_form}
+    #               add the context 🖟
+    return render(request, "serverless/serverless_login.html", context)
 
 def fmServerlessSimulator(request):
     # First check if user is logged-in
     if not request.user.is_authenticated:
         return redirect('please_login')
+    # ONLY ALLOW USERS WHO HAVE SERVERLESS PASSWORD TO USE AND ACCESS THE SERVERLESS SIMULATION
+    if request.session.get('serverless_password') == None:
+        # Initiate your session variable
+        request.session['serverless_password'] = 'invalid'
+        return redirect('serverless_login')
+    if request.session['serverless_password'] == 'invalid':
+        return redirect('serverless_login')
     # if this is a POST request we need to process the form data
     if request.method == 'POST':
         print(request.POST)
@@ -506,20 +477,7 @@ def fmServerlessSimulator(request):
             sys.stdout.flush()
             request.session['ec2_file_paths'] = []
             request.session['scoredVolumeRegionID'] = []
-            # if request.POST['selected_existing_meshes'] != "":
-            #     # to do trigger run of fullmonte vsi by uploading a file to a cos
-            #     print("This is 1")
-            #     # selected a mesh from database
-            #     mesh_from_database = meshFiles.objects.filter(id=request.POST['selected_existing_meshes'])[0]
 
-            #     obj = form.save(commit = False)
-            #     obj.meshFile = mesh_from_database.meshFile
-            #     obj.originalMeshFileName = mesh_from_database.originalMeshFileName
-            #     obj.meshFileID = mesh_from_database
-            #     obj.user = request.user
-            #     obj.save()
-            # else:
-            print("This is 2")
             # uploaded a new mesh
             # process cleaned data from formsets
             obj = form.save(commit=False)
@@ -529,24 +487,6 @@ def fmServerlessSimulator(request):
             obj.save()
             print(obj)
             sys.stdout.flush()
-
-            # no need to save
-            # # create entry for the newly uploaded meshfile
-            # new_mesh_entry = meshFiles()
-            # new_mesh_entry.meshFile = obj.meshFile
-            # new_mesh_entry.originalMeshFileName = obj.originalMeshFileName
-            # new_mesh_entry.user = request.user
-            # new_mesh_entry.save()
-
-            # update meshfile id
-            # obj.meshFileID = new_mesh_entry
-            # obj.save()
-            # meshname = tclInput.objects.filter(user = request.user).latest('id').meshFile.file.name
-            # print("default_storage.path(meshname)", meshname)
-
-            # print(request.FILES['meshFile'].file.name)
-            # upload random mesh
-            # print(request.FILES['meshFile'].file.name)
 
             print(form.cleaned_data['kernelType'])
 
@@ -592,23 +532,6 @@ def fmServerlessSimulator(request):
             request.session['packetCount'] = form.cleaned_data['packetCount']
             request.session['totalEnergy'] = form.cleaned_data['totalEnergy']
             request.session['energyUnit'] = form.cleaned_data['energyUnit']
-
-            # if request.POST.get("overwrite_on_ec2") == "True":
-            #     request.session['overwrite_on_ec2'] = True
-            # else:
-            #     request.session['overwrite_on_ec2'] = False
-
-            # generate empty TCL template TO DO EDIT:
-            # mesh = tclInput.objects.filter(user = request.user).latest('id')
-            # class meshFile:
-            #     def __init__(self, name):
-            #         self.name = name
-            # class mesh_serverless:
-            #     def __init__(self, name):
-            #         self.originalMeshFileName = name
-            #         self.meshFile = meshFile(name)
-            #
-            # mesh_serverless = mesh_serverless(obj.originalMeshFileName)
 
             serverless_request = ServerlessParameters(obj.originalMeshFileName)
             request.session[ServerlessParameters.SERVERLESS_REQUEST] = serverless_request.__dict__

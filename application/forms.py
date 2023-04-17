@@ -227,3 +227,9 @@ class visualizeMeshForm(forms.ModelForm):
 materialSetSet = formset_factory(materialSet, formset=RequiredFormSet)
 lightSourceSet = formset_factory(lightSource, formset=RequiredFormSet)
 regionIDSet = formset_factory(regionIDEntry, formset=RequiredFormSet)
+
+class ServerlessForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput())
+    class Meta:
+        model = ServerlessDetails
+        fields = ('username', 'password')

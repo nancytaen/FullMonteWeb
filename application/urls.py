@@ -52,6 +52,8 @@ urlpatterns = [
     path('kernel_info', views.kernelInfo, name='kernel_info'),
 
     ####################### serverless simulator #######################
+     path('serverless_login', serverless_views.serverless_login, name='serverless_login'),
+
     # /application/serverless_simulator
     # path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
     path('serverless_simulator', serverless_views.fmServerlessSimulator, name='serverless_simulator'),
