@@ -64,6 +64,7 @@ fullmontepassword='capstone2020'
 IBM_COS_SERVICE_INSTANCE_CRN = <your IBM_COS_SERVICE_INSTANCE_CRN/secret accress key>
 COS_HMAC_ACCESS_KEY_ID = <find this on the service credentials of your bucket>
 COS_HMAC_SECRET_ACCESS_KEY = <find this on the service credentials of your bucket> 
+SERVERLESS_PASSWORD = <YOUR PASSWORD to disallow external users from running sims on your ibmcodeengine> 
 ```
 
 Setup database migrations
